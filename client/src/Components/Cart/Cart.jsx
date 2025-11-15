@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import styles from "./Cart.module.css";
 import { useCart } from "./CartContext";
-import CheckoutButton from "../../components/pay/CheckoutButton";
+import CheckoutButton from "../../Components/pay/CheckoutButton";
 
 function centsFromItem(it) {
   if (it?.price_cents !== undefined && it?.price_cents !== null) {
