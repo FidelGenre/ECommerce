@@ -20,15 +20,14 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const IS_PROD = process.env.NODE_ENV === "production";
 
-// Render setea la URL final automáticamente si queda ""
+// Render setea automáticamente si queda ""
 const BASE_URL =
   process.env.BASE_URL || (IS_PROD ? "" : `http://localhost:${PORT}`);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
-
 const MP_PUBLIC_BASE_URL = process.env.MP_PUBLIC_BASE_URL || "";
 
-/* ================== MIDDLEWARES ================== */
+/* ================== TRUST PROXY ================== */
 app.set("trust proxy", 1);
 
 /* ================== CORS (EXPRESS 5 SAFE) ================== */
@@ -49,21 +48,24 @@ app.use(
       }
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// 🟢 Express 5 NO acepta "*" → usamos "/api/*"
-app.options("/api/*", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", FRONTEND_URL);
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader(
+/* ========== FIX PARA EXPRESS 5 (no acepta "*") ========== */
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", FRONTEND_URL);
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, PATCH, DELETE, OPTIONS"
   );
-  res.sendStatus(204);
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
 });
 
 /* ================== PARSERS ================== */
@@ -71,6 +73,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+/* ================== FAVICON ================== */
 app.get("/favicon.ico", (_req, res) => res.sendStatus(204));
 
 /* ================== STATIC IMAGES ================== */
@@ -78,19 +81,18 @@ app.use("/images", express.static(path.join(__dirname, "public", "images")));
 
 function withImageURL(item) {
   const base = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
-
   return {
     ...item,
     image: item.image ? `${base}/images/${item.image}` : null,
   };
 }
 
-/* ================== ENDPOINTS PÚBLICOS ================== */
+/* ================== ENDPOINTS PUBLIC ================== */
 
 // Healthcheck
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-// Catálogo
+// Catálogo de granos
 app.get("/api/beans", async (_req, res) => {
   try {
     const result = await pool.query(`
@@ -117,7 +119,6 @@ app.get("/api/beans", async (_req, res) => {
 });
 
 /* ================== ENDPOINTS ADMIN ================== */
-
 app.post("/api/beans", async (req, res) => {
   const {
     name,
