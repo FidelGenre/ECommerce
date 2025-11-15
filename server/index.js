@@ -18,14 +18,22 @@ const app = express();
 
 /* ================== CONFIG ================== */
 const PORT = process.env.PORT || 5000;
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const IS_PROD = process.env.NODE_ENV === "production";
+
+// Si no viene BASE_URL, se arma solo
+const BASE_URL =
+  process.env.BASE_URL ||
+  (IS_PROD
+    ? "" // Render la setea sola
+    : `http://localhost:${PORT}`);
+
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const MP_PUBLIC_BASE_URL = process.env.MP_PUBLIC_BASE_URL || "";
 
 /* ================== MIDDLEWARES ================== */
 app.set("trust proxy", 1);
 
-// CORS: tu frontend con credenciales (cookies)
+// CORS: necesario para cookies cross-site
 app.use(
   cors({
     origin: FRONTEND_URL,
@@ -35,18 +43,17 @@ app.use(
   })
 );
 
-// Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// evita error de favicon en dev
+// evita error de favicon
 app.get("/favicon.ico", (_req, res) => res.sendStatus(204));
 
-// Archivos estáticos (imágenes)
+/* ================== ARCHIVOS ESTÁTICOS ================== */
 app.use("/images", express.static(path.join(__dirname, "public", "images")));
 
-// Helper para armar URL de imagen completa
+/* Helper para generar la URL de la imagen */
 function withImageURL(item) {
   return {
     ...item,
@@ -59,7 +66,7 @@ function withImageURL(item) {
 // Healthcheck
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-// Catálogo de granos (ejemplo con tu esquema)
+// Catálogo de granos
 app.get("/api/beans", async (_req, res) => {
   try {
     if (!pool) return res.json([]);
@@ -90,6 +97,7 @@ app.post("/api/beans", async (req, res) => {
     stock = 0,
     min_stock = 0,
   } = req.body;
+
   try {
     const inserted = await pool.query(
       `INSERT INTO beanstype (name, description, origin, roast_level, price_cents, image)
@@ -113,21 +121,15 @@ app.post("/api/beans", async (req, res) => {
   }
 });
 
-/* ================== ROUTERS DE LA APP ================== */
+/* ================== ROUTERS ================== */
 app.use("/api/auth", authRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/user", userRouter);
-app.use("/api/orders", ordersRouter); // checkout + listados + detalle
-app.use("/api/pay", payRouter); // webhook MP
+app.use("/api/orders", ordersRouter);
+app.use("/api/pay", payRouter);
 
-/* ================== 404 & ERROR HANDLERS ================== */
+/* ================== 404 ================== */
 app.use((_req, res) => res.status(404).json({ error: "Not found" }));
-
-// (opcional) Handler de errores global
-// app.use((err, _req, res, _next) => {
-//   console.error("Unhandled error:", err);
-//   res.status(500).json({ error: "Internal server error" });
-// });
 
 /* ================== START ================== */
 app.listen(PORT, async () => {
@@ -135,6 +137,7 @@ app.listen(PORT, async () => {
   if (MP_PUBLIC_BASE_URL) {
     console.log(`🌐 MP público para pagos: ${MP_PUBLIC_BASE_URL}`);
   }
+
   try {
     const ping = await pool.query("SELECT NOW()");
     console.log("DB connected:", ping.rows[0]);

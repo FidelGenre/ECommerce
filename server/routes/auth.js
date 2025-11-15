@@ -11,6 +11,21 @@ if (!pool)
 const JWT_SECRET = (process.env.JWT_SECRET || "dev_secret").trim();
 const IS_PROD = process.env.NODE_ENV === "production";
 
+// 🔐 Opciones de la cookie de sesión
+const cookieOptions = IS_PROD
+  ? {
+      httpOnly: true,
+      sameSite: "none", // necesario para cross-site (front y back en dominios distintos)
+      secure: true, // obligatorio cuando SameSite=None (y Render usa HTTPS)
+      path: "/", // visible en /api/*
+    }
+  : {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      path: "/",
+    };
+
 // rol por defecto si en la DB está null o no viene nada
 const DEFAULT_ROLE = "client";
 
@@ -32,7 +47,7 @@ const norm = (e) =>
     .trim()
     .toLowerCase();
 
-/* /me */
+/* ========== /auth/me ========== */
 router.get("/me", async (req, res) => {
   try {
     const bearer = req.headers.authorization?.startsWith("Bearer ")
@@ -57,7 +72,7 @@ router.get("/me", async (req, res) => {
   }
 });
 
-/* register */
+/* ========== register ========== */
 router.post("/register", async (req, res) => {
   // ignoramos role del body: siempre cliente
   let { name, email, password } = req.body || {};
@@ -86,7 +101,9 @@ router.post("/register", async (req, res) => {
     if (!user.role) user.role = DEFAULT_ROLE;
 
     const token = sign(user);
-    res.cookie("token", token, { httpOnly: true, sameSite: "lax" });
+
+    // 🔐 cookie con opciones correctas para cross-site
+    res.cookie("token", token, cookieOptions);
     res.json({ user, token });
   } catch (e) {
     console.error("POST /auth/register", e);
@@ -94,7 +111,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-/* login */
+/* ========== login ========== */
 router.post("/login", async (req, res) => {
   let { email, password } = req.body || {};
   if (!email || !password)
@@ -133,7 +150,9 @@ router.post("/login", async (req, res) => {
       points: u.points,
     };
     const token = sign(user);
-    res.cookie("token", token, { httpOnly: true, sameSite: "lax" });
+
+    // 🔐 cookie con SameSite/secure según entorno
+    res.cookie("token", token, cookieOptions);
     res.json({ user, token });
   } catch (e) {
     console.error("POST /auth/login", e);
@@ -141,9 +160,10 @@ router.post("/login", async (req, res) => {
   }
 });
 
-/* logout */
+/* ========== logout ========== */
 router.post("/logout", (_req, res) => {
-  res.clearCookie("token");
+  // usar las mismas opciones para asegurarnos de que se borre
+  res.clearCookie("token", cookieOptions);
   res.json({ ok: true });
 });
 
