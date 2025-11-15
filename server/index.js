@@ -20,7 +20,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const IS_PROD = process.env.NODE_ENV === "production";
 
-// Render autogenera BASE_URL si está vacío
+// Render setea la URL final automáticamente si queda ""
 const BASE_URL =
   process.env.BASE_URL || (IS_PROD ? "" : `http://localhost:${PORT}`);
 
@@ -28,10 +28,10 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 const MP_PUBLIC_BASE_URL = process.env.MP_PUBLIC_BASE_URL || "";
 
-/* ================== TRUST PROXY ================== */
+/* ================== MIDDLEWARES ================== */
 app.set("trust proxy", 1);
 
-/* ================== CORS (COMPATIBLE SAFARI IOS) ================== */
+/* ================== CORS (EXPRESS 5 SAFE) ================== */
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -41,7 +41,6 @@ app.use(
         "https://ecommerceclient-w2q7.onrender.com",
       ];
 
-      // Safari iOS puede mandar origin null
       if (!origin || allowed.includes(origin)) {
         callback(null, true);
       } else {
@@ -55,22 +54,31 @@ app.use(
   })
 );
 
-// Necesario para preflight en celulares
-app.options("*", cors());
+// 🟢 Express 5 NO acepta "*" → usamos "/api/*"
+app.options("/api/*", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", FRONTEND_URL);
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+  res.sendStatus(204);
+});
 
-/* ================== MIDDLEWARES ================== */
+/* ================== PARSERS ================== */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.get("/favicon.ico", (_req, res) => res.sendStatus(204));
 
-/* ================== ARCHIVOS ESTÁTICOS ================== */
+/* ================== STATIC IMAGES ================== */
 app.use("/images", express.static(path.join(__dirname, "public", "images")));
 
-/* Helper para URLs de imágenes */
 function withImageURL(item) {
   const base = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
+
   return {
     ...item,
     image: item.image ? `${base}/images/${item.image}` : null,
@@ -79,20 +87,22 @@ function withImageURL(item) {
 
 /* ================== ENDPOINTS PÚBLICOS ================== */
 
+// Healthcheck
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
+// Catálogo
 app.get("/api/beans", async (_req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        b.id,
-        b.name,
-        b.description,
-        b.origin,
+        b.id, 
+        b.name, 
+        b.description, 
+        b.origin, 
         b.roast_level,
-        b.price_cents,
+        b.price_cents, 
         COALESCE(b.image, 'coffeeall.png') AS image,
-        COALESCE(i.stock, 0) AS stock,
+        COALESCE(i.stock, 0) AS stock, 
         COALESCE(i.min_stock, 0) AS min_stock
       FROM beanstype b
       LEFT JOIN inventory i ON i.beanstype_id = b.id
@@ -145,7 +155,6 @@ app.post("/api/beans", async (req, res) => {
 });
 
 /* ================== ROUTERS ================== */
-
 app.use("/api/auth", authRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/user", userRouter);
@@ -160,7 +169,7 @@ app.listen(PORT, async () => {
   console.log(`🚀 API running on ${BASE_URL || "(Render autogen)"}`);
 
   if (MP_PUBLIC_BASE_URL) {
-    console.log(`🌐 MP público para pagos: ${MP_PUBLIC_BASE_URL}`);
+    console.log(`🌐 MP público: ${MP_PUBLIC_BASE_URL}`);
   }
 
   try {
