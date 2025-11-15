@@ -20,11 +20,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const IS_PROD = process.env.NODE_ENV === "production";
 
-// Si no viene BASE_URL, se arma solo
+// Si no viene BASE_URL en Render, armamos automáticamente
 const BASE_URL =
   process.env.BASE_URL ||
   (IS_PROD
-    ? "" // Render la setea sola
+    ? "" // Render va a reemplazar "" por la URL final
     : `http://localhost:${PORT}`);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -33,7 +33,7 @@ const MP_PUBLIC_BASE_URL = process.env.MP_PUBLIC_BASE_URL || "";
 /* ================== MIDDLEWARES ================== */
 app.set("trust proxy", 1);
 
-// CORS: necesario para cookies cross-site
+// CORS con credenciales (cookies)
 app.use(
   cors({
     origin: FRONTEND_URL,
@@ -47,21 +47,24 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// evita error de favicon
 app.get("/favicon.ico", (_req, res) => res.sendStatus(204));
 
 /* ================== ARCHIVOS ESTÁTICOS ================== */
 app.use("/images", express.static(path.join(__dirname, "public", "images")));
 
-/* Helper para generar la URL de la imagen */
+/* Helper para generar URL completa de imagen */
 function withImageURL(item) {
+  const normalizedBase = BASE_URL.endsWith("/")
+    ? BASE_URL.slice(0, -1)
+    : BASE_URL;
+
   return {
     ...item,
-    image: item.image ? `${BASE_URL}/images/${item.image}` : null,
+    image: item.image ? `${normalizedBase}/images/${item.image}` : null,
   };
 }
 
-/* ================== ENDPOINTS BÁSICOS ================== */
+/* ================== ENDPOINTS PÚBLICOS ================== */
 
 // Healthcheck
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
@@ -69,15 +72,22 @@ app.get("/api/health", (_req, res) => res.json({ ok: true }));
 // Catálogo de granos
 app.get("/api/beans", async (_req, res) => {
   try {
-    if (!pool) return res.json([]);
     const result = await pool.query(`
-      SELECT b.id, b.name, b.description, b.origin, b.roast_level,
-             b.price_cents, COALESCE(b.image, 'coffeeall.png') AS image,
-             COALESCE(i.stock, 0) AS stock, COALESCE(i.min_stock, 0) AS min_stock
+      SELECT 
+        b.id, 
+        b.name, 
+        b.description, 
+        b.origin, 
+        b.roast_level,
+        b.price_cents, 
+        COALESCE(b.image, 'coffeeall.png') AS image,
+        COALESCE(i.stock, 0) AS stock, 
+        COALESCE(i.min_stock, 0) AS min_stock
       FROM beanstype b
       LEFT JOIN inventory i ON i.beanstype_id = b.id
       ORDER BY b.id ASC;
     `);
+
     res.json(result.rows.map(withImageURL));
   } catch (err) {
     console.error("Error en /api/beans:", err);
@@ -85,7 +95,9 @@ app.get("/api/beans", async (_req, res) => {
   }
 });
 
-// Alta de grano (admin)
+/* ================== ENDPOINTS ADMIN ================== */
+
+// Alta de bean
 app.post("/api/beans", async (req, res) => {
   const {
     name,
@@ -104,6 +116,7 @@ app.post("/api/beans", async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
       [name, description, origin, roast_level, price_cents, image]
     );
+
     const bean = inserted.rows[0];
 
     await pool.query(
@@ -133,7 +146,7 @@ app.use((_req, res) => res.status(404).json({ error: "Not found" }));
 
 /* ================== START ================== */
 app.listen(PORT, async () => {
-  console.log(`🚀 API running on ${BASE_URL}`);
+  console.log(`🚀 API running on ${BASE_URL || "(Render autogen)"}`);
   if (MP_PUBLIC_BASE_URL) {
     console.log(`🌐 MP público para pagos: ${MP_PUBLIC_BASE_URL}`);
   }
