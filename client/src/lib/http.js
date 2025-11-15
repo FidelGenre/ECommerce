@@ -1,6 +1,8 @@
 // client/src/lib/http.js
 
-const API_BASE = import.meta.env.VITE_API_URL || "";
+// VITE_API_URL debe ser algo como:
+// https://ecommerceserver-vpti.onrender.com/api
+const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "";
 
 /**
  * Wrapper para fetch con JSON + cookies + base URL automática.
@@ -8,34 +10,34 @@ const API_BASE = import.meta.env.VITE_API_URL || "";
 export async function fetchJSON(path, { method = "GET", body, headers } = {}) {
   let url = path;
 
-  // Si NO es una URL absoluta → se concatena con VITE_API_URL
+  // Si NO es URL absoluta → se concatena con API_BASE
   if (!/^https?:\/\//i.test(path)) {
-    const p = path.startsWith("/") ? path : `/${path}`;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
 
-    // 🔥 Permite que el user pase "admin/users" o "/admin/users"
-    if (API_BASE.endsWith("/")) {
-      url = API_BASE.slice(0, -1) + (p.startsWith("/api") ? p : `/api${p}`);
-    } else {
-      url = API_BASE + (p.startsWith("/api") ? p : `/api${p}`);
-    }
+    // Si la ruta YA empieza con /auth, /admin, /orders...
+    // la convertimos a /api/auth/... automáticamente
+    const finalPath = cleanPath.startsWith("/api")
+      ? cleanPath
+      : `/api${cleanPath}`;
+
+    // Unimos API_BASE + finalPath sin duplicar slashes
+    url = API_BASE + finalPath;
   }
 
   const res = await fetch(url, {
     method,
+    credentials: "include", // NECESARIO para cookies cross-site
     headers: {
       "Content-Type": "application/json",
       ...(headers || {}),
     },
-    credentials: "include", // necesario para cookies cross-site
     body: body ? JSON.stringify(body) : undefined,
   });
 
   let data = null;
   try {
     data = await res.json();
-  } catch {
-    // si el backend no manda JSON, data queda null
-  }
+  } catch {}
 
   if (!res.ok) {
     const msg =
