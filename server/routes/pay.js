@@ -1,7 +1,6 @@
 // server/routes/pay.js
 const express = require("express");
 const pool = require("../db");
-
 const router = express.Router();
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
@@ -14,7 +13,77 @@ function log(...args) {
   }
 }
 
-// MercadoPago fetch helper
+// =======================================================
+// 🔥 CREAR PREFERENCIA DE MERCADOPAGO (Checkout)
+// =======================================================
+router.post("/mp", async (req, res) => {
+  try {
+    const items = req.body.items || [];
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "No items" });
+    }
+
+    // Calcular total
+    const totalARS = items.reduce(
+      (acc, it) => acc + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+      0
+    );
+
+    // Crear preferencia
+    const prefRes = await fetch(
+      "https://api.mercadopago.com/checkout/preferences",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${MP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: items.map((it) => ({
+            title: it.title,
+            quantity: Number(it.quantity),
+            unit_price: Number(it.price),
+            currency_id: "ARS",
+          })),
+          back_urls: {
+            success: `${MP_PUBLIC_BASE_URL}/success`,
+            failure: `${MP_PUBLIC_BASE_URL}/failure`,
+            pending: `${MP_PUBLIC_BASE_URL}/pending`,
+          },
+          auto_return: "approved",
+          notification_url: `${BASE_URL}/api/pay/mp/webhook`,
+        }),
+      }
+    );
+
+    const txt = await prefRes.text();
+    let json = {};
+
+    try {
+      json = txt ? JSON.parse(txt) : {};
+    } catch {
+      return res.status(500).json({
+        error: "MercadoPago devolvió JSON inválido",
+        raw: txt,
+      });
+    }
+
+    if (!prefRes.ok) {
+      return res.status(prefRes.status).json(json);
+    }
+
+    return res.json(json); // <---- SIEMPRE DEVUELVE JSON
+  } catch (e) {
+    console.error("ERROR creando preferencia MP:", e);
+    return res.status(500).json({ error: "Error al crear preferencia" });
+  }
+});
+
+// =======================================================
+// Funciones auxiliares (idénticas a tu código original)
+// =======================================================
+
 async function mpApi(path) {
   const r = await fetch(`https://api.mercadopago.com${path}`, {
     headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` },
@@ -38,9 +107,6 @@ async function mpApi(path) {
   return json;
 }
 
-// ─────────────────────────────────────
-// IDempotencia: Registrar pagos procesados
-// ─────────────────────────────────────
 async function markProcessed(mp_payment_id, client) {
   try {
     await client.query(
@@ -53,29 +119,24 @@ async function markProcessed(mp_payment_id, client) {
   }
 }
 
-// ─────────────────────────────────────
-// NUEVO: Registrar ingreso en caja
-// ─────────────────────────────────────
 async function addIngresoCaja(client, concept, amountARS) {
   await client.query(
     `
-    INSERT INTO cashbox_movements (type, concept, amount)
-    VALUES ('ingreso', $1, $2);
-  `,
+      INSERT INTO cashbox_movements (type, concept, amount)
+      VALUES ('ingreso', $1, $2);
+    `,
     [concept, amountARS]
   );
 }
 
-// ─────────────────────────────────────
-// PROCESAR PAGO APROBADO
-// descuentos stock + puntos + ingreso caja
-// ─────────────────────────────────────
+// =======================================================
+// PROCESAR PAGO APROBADO (descuento stock + puntos + caja)
+// =======================================================
 async function handleApprovedPayment(mp_payment_id) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    // idempotencia
     const firstTime = await markProcessed(mp_payment_id, client);
     if (!firstTime) {
       await client.query("COMMIT");
@@ -83,7 +144,6 @@ async function handleApprovedPayment(mp_payment_id) {
       return;
     }
 
-    // leer pago en MP
     const p = await mpApi(`/v1/payments/${mp_payment_id}`);
     const orderNumber = p?.external_reference;
     if (!orderNumber) {
@@ -92,7 +152,6 @@ async function handleApprovedPayment(mp_payment_id) {
       return;
     }
 
-    // buscar orden
     const { rows: ordRows } = await client.query(
       `SELECT id, user_id, status FROM orders WHERE order_number = $1 FOR UPDATE`,
       [orderNumber]
@@ -107,41 +166,37 @@ async function handleApprovedPayment(mp_payment_id) {
     const orderId = ordRows[0].id;
     const userId = ordRows[0].user_id;
 
-    // marcar como aprobada
     await client.query(
       `
-      UPDATE orders
-         SET status = 'approved',
-             updated_at = now()
-       WHERE id = $1
-    `,
+        UPDATE orders
+           SET status = 'approved',
+               updated_at = now()
+         WHERE id = $1
+      `,
       [orderId]
     );
 
-    // obtener items
     const { rows: items } = await client.query(
       `SELECT title, quantity FROM order_items WHERE order_id = $1`,
       [orderId]
     );
 
-    // descontar stock
     for (const it of items) {
       const title = String(it.title || "").trim();
       const qty = Math.max(1, Number(it.quantity || 1));
 
       await client.query(
         `
-        UPDATE inventory
-           SET stock = GREATEST(0, COALESCE(stock,0) - $2)
-         WHERE beanstype_id = (
-           SELECT id FROM beanstype WHERE name = $1 LIMIT 1
-         );
-      `,
+          UPDATE inventory
+             SET stock = GREATEST(0, COALESCE(stock,0) - $2)
+           WHERE beanstype_id = (
+             SELECT id FROM beanstype WHERE name = $1 LIMIT 1
+           );
+        `,
         [title, qty]
       );
     }
 
-    // sumar puntos
     const totalQty = items.reduce(
       (acc, it) => acc + Math.max(1, Number(it.quantity || 1)),
       0
@@ -150,17 +205,14 @@ async function handleApprovedPayment(mp_payment_id) {
     if (userId && totalQty > 0) {
       await client.query(
         `
-        UPDATE app_user
-           SET points = COALESCE(points,0) + $2
-         WHERE id = $1
-      `,
+          UPDATE app_user
+             SET points = COALESCE(points,0) + $2
+           WHERE id = $1
+        `,
         [userId, totalQty * 10]
       );
     }
 
-    // ─────────────────────────────────────
-    // NUEVO: obtener total de la orden y SUMAR A CAJA
-    // ─────────────────────────────────────
     const { rows: totalRows } = await client.query(
       `SELECT total_cents FROM orders WHERE id = $1`,
       [orderId]
@@ -189,9 +241,9 @@ async function handleApprovedPayment(mp_payment_id) {
   }
 }
 
-// ─────────────────────────────────────
+// =======================================================
 // WEBHOOK DE MERCADOPAGO
-// ─────────────────────────────────────
+// =======================================================
 router.post("/mp/webhook", async (req, res) => {
   try {
     const { id, topic, type } = req.query;
@@ -199,11 +251,8 @@ router.post("/mp/webhook", async (req, res) => {
 
     const topicVal = String(topic || type || "").toLowerCase();
 
-    if (!topicVal) {
-      return res.sendStatus(200);
-    }
+    if (!topicVal) return res.sendStatus(200);
 
-    // pago directo
     if (topicVal === "payment") {
       const paymentId = id || raw?.data?.id || raw?.id;
 
@@ -219,7 +268,6 @@ router.post("/mp/webhook", async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // merchant_order
     if (topicVal === "merchant_order") {
       const moId = id || raw?.resource?.split("/").pop();
 
@@ -244,7 +292,7 @@ router.post("/mp/webhook", async (req, res) => {
   }
 });
 
-// debug webhook (GET)
+// Debug webhook
 router.get("/mp/webhook", (req, res) => {
   log("GET webhook", req.query);
   res.json({ ok: true });
