@@ -20,7 +20,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const IS_PROD = process.env.NODE_ENV === "production";
 
-// Render setea automáticamente si queda ""
+// Render setea automáticamente BASE_URL si es ""
 const BASE_URL =
   process.env.BASE_URL || (IS_PROD ? "" : `http://localhost:${PORT}`);
 
@@ -28,45 +28,45 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const MP_PUBLIC_BASE_URL = process.env.MP_PUBLIC_BASE_URL || "";
 
 /* ================== TRUST PROXY ================== */
+// Necesario para cookies secure en Render
 app.set("trust proxy", 1);
 
-/* ================== CORS (EXPRESS 5 SAFE) ================== */
+/* ================== CORS - CONFIG CORRECTA ================== */
+/*
+   IMPORTANTE:
+   Safari Móvil bloquea cookies si:
+   - el origin no coincide EXACTO
+   - hay 2 headers ACAO distintos
+   - SameSite=None sin secure
+*/
+
+const allowedOrigins = [
+  FRONTEND_URL,
+  "http://localhost:5173",
+  "https://ecommerceclient-w2q7.onrender.com",
+];
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowed = [
-        FRONTEND_URL,
-        "http://localhost:5173",
-        "https://ecommerceclient-w2q7.onrender.com",
-      ];
-
-      if (!origin || allowed.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         console.log("❌ CORS blocked:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true,
+    credentials: true, // NECESARIO para enviar cookies
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-/* ========== FIX PARA EXPRESS 5 (no acepta "*") ========== */
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", FRONTEND_URL);
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-  );
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
+/*  
+  ⚠️ IMPORTANTE:
+  Se eliminó totalmente el FIX manual que sobrescribía el ACAO
+  porque ROMPÍA SAFARI MÓVIL.
+*/
 
 /* ================== PARSERS ================== */
 app.use(express.json());
