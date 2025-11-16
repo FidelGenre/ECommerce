@@ -1,6 +1,8 @@
 // server/middlewares/auth.js
 const jwt = require("jsonwebtoken");
 
+const JWT_SECRET = (process.env.JWT_SECRET || "dev_secret").trim();
+
 /**
  * Extrae el token JWT desde las cookies o el header Authorization: Bearer
  */
@@ -25,8 +27,15 @@ function authRequired(req, res, next) {
   }
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || "dev_secret");
-    req.user = payload; // { id, email, role, name }
+    const payload = jwt.verify(token, JWT_SECRET);
+    // payload viene de sign(u) en auth.js: { id, email, role, name, points }
+    req.user = {
+      id: payload.id,
+      email: String(payload.email || "").toLowerCase(),
+      role: payload.role || "client",
+      name: payload.name,
+      points: payload.points || 0,
+    };
     next();
   } catch (e) {
     console.warn("authRequired: token inválido →", e.message);
@@ -36,7 +45,7 @@ function authRequired(req, res, next) {
 
 /**
  * Middleware para restringir rutas según el rol del usuario
- * Ejemplo: router.post('/admin', roleRequired('admin'), handler)
+ * Ejemplo: router.post('/admin', authRequired, roleRequired('admin'), handler)
  */
 function roleRequired(role) {
   return (req, res, next) => {
@@ -44,9 +53,10 @@ function roleRequired(role) {
       console.warn("roleRequired: sin sesión activa");
       return res.status(401).json({ error: "Unauthorized" });
     }
-    if (req.user.role !== role) {
+    const userRole = req.user.role || "client";
+    if (userRole !== role) {
       console.warn(
-        `roleRequired: acceso denegado. Se requiere rol '${role}', usuario actual: '${req.user.role}'`
+        `roleRequired: acceso denegado. Se requiere rol '${role}', usuario actual: '${userRole}'`
       );
       return res.status(403).json({ error: "Forbidden" });
     }
