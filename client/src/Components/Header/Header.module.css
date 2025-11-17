@@ -3,10 +3,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 21px 30px;
+  padding: 18px 20px;
   background-color: #745131;
   color: #f5e6d3;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;     /* 🔥 FIX para que nada se rompa en móvil */
+  gap: 12px;
   position: relative;
   z-index: 1000;
   font-family: sans-serif;
@@ -16,8 +17,8 @@
 .logo {
   display: inline-flex;
   align-items: center;
-  cursor: pointer;
   gap: 8px;
+  cursor: pointer;
   transition: transform 0.2s ease, color 0.3s ease;
 }
 .logo:hover {
@@ -110,7 +111,7 @@
   color: #ffffff;
 }
 
-/* ---------- RESPONSIVE MENU ---------- */
+/* ---------- MENÚ MÓVIL (FULLSCREEN) ---------- */
 .menuToggle {
   display: none;
   font-size: 1.8rem;
@@ -139,12 +140,11 @@
     font-size: 1.5rem;
   }
 
-  .actions {
-    gap: 10px;
-  }
-
   .menuToggle {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
   }
 
   .authButton,
@@ -154,5 +154,27 @@
 
   .logo span {
     font-size: 1.3rem;
+  }
+}
+
+/* ---------- FIX ESPECIAL PARA MÓVILES PEQUEÑOS (iPhone SE) ---------- */
+@media (max-width: 480px) {
+  .header {
+    padding: 16px 14px;
+  }
+
+  .actions {
+    gap: 8px;
+  }
+
+  .authButton,
+  .cartButton,
+  .menuToggle {
+    padding: 10px 14px;
+    font-size: 1.15rem;
+  }
+
+  .logo span {
+    font-size: 1.2rem;
   }
 }
