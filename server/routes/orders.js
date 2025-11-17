@@ -71,8 +71,14 @@ async function withRetry(fn, { tries = 4, baseMs = 250 } = {}) {
   throw last;
 }
 
+/**
+ * Descuenta stock en la tabla inventory para los ítems de la orden.
+ * Usa el título del ítem para buscar el beanstype (name).
+ * Se asume que el título coincide con beanstype.name.
+ */
 async function descontarStockPorOrden(client, safeItems) {
   for (const it of safeItems) {
+    // Buscamos el producto en beanstype por nombre (case-insensitive)
     const { rows: beanRows } = await client.query(
       `
       SELECT id
@@ -84,6 +90,7 @@ async function descontarStockPorOrden(client, safeItems) {
     );
 
     if (!beanRows.length) {
+      // Si no lo encontramos, simplemente seguimos con el siguiente ítem
       console.warn(
         "[descontarStockPorOrden] No se encontró beanstype para título:",
         it.title
@@ -94,6 +101,7 @@ async function descontarStockPorOrden(client, safeItems) {
     const beanId = beanRows[0].id;
     const qty = Math.max(1, Number(it.quantity || 1));
 
+    // Aseguramos que exista el registro en inventory
     await client.query(
       `
       INSERT INTO inventory (beanstype_id, stock, min_stock)
@@ -103,6 +111,7 @@ async function descontarStockPorOrden(client, safeItems) {
       [beanId]
     );
 
+    // Descontamos stock (sin permitir valores negativos)
     await client.query(
       `
       UPDATE inventory
@@ -116,9 +125,8 @@ async function descontarStockPorOrden(client, safeItems) {
 
 /* ============================
    POST /api/orders/checkout
-   (SIN authRequired)
 =============================== */
-router.post("/checkout", async (req, res) => {
+router.post("/checkout", authRequired, async (req, res) => {
   if (!MP_ACCESS_TOKEN)
     return res.status(500).json({ error: "Falta MP_ACCESS_TOKEN" });
 
@@ -138,8 +146,10 @@ router.post("/checkout", async (req, res) => {
   if (!safeItems.length)
     return res.status(400).json({ error: "No hay ítems válidos" });
 
-  const customer_name = customer.name || "Invitado";
-  const customer_email = customer.email || "";
+  const user_id = req.user?.id ?? null;
+  const customer_name = customer.name || req.user?.name || "Invitado";
+  const customer_email = customer.email || req.user?.email || "";
+  const shipping_address = shipping.address1 || "";
 
   if (!customer_email)
     return res.status(400).json({ error: "Falta email del cliente" });
@@ -162,11 +172,11 @@ router.post("/checkout", async (req, res) => {
        RETURNING id`,
       [
         order_number,
-        null, // SIN authRequired no hay usuario
+        user_id,
         total_cents,
         customer_name,
         customer_email,
-        shipping.address1 || "",
+        shipping_address,
       ]
     );
     const order_id = orderRows[0].id;
@@ -181,7 +191,9 @@ router.post("/checkout", async (req, res) => {
       );
     }
 
+    // 🔽🔽🔽 NUEVO: descontar stock en inventory dentro de la misma transacción
     await descontarStockPorOrden(client, safeItems);
+    // 🔼🔼🔼
 
     const prefPayload = {
       items: safeItems.map((it) => ({
@@ -253,7 +265,7 @@ router.get("/my", authRequired, async (req, res) => {
 });
 
 /* ============================
-   GET /api/orders/id/:orderId
+   GET /api/orders/id/:orderId  (detalle por ID numérico)
 =============================== */
 router.get("/id/:orderId", authRequired, async (req, res) => {
   const orderId = Number.parseInt(req.params.orderId, 10);
@@ -300,7 +312,7 @@ router.get("/id/:orderId", authRequired, async (req, res) => {
 });
 
 /* ============================
-   GET /api/orders/by-number/:orderNumber
+   GET /api/orders/by-number/:orderNumber  (detalle por número)
 =============================== */
 router.get("/by-number/:orderNumber", authRequired, async (req, res) => {
   try {
