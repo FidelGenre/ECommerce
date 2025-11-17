@@ -102,7 +102,6 @@ export default function InventoryAdmin() {
   /* =================== COMPRA MASIVA =================== */
 
   const handleBulkPurchase = async () => {
-    // 1) Construir items válidos
     const list = items
       .map((p) => {
         const qty = Number(document.getElementById(`qty-${p.id}`)?.value || 0);
@@ -123,7 +122,6 @@ export default function InventoryAdmin() {
       return alert("No hay compras válidas. Completá cantidad, costo y proveedor.");
     }
 
-    // 2) Validación del límite total
     const totalQty = list.reduce((acc, r) => acc + r.quantity, 0);
     if (totalQty > MAX_PROVIDER_PURCHASE_QTY) {
       return alert(
@@ -131,7 +129,6 @@ export default function InventoryAdmin() {
       );
     }
 
-    // 3) Agrupar por proveedor
     const groups = new Map();
     for (const it of list) {
       if (!groups.has(it.supplier_id)) groups.set(it.supplier_id, []);
@@ -139,7 +136,6 @@ export default function InventoryAdmin() {
     }
 
     try {
-      // 4) Enviar grupo por grupo
       for (const [supplier_id, itemsGroup] of groups.entries()) {
         await fetchJSON("/admin/purchases/bulk", {
           method: "POST",
@@ -153,13 +149,12 @@ export default function InventoryAdmin() {
           },
         });
 
-        await new Promise((r) => setTimeout(r, 200)); // evitar flood
+        await new Promise((r) => setTimeout(r, 200));
       }
 
       await loadInventory();
       alert("Compra masiva registrada correctamente ✔");
 
-      // 5) Limpiar inputs
       items.forEach((p) => {
         const q = document.getElementById(`qty-${p.id}`);
         const c = document.getElementById(`cost-${p.id}`);
@@ -329,9 +324,16 @@ export default function InventoryAdmin() {
                     )}
                   </td>
 
-                  {/* Proveedor */}
+                  {/* ========== PROVEEDOR + (medio kilo) ========== */}
                   <td className={s.td}>
-                    <div className={s.supplierCell}>
+                    <div
+                      className={s.supplierCell}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
                       <select
                         className={s.supplierSelectSlim}
                         value={p.supplier_id ?? ""}
@@ -349,16 +351,30 @@ export default function InventoryAdmin() {
                         ))}
                       </select>
 
-                      <div className={s.supplierHint}>
-                        <span>Actual:</span>
-                        <span className={s.supplierCurrent}>
-                          {p.supplier_name || "Sin proveedor"}
-                        </span>
-                      </div>
+                      {/* Mostrar "(medio kilo)" SEGÚN NOMBRE DEL PRODUCTO */}
+                      {!p.name.toLowerCase().includes("bolsa") &&
+                        !p.name.toLowerCase().includes("bag") && (
+                          <span
+                            style={{
+                              fontSize: "0.8rem",
+                              color: "var(--coffee-700)",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            (medio kilo)
+                          </span>
+                        )}
+                    </div>
+
+                    <div className={s.supplierHint}>
+                      <span>Actual:</span>
+                      <span className={s.supplierCurrent}>
+                        {p.supplier_name || "Sin proveedor"}
+                      </span>
                     </div>
                   </td>
 
-                  {/* Compra rápida */}
+                  {/* ========== COMPRA RÁPIDA ========== */}
                   <td className={s.td}>
                     <div className={s.purchaseCell}>
                       <input
@@ -388,7 +404,7 @@ export default function InventoryAdmin() {
                     </div>
                   </td>
 
-                  {/* Acciones */}
+                  {/* ========== ACCIONES ========== */}
                   <td className={s.td}>
                     {editingId === p.id ? (
                       <>
