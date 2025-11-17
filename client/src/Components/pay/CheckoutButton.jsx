@@ -1,20 +1,15 @@
-// client/src/Components/CheckoutButton/CheckoutButton.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 import s from "./CheckoutButton.module.css";
 
-// BACKEND DE PRODUCCIÓN (Render)
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
-
-// PUBLIC KEY de MercadoPago
 const PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function CheckoutButton({ items, customer, shipping }) {
   const [preferenceId, setPreferenceId] = useState(null);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Normalizar items
   const normItems = useMemo(
     () =>
       (Array.isArray(items) ? items : [])
@@ -24,14 +19,11 @@ export default function CheckoutButton({ items, customer, shipping }) {
           unit_price:
             typeof it.unit_price === "number"
               ? it.unit_price
-              : parseFloat(
-                  String(it.unit_price).replace(/[^0-9.-]+/g, "") || "0"
-                ),
+              : parseFloat(String(it.unit_price).replace(/[^0-9.-]+/g, "") || "0"),
         }))
         .filter(
           (it) =>
             it.title &&
-            Number.isFinite(it.quantity) &&
             it.quantity > 0 &&
             Number.isFinite(it.unit_price) &&
             it.unit_price >= 0.01
@@ -39,7 +31,6 @@ export default function CheckoutButton({ items, customer, shipping }) {
     [items]
   );
 
-  // Inicializar MP
   useEffect(() => {
     if (!PUBLIC_KEY) {
       setErr("Falta VITE_MP_PUBLIC_KEY en el frontend (.env).");
@@ -48,7 +39,6 @@ export default function CheckoutButton({ items, customer, shipping }) {
     initMercadoPago(PUBLIC_KEY, { locale: "es-AR" });
   }, []);
 
-  // Iniciar checkout
   const startCheckout = async () => {
     try {
       if (!normItems.length) {
@@ -59,18 +49,15 @@ export default function CheckoutButton({ items, customer, shipping }) {
       setLoading(true);
       setErr("");
 
-      const payload = {
-        items: normItems,
-        customer: customer || {},
-        shipping: shipping || {},
-      };
-
-      // 🔥🔥🔥 IMPORTANTE: ahora llama al backend REAL en Render
-      const r = await fetch(`${API_BASE}/api/orders/checkout`, {
+      const r = await fetch(`${API_URL}/api/orders/checkout`, {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        credentials: "include",
+        body: JSON.stringify({
+          items: normItems,
+          customer: customer || {},
+          shipping: shipping || {},
+        }),
       });
 
       const txt = await r.text();
