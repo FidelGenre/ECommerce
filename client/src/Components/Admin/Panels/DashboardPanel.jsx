@@ -265,8 +265,7 @@ export default function DashboardPanel() {
           <h3 className={s.cardTitle}>Resumen histórico</h3>
         </div>
 
-        {/* 👇 Contenedor con scroll lindo */}
-        <div className={`${s.cardBody} tableScroll`}>
+        <div className={s.cardBody}>
           <table className={s.seriesTable}>
             <thead>
               <tr>
