@@ -1,35 +1,35 @@
-☕ COFFEE BEANS – Artisan Coffee E-Commerce
+☕ Coffee Beans – Artisan Coffee E-Commerce
 
-Coffee Beans is a full-stack e-commerce platform where users can browse and purchase artisan coffee bean varieties.
-It includes a fully featured Admin Panel to manage products, suppliers, inventory, purchases, sales, cashbox, and users — all in real time.
+Coffee Beans is a full-stack e-commerce platform for browsing and purchasing artisan coffee beans.
+It includes a fully featured Admin Panel to manage products, suppliers, inventory, purchases, sales, cashbox, and users.
 
-This project showcases a complete modern stack using:
+This project demonstrates a real modern full-stack application using:
 
-React + Vite (frontend)
+React + Vite (Frontend)
 
-Node.js + Express (backend)
+Node.js + Express (Backend)
 
-PostgreSQL (database)
+PostgreSQL (Database)
 
-Render for backend hosting
+Render / Vercel (Deployment)
 
-MercadoPago Sandbox for payments
+MercadoPago Sandbox (Payments)
 
-🧩 GENERAL OVERVIEW
-🏷️ Project Name: Coffee Beans
-🛒 Type: E-commerce / Online Store
-⚙️ Architecture: Frontend + REST API + PostgreSQL
-💾 Database: PostgreSQL (local, Render, or Supabase)
-🔐 Authentication: JWT via Secure HTTPOnly Cookies
-🚀 Deployment: Backend on Render, Frontend on Render/Vercel
-💳 Payments: MercadoPago Sandbox + Webhooks
-📊 Admin Dashboard: Real-time KPIs and analytics
-🎨 FRONTEND (React + Vite)
+🧩 General Overview
+Feature	Description
+🏷️ Project Name	Coffee Beans
+🛒 Type	E-commerce / Online Store
+⚙️ Architecture	React Frontend + Express API + PostgreSQL
+💾 Database	PostgreSQL
+🔐 Auth	JWT + Secure HTTPOnly Cookies
+🚀 Deployment	Backend on Render, Frontend on Render/Vercel
+💳 Payments	MercadoPago Sandbox + Webhooks
+📊 Admin Dashboard	Real-time KPIs & analytics
+🎨 Frontend – React + Vite
 
-The frontend is built with React + Vite and styled using CSS Modules.
-The UI is fully responsive and follows a warm coffee-themed design.
+The frontend is built with React + Vite and styled using CSS Modules, featuring a warm coffee-themed UI and a fully responsive layout.
 
-⭐ Main Features
+🌟 Main Features
 
 ⚛️ React + Vite
 
@@ -37,194 +37,169 @@ The UI is fully responsive and follows a warm coffee-themed design.
 
 🛒 Persistent Shopping Cart
 
-🔐 Login & Register with JWT (stored in cookies)
+🔐 Login & Register with JWT
 
-📦 Product listing with images
+📦 Product catalog with images
 
-🧾 MercadoPago Sandbox Checkout
+💳 MercadoPago Sandbox checkout
 
-📱 Responsive layout
+📱 Fully responsive
 
-🛠️ Complete Admin Panel: Products, Inventory, Suppliers, Orders, Users
+🛠️ Complete Admin Panel (Products, Inventory, Suppliers, Users, Dashboard)
 
-▶️ Run the Frontend
-cd client
-npm install
-npm run dev
+🧱 Backend – Node.js + Express
 
+The backend provides a clean REST API used by the storefront and admin panel.
 
-Default URL:
-👉 http://localhost:5173
+🌟 Main Features
 
-Frontend .env file
+🔐 JWT authentication via HTTPOnly cookies
 
-VITE_API_URL=http://localhost:5000
+👤 Role-based access (Admin / Client)
 
-🧱 BACKEND (Node.js + Express)
+📦 Products & inventory management
 
-The backend exposes a REST API used by both the storefront and the admin panel.
-It handles authentication, inventory logic, purchases, sales, payments, and reporting.
+🧾 Purchases linked to suppliers
 
-📁 Backend Modules
+💰 Cashbox system with real-time balance
 
-/routes/auth.js – Login, Register, Roles
+📊 Dashboard with:
 
-/routes/admin.js – Products, Suppliers, Inventory, Dashboard
+Monthly sales
 
-/routes/orders.js – Orders and history
-
-/routes/pay.js – MercadoPago integration + webhooks
-
-/middlewares/auth.js – JWT auth + roleRequired
-
-/db.js – PostgreSQL pool
-
-/images – Static image hosting
-
-⭐ Backend Features
-
-✔️ Secure JWT Authentication (cookies: HTTPOnly, Secure, SameSite=None)
-
-✔️ Role-based access (Admin / Client)
-
-✔️ Full CRUD for products & suppliers
-
-✔️ Inventory management with min stock alerts
-
-✔️ Purchase tracking (supplier purchases)
-
-✔️ Cashbox system with initial balance of 50M ARS
-
-✔️ Dashboard KPIs:
-
-Total sales (monthly)
-
-Total purchases (monthly)
+Monthly purchases
 
 Net profit
 
-Current cashbox balance
+Current cashbox value
 
-Best-selling product
+Best selling products
 
-Top 3 products of the month
+Top 3 of the month
 
-✔️ Supplier payment workflow:
+👨‍🔧 Supplier system with:
 
-Automatically sums debts per supplier
+Automatic total debt per supplier
 
-Tracks quantities purchased
+Purchase tracking
 
-“Paid” button deducts debt from cashbox
+“Paid” button to deduct from cashbox
 
-✔️ MercadoPago Sandbox + redirect + notifications
+💳 MercadoPago integration (sandbox)
 
-✔️ CORS configuration compatible with mobile browsers
+📡 Webhooks for payment notifications
 
-▶️ Run the Backend
+🌐 CORS configured for mobile & desktop
+
+🧰 Database – PostgreSQL
+
+Coffee Beans uses PostgreSQL both locally and in cloud environments (Render / Supabase).
+
+🗄️ Main Tables
+
+User & Authentication
+
+app_user → System users (admin / client)
+
+☕ Products & Coffee Types
+
+beanstype → Coffee types (name, origin, roast level, price, image, etc.)
+
+beanstype_supplier → Many-to-many relationship between coffee types and suppliers
+
+📦 Inventory System
+
+inventory → Main inventory (stock in kilos or units)
+
+bags_inventory → Inventory for packaged coffee bags
+
+inventory_bags → Relationship between general inventory and bag items
+
+🧾 Orders & Sales
+
+orders → Customer orders
+
+order_items → Items inside each order
+
+sales → Final confirmed sales records
+
+👨‍🔧 Suppliers
+
+suppliers → Suppliers (name, category, etc.)
+
+suppliers_meta → Additional supplier data (email, phone, alias, etc.)
+
+💸 Purchases (Stock Inwards)
+
+purchases → Purchases made from suppliers
+
+purchase_items → Detailed items inside each purchase (quantity, unit cost)
+
+💰 Cashbox
+
+cashbox → Current cashbox balance
+
+cashbox_movements → All financial movements (sales, purchases, payments, adjustments)
+
+💳 Payments / MercadoPago
+
+mp_events → Events received from the MercadoPago webhook
+
+processed_payments → Successfully processed payments
+
+processed_webhooks → Stored webhooks to avoid duplicate processing
+
+💳 Payments – MercadoPago Sandbox
+
+The project includes full support for MercadoPago test payments:
+
+✔️ Payment preferences
+
+✔️ Redirect (success / failure)
+
+✔️ Test users (seller & buyer)
+
+✔️ Webhooks
+
+✔️ ngrok support in development
+
+🚀 Deployment
+🌐 Backend (Render)
+
+Static images served from /images
+
+CORS configured for mobile + desktop
+
+Secure cookies enabled (trust proxy)
+
+🌐 Frontend (Vercel / Render)
+
+Build with Vite
+
+Environment variables for API URL
+
+🧭 How to Clone & Run
+git clone https://github.com/YOUR-USER/CoffeeBeans.git
+cd CoffeeBeans
+
+▶️ Backend
 cd server
 npm install
 npm run dev
 
-
-Default URL:
-👉 http://localhost:5000
-
-🧰 DATABASE (PostgreSQL)
-
-The database is designed for a real e-commerce workflow plus inventory and supplier management.
-
-🗄️ Main Tables
-
-users
-
-beanstype (coffee types)
-
-inventory
-
-suppliers & suppliers_meta
-
-orders & order_details
-
-purchases
-
-cashbox
-
-Environment Variables
+.env (Backend)
 DATABASE_URL=postgres://user:pass@host:port/dbname
 JWT_SECRET=your_jwt_secret
 FRONTEND_URL=http://localhost:5173
 BASE_URL=http://localhost:5000
 MP_PUBLIC_BASE_URL=http://localhost:5000
 
-
-Supports:
-
-Local PostgreSQL
-
-Render PostgreSQL
-
-Supabase PostgreSQL
-
-💳 PAYMENTS (MercadoPago Sandbox)
-
-Fully integrated payment system:
-
-✔️ Payment preferences
-
-✔️ Success / failure redirects
-
-✔️ Test users (buyer/seller)
-
-✔️ Webhooks for payment confirmation
-
-✔️ Compatible with Render, local dev, and ngrok
-
-🚀 DEPLOYMENT
-
-Backend is deployed on Render, with:
-
-CORS for both mobile + desktop
-
-Secure cookies
-
-Static image hosting (/images)
-
-Frontend can be deployed on:
-
-Render
-
-Vercel
-
-Netlify
-
-🧭 HOW TO CLONE & RUN
-git clone https://github.com/your-user/CoffeeBeans.git
-cd CoffeeBeans
-
-Backend
-cd server
-npm install
-npm run dev
-
-Frontend
+▶️ Frontend
 cd client
 npm install
 npm run dev
 
+Default URL: http://localhost:5173
 
-Make sure .env matches your backend URL.
-
-⚙️ QUICK SETUP SUMMARY
-
-Clone the repository
-
-Create PostgreSQL database
-
-Configure .env (backend + frontend)
-
-Run backend (npm run dev)
-
-Run frontend (npm run dev)
-
-Start exploring Coffee Beans ☕🚀
+.env (Frontend)
+VITE_API_URL=http://localhost:5000
