@@ -1,0 +1,11 @@
+package com.store.api.repository;
+
+import com.store.api.entity.CashRegister;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
+
+public interface CashRegisterRepository extends JpaRepository<CashRegister, Long> {
+    Optional<CashRegister> findFirstByClosedAtIsNullOrderByOpenedAtDesc();
+
+    java.util.List<CashRegister> findByOpenedAtBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
+}

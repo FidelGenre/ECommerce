@@ -1,0 +1,507 @@
+'use client'
+import React, { useEffect, useState, useCallback } from 'react'
+import api from '@/lib/api'
+import { SaleOrder, OperationStatus, Customer, PaymentMethod, Item } from '@/types'
+import { Plus, X, Search, FileSpreadsheet, Download, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Trash2, Printer, Eye } from 'lucide-react'
+import * as XLSX from 'xlsx'
+import { QRCodeSVG } from 'qrcode.react'
+import { SavedFilters } from '@/components/SavedFilters'
+
+const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
+
+type SortField = 'id' | 'total' | 'createdAt' | 'paymentMethod'
+type SortDir = 'asc' | 'desc'
+
+export default function SalesPage() {
+    const [data, setData] = useState<SaleOrder[]>([])
+    const [total, setTotal] = useState(0)
+    const [page, setPage] = useState(0)
+    const [loading, setLoading] = useState(true)
+    const [showModal, setShowModal] = useState(false)
+
+    // Filters
+    const [q, setQ] = useState('')
+
+    // Ticket printing
+    const [ticketModal, setTicketModal] = useState<SaleOrder | null>(null)
+    const [fromDate, setFromDate] = useState('')
+    const [toDate, setToDate] = useState('')
+    const [statusFilter, setStatusFilter] = useState('')
+    const [customerFilter, setCustomerFilter] = useState('')
+
+    // Sort
+    const [sortField, setSortField] = useState<SortField>('createdAt')
+    const [sortDir, setSortDir] = useState<SortDir>('desc')
+
+    // Reference data
+    const [statuses, setStatuses] = useState<OperationStatus[]>([])
+    const [customers, setCustomers] = useState<Customer[]>([])
+    const [payments, setPayments] = useState<PaymentMethod[]>([])
+    const [items, setItems] = useState<Item[]>([])
+
+    // New order form
+    const [form, setForm] = useState({ customerId: '', statusId: '', paymentMethodId: '', notes: '', pointsUsed: '0' })
+    const [lines, setLines] = useState<{ itemId: string; quantity: string; unitPrice: string }[]>([
+        { itemId: '', quantity: '1', unitPrice: '' }
+    ])
+    const [saving, setSaving] = useState(false)
+
+    // Expandable rows
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
+    const toggleRow = (id: number) => setExpandedRows(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
+
+    // Category filter for item selector
+    const [categoryFilter, setCategoryFilter] = useState<string>('')
+
+    const buildUrl = useCallback(() => {
+        const params = new URLSearchParams({ page: String(page), size: '15' })
+        if (fromDate) params.set('from', fromDate + 'T00:00:00')
+        if (toDate) params.set('to', toDate + 'T23:59:59')
+        if (statusFilter) params.set('status', statusFilter)
+        if (customerFilter) params.set('customer', customerFilter)
+        return `/api/admin/sales?${params}`
+    }, [page, fromDate, toDate, statusFilter, customerFilter])
+
+    const load = useCallback(async () => {
+        setLoading(true)
+        try {
+            const r = await api.get(buildUrl())
+            setData(r.data.content); setTotal(r.data.totalElements)
+        } finally { setLoading(false) }
+    }, [buildUrl])
+
+    useEffect(() => { load() }, [load])
+    useEffect(() => {
+        Promise.all([
+            api.get('/api/admin/settings/statuses?type=SALE'),
+            api.get('/api/admin/customers?size=200'),
+            api.get('/api/admin/settings/payment-methods'),
+            api.get('/api/admin/items?size=200'),
+        ]).then(([s, c, pm, it]) => {
+            setStatuses(s.data); setCustomers(c.data.content)
+            setPayments(pm.data); setItems(it.data.content)
+        })
+    }, [])
+
+    const resetFilters = () => {
+        setFromDate(''); setToDate(''); setStatusFilter(''); setCustomerFilter(''); setQ(''); setPage(0)
+    }
+
+    const toggleSort = (field: SortField) => {
+        if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+        else { setSortField(field); setSortDir('asc') }
+    }
+
+    const sortedData = [...data]
+        .filter(o => !q || (o.customer ? `${o.customer.firstName} ${o.customer.lastName}` : '').toLowerCase().includes(q.toLowerCase()) || String(o.id).includes(q))
+        .sort((a, b) => {
+            let av: any = a[sortField], bv: any = b[sortField]
+            if (sortField === 'total') { av = Number(a.total); bv = Number(b.total) }
+            if (av < bv) return sortDir === 'asc' ? -1 : 1
+            if (av > bv) return sortDir === 'asc' ? 1 : -1
+            return 0
+        })
+
+    const SortIcon = ({ field }: { field: SortField }) => (
+        <span className="inline-flex flex-col ml-1">
+            {sortField === field && sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : sortField === field && sortDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <span className="w-3 h-3 opacity-30">↕</span>}
+        </span>
+    )
+
+    const exportCSV = () => {
+        const rows = sortedData.map(o => ({
+            ID: o.id,
+            Cliente: o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? 'Walk-in'),
+            Estado: o.status?.name ?? '',
+            Pago: o.paymentMethod?.name ?? '',
+            Total: o.total,
+            Fecha: new Date(o.createdAt).toLocaleDateString('es-AR'),
+        }))
+        const csv = [Object.keys(rows[0]).join(','), ...rows.map(r => Object.values(r).join(','))].join('\n')
+        const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv)
+        a.download = `ventas_${new Date().toISOString().slice(0, 10)}.csv`; a.click()
+    }
+
+    const exportExcel = () => {
+        const rows = sortedData.map(o => ({
+            ID: o.id,
+            Cliente: o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? 'Walk-in'),
+            Estado: o.status?.name ?? '',
+            'Forma de Pago': o.paymentMethod?.name ?? '',
+            Total: Number(o.total),
+            Fecha: new Date(o.createdAt).toLocaleDateString('es-AR'),
+        }))
+        const ws = XLSX.utils.json_to_sheet(rows)
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Ventas')
+        XLSX.writeFile(wb, `ventas_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    }
+
+    const addLine = () => setLines(l => [...l, { itemId: '', quantity: '1', unitPrice: '' }])
+    const removeLine = (i: number) => setLines(l => l.filter((_, j) => j !== i))
+    const updateLine = (i: number, k: string, v: string) => {
+        const next = [...lines]
+        if (k === 'itemId') {
+            const item = items.find(x => String(x.id) === v)
+            next[i] = { ...next[i], [k]: v, unitPrice: item ? String(item.price) : next[i].unitPrice }
+        } else { next[i] = { ...next[i], [k]: v } }
+        setLines(next)
+    }
+
+    const handleCreate = async (e: React.FormEvent) => {
+        e.preventDefault(); setSaving(true)
+        try {
+            await api.post('/api/admin/sales', {
+                customerId: form.customerId ? Number(form.customerId) : null,
+                statusId: form.statusId ? Number(form.statusId) : null,
+                paymentMethodId: form.paymentMethodId ? Number(form.paymentMethodId) : null,
+                notes: form.notes,
+                pointsUsed: form.pointsUsed ? Number(form.pointsUsed) : 0,
+                lines: lines.map(l => ({ itemId: Number(l.itemId), quantity: Number(l.quantity), unitPrice: Number(l.unitPrice) })),
+            })
+            setShowModal(false); load()
+        } finally { setSaving(false) }
+    }
+
+    const statusColor: Record<string, string> = {
+        Completed: 'badge-green', Pending: 'badge-yellow', Cancelled: 'badge-red', Reserved: 'badge-blue'
+    }
+
+    const hasFilters = fromDate || toDate || statusFilter || customerFilter
+
+    const currentFilters = { fromDate, toDate, statusFilter, customerFilter, q }
+    const handleLoadFilters = (f: Record<string, any>) => {
+        setFromDate(f.fromDate || '')
+        setToDate(f.toDate || '')
+        setStatusFilter(f.statusFilter || '')
+        setCustomerFilter(f.customerFilter || '')
+        setQ(f.q || '')
+        setPage(0)
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-espresso">Ventas</h1>
+                    <p className="text-primary-500 text-sm">{total} órdenes en total</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button onClick={exportCSV} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3">
+                        <Download className="w-4 h-4" /> CSV
+                    </button>
+                    <button onClick={exportExcel} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3">
+                        <FileSpreadsheet className="w-4 h-4" /> Excel
+                    </button>
+                    <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Nueva venta
+                    </button>
+                </div>
+            </div>
+
+            {/* Filter bar */}
+            <div className="card p-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div className="relative col-span-2 md:col-span-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
+                        <input className="input pl-9 text-sm" placeholder="Buscar…" value={q} onChange={e => setQ(e.target.value)} />
+                    </div>
+                    <input type="date" className="input text-sm" value={fromDate} onChange={e => { setFromDate(e.target.value); setPage(0) }} />
+                    <input type="date" className="input text-sm" value={toDate} onChange={e => { setToDate(e.target.value); setPage(0) }} />
+                    <select className="select text-sm" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0) }}>
+                        <option value="">Todos los estados</option>
+                        {statuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                    <select className="select text-sm" value={customerFilter} onChange={e => { setCustomerFilter(e.target.value); setPage(0) }}>
+                        <option value="">Todos los clientes</option>
+                        {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+                    </select>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                    <SavedFilters storageKey="sales_filters" currentFilters={currentFilters} onLoadFilters={handleLoadFilters} />
+                    {hasFilters && (
+                        <button onClick={resetFilters} className="text-xs text-primary-500 hover:text-espresso flex items-center gap-1">
+                            <X className="w-3 h-3" /> Limpiar filtros
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div className="card p-0 overflow-hidden">
+                {loading ? (
+                    <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div>
+                ) : (
+                    <div className="table-wrapper rounded-none border-0">
+                        <table className="data-table">
+                            <thead><tr>
+                                <th className="w-6"></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('id')}># <SortIcon field="id" /></th>
+                                <th>Cliente</th>
+                                <th>Vendedor</th>
+                                <th>Estado</th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('paymentMethod')}>Pago <SortIcon field="paymentMethod" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('total')}>Total <SortIcon field="total" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('createdAt')}>Fecha <SortIcon field="createdAt" /></th>
+                                <th>Acciones</th>
+                            </tr></thead>
+                            <tbody>
+                                {sortedData.length === 0 ? (
+                                    <tr><td colSpan={8} className="text-center text-primary-400 py-10">No se encontraron resultados</td></tr>
+                                ) : sortedData.map(o => {
+                                    const isExpanded = expandedRows.has(o.id)
+                                    const byCategory = (o.lines ?? []).reduce((acc: Record<string, any[]>, line: any) => {
+                                        const cat = line.item?.category?.name ?? 'Sin Categoría'
+                                        if (!acc[cat]) acc[cat] = []
+                                        acc[cat].push(line); return acc
+                                    }, {})
+                                    return (<React.Fragment key={o.id}>
+                                        <tr className={isExpanded ? 'bg-primary-50' : ''}>
+                                            <td><button onClick={() => toggleRow(o.id)} className="btn-ghost p-0.5">
+                                                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                            </button></td>
+                                            <td className="font-mono text-primary-400">#{o.id}</td>
+                                            <td>{o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : <span className="text-primary-300">Walk-in</span>}</td>
+                                            <td>{o.createdBy ? <span className="text-primary-600">{o.createdBy.username ?? o.createdBy.email}</span> : <span className="text-primary-300">Web</span>}</td>
+                                            <td><span className={statusColor[o.status?.name ?? ''] ?? 'badge-brown'}>{o.status?.name ?? '—'}</span></td>
+                                            <td className="text-primary-500">{o.paymentMethod?.name ?? '—'}</td>
+                                            <td className="font-semibold">{FMT(o.total)}</td>
+                                            <td className="text-primary-400 text-xs">{new Date(o.createdAt).toLocaleDateString('es-AR')}</td>
+                                            <td>
+                                                <button onClick={() => setTicketModal(o)} className="btn-ghost py-1 px-2 text-xs flex items-center gap-1" title="Ver / Imprimir">
+                                                    <Printer className="w-3.5 h-3.5" /> Ticket
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {isExpanded && (
+                                            <tr key={`${o.id}-lines`} className="bg-primary-50">
+                                                <td colSpan={9} className="px-6 py-3">
+                                                    {Object.keys(byCategory).length === 0 ? (
+                                                        <p className="text-xs text-primary-400">Sin líneas detalladas</p>
+                                                    ) : Object.entries(byCategory).map(([cat, lines]) => (
+                                                        <div key={cat} className="mb-2">
+                                                            <p className="text-xs font-semibold text-primary-600 mb-1">{cat}</p>
+                                                            <div className="space-y-0.5">
+                                                                {(lines as any[]).map((line: any, i: number) => (
+                                                                    <div key={i} className="flex gap-6 text-xs text-primary-700 bg-white rounded px-3 py-1.5">
+                                                                        <span className="font-medium">{line.item?.name ?? '—'}</span>
+                                                                        <span className="text-primary-400">Cant: <b>{line.quantity}</b></span>
+                                                                        <span className="text-primary-400">Precio u.: <b>{FMT(line.unitPrice ?? 0)}</b></span>
+                                                                        <span className="text-primary-400">Subtotal: <b>{FMT((line.quantity ?? 0) * (line.unitPrice ?? 0))}</b></span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>)
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+                <div className="flex items-center justify-between px-4 py-3 border-t border-muted">
+                    <p className="text-xs text-primary-400">Página {page + 1} · {total} resultados</p>
+                    <div className="flex gap-2">
+                        <button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="btn-ghost p-1.5 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
+                        <button onClick={() => setPage(p => p + 1)} className="btn-ghost p-1.5"><ChevronRight className="w-4 h-4" /></button>
+                    </div>
+                </div>
+            </div>
+
+            {/* New Sale Modal */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <div className="flex items-center justify-between p-6 border-b border-muted">
+                            <h2 className="text-lg font-bold text-espresso">Nueva Venta</h2>
+                            <button onClick={() => setShowModal(false)} className="btn-ghost p-1.5"><X className="w-5 h-5" /></button>
+                        </div>
+                        <form onSubmit={handleCreate} className="p-6 space-y-4">
+                            {(() => {
+                                const selectedCustomer = customers.find(c => String(c.id) === form.customerId)
+                                const selectedCustomerPoints = selectedCustomer?.loyaltyPoints ?? 0
+                                const linesTotal = lines.reduce((acc, l) => acc + (Number(l.quantity || 0) * Number(l.unitPrice || 0)), 0)
+                                const discount = Number(form.pointsUsed || 0) * 10
+                                const finalTotal = Math.max(0, linesTotal - discount)
+                                return (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-primary-700 mb-1">Cliente</label>
+                                                <select className="select" value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value, pointsUsed: '0' })}>
+                                                    <option value="">Walk-in</option>
+                                                    {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-primary-700 mb-1">Estado</label>
+                                                <select className="select" value={form.statusId} onChange={e => setForm({ ...form, statusId: e.target.value })}>
+                                                    <option value="">Seleccionar estado</option>
+                                                    {statuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-primary-700 mb-1">Forma de Pago</label>
+                                                <select className="select" value={form.paymentMethodId} onChange={e => setForm({ ...form, paymentMethodId: e.target.value })}>
+                                                    <option value="">Seleccionar…</option>
+                                                    {payments.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-primary-700 mb-1">Notas</label>
+                                                <input className="input" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-primary-700 mb-1">Puntos a descontar</label>
+                                                <input type="number" min="0" max={selectedCustomerPoints} className="input" value={form.pointsUsed} onChange={e => setForm({ ...form, pointsUsed: e.target.value })} disabled={!form.customerId} placeholder="1 punto = $10" />
+                                                {form.customerId ? <p className="text-xs text-primary-500 mt-1">Disponibles: {selectedCustomerPoints}</p> : <p className="text-xs text-primary-400 mt-1">Seleccione un cliente primero</p>}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <label className="text-sm font-medium text-primary-700">Productos</label>
+                                                <button type="button" onClick={addLine} className="text-primary-600 hover:text-primary-800 text-sm flex items-center gap-1"><Plus className="w-3.5 h-3.5" />Agregar línea</button>
+                                            </div>
+                                            <div className="mb-2">
+                                                <select className="select text-sm w-full" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+                                                    <option value="">Todas las categorías</option>
+                                                    {[...new Set(items.map(it => (it as any).category?.name).filter(Boolean))].sort().map((cat: string) => (
+                                                        <option key={cat} value={cat}>{cat}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {lines.map((line, i) => (
+                                                    <div key={i} className="flex gap-2 items-center">
+                                                        <select className="select flex-1" value={line.itemId} onChange={e => updateLine(i, 'itemId', e.target.value)} required>
+                                                            <option value="">Seleccionar producto</option>
+                                                            {items.filter(it => !categoryFilter || (it as any).category?.name === categoryFilter).map(it => <option key={it.id} value={it.id}>{it.name} (stock: {it.stock})</option>)}
+                                                        </select>
+                                                        <input type="number" min="1" placeholder="Cant." className="input w-20 text-center" value={line.quantity} onChange={e => updateLine(i, 'quantity', e.target.value)} required />
+                                                        <input type="number" min="0" placeholder="Precio" className="input w-28" value={line.unitPrice} onChange={e => updateLine(i, 'unitPrice', e.target.value)} required />
+                                                        {lines.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-warm-50 p-4 rounded-xl border border-muted">
+                                            <span className="font-medium text-primary-700">Total Venta:</span>
+                                            <div className="text-right">
+                                                {discount > 0 && <p className="text-xs text-emerald-600 line-through mb-0.5">${linesTotal.toLocaleString('es-AR')}</p>}
+                                                <p className="text-xl font-bold text-espresso">${finalTotal.toLocaleString('es-AR')}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3 pt-2">
+                                            <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancelar</button>
+                                            <button type="submit" className="btn-primary flex-1" disabled={saving || finalTotal < 0}>{saving ? 'Guardando…' : 'Crear Venta'}</button>
+                                        </div>
+                                    </>
+                                )
+                            })()}
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Print Ticket Modal */}
+            {ticketModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 print:bg-white print:p-0">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl print:shadow-none print:w-auto print:mx-auto max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-6 border-b border-muted print:hidden">
+                            <h2 className="text-lg font-bold text-espresso">Detalle de Venta</h2>
+                            <button onClick={() => setTicketModal(null)} className="btn-ghost p-1.5"><X className="w-5 h-5" /></button>
+                        </div>
+                        <div className="p-6 flex-1 overflow-y-auto">
+                            {/* The Ticket */}
+                            <div className="font-mono text-sm space-y-4 max-w-xs mx-auto text-black">
+                                <div className="text-center pb-4 border-b border-dashed border-gray-400">
+                                    <h2 className="font-bold text-xl uppercase tracking-widest">COFFEE BEANS</h2>
+                                    <p className="text-xs mt-1">Av. Falsa 123, CABA</p>
+                                    <p className="text-xs">CUIT: 30-12345678-9</p>
+                                    <div className="mt-3 text-left space-y-0.5 text-xs">
+                                        <div className="flex justify-between"><span>Ticket No:</span><span>{String(ticketModal.id).padStart(8, '0')}</span></div>
+                                        <div className="flex justify-between"><span>Fecha:</span><span>{new Date(ticketModal.createdAt).toLocaleString('es-AR')}</span></div>
+                                        <div className="flex justify-between">
+                                            <span>Cliente:</span>
+                                            <span className="truncate max-w-[150px] text-right">
+                                                {ticketModal.customer ? `${ticketModal.customer.firstName} ${ticketModal.customer.lastName ?? ''}` : 'Consumidor Final'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="border-b border-dashed border-gray-400 pb-4">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="border-b border-dashed border-gray-300">
+                                                <th className="text-left font-normal py-1">CANT DESCRIPCION</th>
+                                                <th className="text-right font-normal py-1">IMPORTE</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {ticketModal.lines.map((l: any, i: number) => (
+                                                <tr key={i}>
+                                                    <td className="py-1">
+                                                        {l.quantity}x {l.item?.name}
+                                                        <br />
+                                                        <span className="text-[10px] text-gray-500">${Number(l.unitPrice).toLocaleString('es-AR')} c/u</span>
+                                                    </td>
+                                                    <td className="text-right py-1 align-bottom">
+                                                        ${(Number(l.quantity) * Number(l.unitPrice)).toLocaleString('es-AR')}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {(ticketModal.pointsUsed ?? 0) > 0 && (
+                                                <tr>
+                                                    <td className="py-1 pt-3 font-semibold text-emerald-600">
+                                                        Descuento Puntos ({ticketModal.pointsUsed})
+                                                    </td>
+                                                    <td className="text-right py-1 pt-3 font-semibold text-emerald-600 align-bottom">
+                                                        -${(Number(ticketModal.pointsUsed) * 10).toLocaleString('es-AR')}
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="space-y-1 pb-4 border-b border-dashed border-gray-400">
+                                    <div className="flex justify-between items-center text-lg font-bold">
+                                        <span>TOTAL</span>
+                                        <span>${Number(ticketModal.total).toLocaleString('es-AR')}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span>Paga con:</span>
+                                        <span>{ticketModal.paymentMethod?.name ?? '—'}</span>
+                                    </div>
+                                </div>
+
+                                <div className="text-center pt-2 text-xs flex flex-col items-center gap-3">
+                                    <p>¡Gracias por su compra!</p>
+                                    <QRCodeSVG value={`https://coffeebeans.com/verify/${ticketModal.id}`} size={80} level="L" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-muted flex gap-3 print:hidden shrink-0 bg-white rounded-b-2xl">
+                            <button onClick={() => setTicketModal(null)} className="btn-secondary flex-1">Cerrar</button>
+                            <button onClick={() => window.print()} className="btn-primary flex-1 flex justify-center items-center gap-2">
+                                <Printer className="w-4 h-4" /> Imprimir
+                            </button>
+                        </div>
+                        <style dangerouslySetInnerHTML={{
+                            __html: `
+                            @media print {
+                                body * { visibility: hidden; }
+                                .fixed.inset-0.bg-black\\/50, .fixed.inset-0.bg-black\\/50 * { visibility: visible; }
+                                .fixed.inset-0.bg-black\\/50 { position: absolute; left: 0; top: 0; background: white; }
+                                /* Hide extra print elements */
+                                .fixed.inset-0.bg-black\\/50 { padding: 0 !important; }
+                            }
+                        `}} />
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}

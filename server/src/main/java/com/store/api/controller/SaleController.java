@@ -1,0 +1,159 @@
+package com.store.api.controller;
+
+import com.store.api.dto.OrderRequest;
+import com.store.api.entity.*;
+import com.store.api.repository.*;
+import com.store.api.service.CashService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+@RestController
+@RequestMapping("/api/admin/sales")
+@RequiredArgsConstructor
+@Transactional
+public class SaleController {
+
+    private final SaleOrderRepository saleRepo;
+    private final ItemRepository itemRepo;
+    private final CustomerRepository customerRepo;
+    private final OperationStatusRepository statusRepo;
+    private final PaymentMethodRepository paymentRepo;
+    private final StockMovementRepository stockMovementRepo;
+    private final NotificationRepository notificationRepo;
+    private final UserRepository userRepo;
+    private final CashService cashService;
+
+    @GetMapping
+    public ResponseEntity<Page<SaleOrder>> list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long customer,
+            @RequestParam(required = false) Long status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Specification<SaleOrder> spec = (root, query, cb) -> {
+            var predicates = new ArrayList<Predicate>();
+            if (customer != null)
+                predicates.add(cb.equal(root.get("customer").get("id"), customer));
+            if (status != null)
+                predicates.add(cb.equal(root.get("status").get("id"), status));
+            if (from != null)
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), from));
+            if (to != null)
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), to));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return ResponseEntity.ok(saleRepo.findAll(spec, pageable));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<SaleOrder> getById(@PathVariable Long id) {
+        return saleRepo.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<SaleOrder> create(@RequestBody OrderRequest req,
+            org.springframework.security.core.Authentication auth) {
+        SaleOrder order = new SaleOrder();
+
+        if (auth != null) {
+            userRepo.findByUsername(auth.getName()).ifPresent(order::setCreatedBy);
+        }
+
+        if (req.getCustomerId() != null)
+            customerRepo.findById(req.getCustomerId()).ifPresent(order::setCustomer);
+        if (req.getStatusId() != null)
+            statusRepo.findById(req.getStatusId()).ifPresent(order::setStatus);
+        if (req.getPaymentMethodId() != null)
+            paymentRepo.findById(req.getPaymentMethodId()).ifPresent(order::setPaymentMethod);
+        order.setNotes(req.getNotes());
+
+        if (req.getLines() != null) {
+            for (OrderRequest.OrderLineRequest lineReq : req.getLines()) {
+                Item item = itemRepo.findById(lineReq.getItemId()).orElseThrow();
+
+                SaleLine line = new SaleLine();
+                line.setSaleOrder(order);
+                line.setItem(item);
+                line.setQuantity(lineReq.getQuantity());
+                line.setUnitPrice(lineReq.getUnitPrice());
+                order.getLines().add(line);
+                order.setTotal(order.getTotal()
+                        .add(lineReq.getUnitPrice().multiply(java.math.BigDecimal.valueOf(lineReq.getQuantity()))));
+
+                // Auto-decrement stock
+                item.setStock(item.getStock() - lineReq.getQuantity());
+                itemRepo.save(item);
+
+                // Record stock movement
+                StockMovement movement = new StockMovement();
+                movement.setItem(item);
+                movement.setMovementType("OUT");
+                movement.setQuantity(lineReq.getQuantity());
+                movement.setReason("Sale order");
+                stockMovementRepo.save(movement);
+
+                // Low-stock notification
+                if (item.getStock() <= item.getMinStock()) {
+                    Notification notification = new Notification();
+                    notification.setMessage("Low stock: " + item.getName() + " (" + item.getStock() + " left, min: "
+                            + item.getMinStock() + ")");
+                    notification.setType("WARNING");
+                    notificationRepo.save(notification);
+                }
+            }
+        }
+
+        if (req.getPointsUsed() != null && req.getPointsUsed() > 0 && order.getCustomer() != null) {
+            Customer c = order.getCustomer();
+            int used = Math.min(req.getPointsUsed(), c.getLoyaltyPoints() != null ? c.getLoyaltyPoints() : 0);
+            if (used > 0) {
+                c.setLoyaltyPoints(c.getLoyaltyPoints() - used);
+                order.setPointsUsed(used);
+                java.math.BigDecimal discount = java.math.BigDecimal.valueOf(used * 10L); // 1 punto = $10 de descuento
+                order.setTotal(order.getTotal().subtract(discount));
+                if (order.getTotal().compareTo(java.math.BigDecimal.ZERO) < 0) {
+                    order.setTotal(java.math.BigDecimal.ZERO);
+                }
+            }
+        }
+
+        if (order.getCustomer() != null && order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            Customer c = order.getCustomer();
+            int earned = order.getTotal().intValue() / 1000; // 1 punto por cada $1000
+            if (earned > 0) {
+                c.setLoyaltyPoints((c.getLoyaltyPoints() != null ? c.getLoyaltyPoints() : 0) + earned);
+            }
+            customerRepo.save(c);
+        }
+
+        SaleOrder saved = saleRepo.save(order);
+        cashService.record("INCOME", saved.getTotal(), "Venta #" + saved.getId());
+        return ResponseEntity.ok(saved);
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<SaleOrder> updateStatus(@PathVariable Long id, @RequestParam Long statusId) {
+        return saleRepo.findById(id).map(order -> {
+            statusRepo.findById(statusId).ifPresent(order::setStatus);
+            return ResponseEntity.ok(saleRepo.save(order));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // Customer-facing: orders for current customer
+    @GetMapping("/my/{userId}")
+    public ResponseEntity<?> myOrders(@PathVariable Long userId) {
+        return ResponseEntity.ok(saleRepo.findByCreatedById(userId));
+    }
+}

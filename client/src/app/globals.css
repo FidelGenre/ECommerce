@@ -1,0 +1,174 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --color-primary-50: #f5e6cc;
+  --color-primary-100: #f3e6d3;
+  --color-primary-200: #e3cba5;
+  --color-primary-300: #c49b6c;
+  --color-primary-400: #a97142;
+  --color-primary-500: #8b5e34;
+  --color-primary-600: #745131;
+  --color-primary-700: #5c3d20;
+  --color-primary-800: #4b2e05;
+  --color-primary-900: #3a2a1b;
+
+  --color-surface: #f5e6cc;
+  --color-muted: #e3cba5;
+  --color-espresso: #4b2e05;
+  --color-caramel: #c49b6c;
+  --color-cream: #f3e6d3;
+  --color-sand: #c8a97e;
+}
+
+/* Custom dark scrollbar for the sidebar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface text-espresso;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-700 hover:bg-primary-800 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-muted hover:bg-primary-200 text-primary-800 font-semibold px-4 py-2 rounded-lg transition-all duration-200 border border-primary-200;
+  }
+
+  .btn-danger {
+    @apply bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 shadow-sm;
+  }
+
+  .btn-ghost {
+    @apply text-primary-700 hover:bg-primary-50 font-medium px-3 py-2 rounded-lg transition-colors;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-muted p-6;
+  }
+
+  .input {
+    @apply w-full border border-muted rounded-lg px-3 py-2 bg-white text-espresso focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent placeholder:text-primary-300 transition-all;
+  }
+
+  .select {
+    @apply w-full border border-muted rounded-lg px-3 py-2 bg-white text-espresso focus:outline-none focus:ring-2 focus:ring-primary-400 cursor-pointer;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-green {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800;
+  }
+
+  .badge-yellow {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800;
+  }
+
+  .badge-red {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800;
+  }
+
+  .badge-blue {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800;
+  }
+
+  .badge-brown {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800;
+  }
+
+  .table-wrapper {
+    @apply w-full overflow-x-auto rounded-xl border border-muted;
+  }
+
+  .data-table {
+    @apply w-full text-sm;
+  }
+
+  .data-table thead {
+    @apply bg-primary-50 text-primary-700 uppercase text-xs tracking-wider;
+  }
+
+  .data-table th {
+    @apply px-4 py-3 text-left font-semibold;
+  }
+
+  .data-table td {
+    @apply px-4 py-3 border-t border-muted text-espresso;
+  }
+
+  .data-table tr:hover td {
+    @apply bg-cream;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-primary-200 hover:text-white hover:bg-primary-700/60 transition-all duration-150 cursor-pointer;
+  }
+
+  .sidebar-link.active {
+    @apply bg-primary-600 text-white shadow-sm;
+  }
+}
+
+/* Overlay animation */
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlaySlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.overlay-animate {
+  animation: overlayFadeIn 0.25s ease-out;
+}
+
+.overlay-items-animate {
+  animation: overlaySlideUp 0.3s ease-out;
+}
+
+/* Body scroll lock — NO position:fixed to avoid breaking child fixed elements */
+body.menu-open {
+  overflow: hidden;
+}

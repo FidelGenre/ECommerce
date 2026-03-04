@@ -1,0 +1,29 @@
+# Maven ────────────────────────────────────────────────────
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/
+
+# Secrets — real config stays local, never committed
+src/main/resources/application.properties
+
+# ── Compiled ─────────────────────────────────────────────────
+*.class
+*.jar
+*.war
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── IDE ──────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Secrets — keep application.properties but ignore overrides
+src/main/resources/application-prod.properties
+src/main/resources/application-local.properties

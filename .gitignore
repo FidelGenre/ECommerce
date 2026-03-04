@@ -1,0 +1,25 @@
+# ── Compiled output ──────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── IDE ──────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Secrets / environment ─────────────────────────────────────
+application-prod.properties
+application-local.properties
+*.env
