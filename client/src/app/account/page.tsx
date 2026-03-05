@@ -123,7 +123,7 @@ export default function AccountPage() {
     return (
         <div className="min-h-screen bg-surface">
             {/* Header */}
-            <header className="bg-espresso text-white px-6 py-4 flex items-center justify-between shadow-lg">
+            <header className="bg-primary-600 text-white px-6 py-4 flex items-center justify-between shadow-lg">
                 <Link href="/" className="text-primary-300 hover:text-caramel transition-colors text-sm">← Volver a la Tienda</Link>
                 <button onClick={logout} className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm transition-colors">
                     <LogOut className="w-4 h-4" /> Cerrar Sesión

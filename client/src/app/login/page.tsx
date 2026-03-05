@@ -16,7 +16,7 @@ export default function LoginPage() {
         try {
             await login(username, password)
         } catch {
-            setError('Invalid credentials. Try admin / admin123')
+            setError('Usuario o contraseña incorrectos.')
         } finally {
             setLoading(false)
         }
@@ -89,7 +89,7 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <p className="text-center text-primary-400 text-xs mt-6">Por defecto: admin / admin123</p>
+
             </div>
         </div>
     )

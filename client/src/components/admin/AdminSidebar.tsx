@@ -24,7 +24,8 @@ const NAV = [
     { href: '/admin/notifications', icon: Bell, label: 'Notificaciones' },
     { href: '/admin/audit', icon: ClipboardList, label: 'Auditoría' },
     { separator: true, label: 'Configuración' },
-    { href: '/admin/settings/categories', icon: Settings, label: 'Categorías' },
+    { href: '/admin/settings/categories', icon: Settings, label: 'Categorías de Productos' },
+    { href: '/admin/settings/supplier-categories', icon: Truck, label: 'Categorías de Proveedores' },
     { href: '/admin/settings/users', icon: Users, label: 'Usuarios' },
     { href: '/admin/settings/payments', icon: Banknote, label: 'Formas de Pago' },
     { href: '/admin/settings/statuses', icon: ClipboardList, label: 'Estados' },
@@ -43,7 +44,7 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
                 </div>
                 <div>
                     <h1 className="text-white font-bold text-base leading-tight">Coffee Beans</h1>
-                    <p className="text-primary-400 text-xs group-hover:text-primary-300 transition-colors">← Ir al inicio</p>
+                    <p className="text-white/60 text-xs group-hover:text-white/80 transition-colors">← Ir al inicio</p>
                 </div>
             </Link>
 
@@ -53,7 +54,7 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
                     if ('separator' in item) {
                         return (
                             <div key={i} className="pt-4 pb-1 px-3">
-                                <p className="text-primary-500 text-xs font-semibold uppercase tracking-wider">{item.label}</p>
+                                <p className="text-white/60 text-xs font-semibold uppercase tracking-wider">{item.label}</p>
                             </div>
                         )
                     }
@@ -77,7 +78,7 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-medium truncate">{user?.username}</p>
-                        <p className="text-primary-400 text-xs">{user?.role}</p>
+                        <p className="text-white/60 text-xs">{user?.role}</p>
                     </div>
                 </div>
                 <button onClick={logout} className="w-full flex items-center gap-2 text-primary-300 hover:text-white hover:bg-primary-700/40 px-3 py-2 rounded-lg text-sm transition-colors">
@@ -107,12 +108,12 @@ export default function AdminSidebar() {
     return (
         <>
             {/* Desktop */}
-            <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-espresso flex-col z-40 shadow-2xl">
+            <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-primary-600 flex-col z-40 shadow-2xl">
                 <SidebarInner />
             </aside>
 
             {/* Mobile top bar */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-espresso flex items-center justify-between px-4 py-3 shadow-lg">
+            <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-primary-600 flex items-center justify-between px-4 py-3 shadow-lg">
                 <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 bg-caramel rounded-lg flex items-center justify-center">
                         <Coffee className="w-4 h-4 text-espresso" />
@@ -126,7 +127,7 @@ export default function AdminSidebar() {
 
             {/* Mobile fullscreen overlay */}
             {mobileOpen && (
-                <div className="lg:hidden fixed inset-0 z-[9999] bg-espresso/98 backdrop-blur-sm flex flex-col overlay-animate"
+                <div className="lg:hidden fixed inset-0 z-[9999] bg-primary-600/98 backdrop-blur-sm flex flex-col overlay-animate"
                     style={{ touchAction: 'none' }}>
                     {/* Top bar */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-primary-800">

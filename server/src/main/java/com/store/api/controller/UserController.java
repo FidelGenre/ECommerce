@@ -51,17 +51,23 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/toggle")
-    public ResponseEntity<User> toggle(@PathVariable Long id) {
+    public ResponseEntity<?> toggle(@PathVariable Long id) {
         return userRepo.findById(id).map(u -> {
+            if ("admin".equalsIgnoreCase(u.getUsername()))
+                return ResponseEntity.status(403).<User>body(null);
             u.setActive(!u.getActive());
             return ResponseEntity.ok(userRepo.save(u));
         }).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        userRepo.deleteById(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        return userRepo.findById(id).map(u -> {
+            if ("admin".equalsIgnoreCase(u.getUsername()))
+                return ResponseEntity.status(403).<Void>body(null);
+            userRepo.deleteById(id);
+            return ResponseEntity.<Void>noContent().build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     // Customer portal: get own profile

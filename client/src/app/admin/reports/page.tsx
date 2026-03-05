@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
-import { FileSpreadsheet, Printer, TrendingUp, Users, PackageX, Clock, Layers } from 'lucide-react'
+import { FileSpreadsheet, Printer, TrendingUp, Users, PackageX, Clock, Layers, FileText } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 const COLORS = ['#6B3F1F', '#C49A6C', '#8B5A2B', '#4A2C14', '#D9C9B0', '#A67C52', '#3E2723', '#D7CCC8']
@@ -34,17 +36,21 @@ export default function ReportsPage() {
         setLoading(true)
         try {
             const dateParam = fromDate && toDate
-                ? `from=${fromDate}T00:00:00&to=${toDate}T23:59:59`
+                ? `from=${fromDate}&to=${toDate}`
                 : `days=30`
+            // salesByHour and nonRotatingProducts only accept an integer 'days' param
+            const daysDiff = fromDate && toDate
+                ? Math.max(1, Math.ceil((new Date(toDate).getTime() - new Date(fromDate).getTime()) / 86400000))
+                : 30
             const [s, sup, cat, hour, margin, top, byClient, nonRot, profit] = await Promise.all([
                 api.get(`/api/admin/dashboard/sales-by-period?${dateParam}`),
-                api.get('/api/admin/dashboard/purchases-by-supplier'),
-                api.get('/api/admin/dashboard/sales-by-category'),
-                api.get(`/api/admin/dashboard/sales-by-hour?${dateParam}`),
+                api.get(`/api/admin/dashboard/purchases-by-supplier?${dateParam}`),
+                api.get(`/api/admin/dashboard/sales-by-category?${dateParam}`),
+                api.get(`/api/admin/dashboard/sales-by-hour?days=${daysDiff}`),
                 api.get('/api/admin/dashboard/margin-evolution?months=6'),
                 api.get('/api/admin/dashboard/top-customers?limit=10'),
                 api.get('/api/admin/dashboard/sales-by-client'),
-                api.get(`/api/admin/dashboard/non-rotating?${dateParam}`),
+                api.get(`/api/admin/dashboard/non-rotating?days=${daysDiff}`),
                 api.get('/api/admin/dashboard/profitability'),
             ])
             setSales(s.data); setBySupplier(sup.data); setByCategory(cat.data)
@@ -60,6 +66,71 @@ export default function ReportsPage() {
         const ws = XLSX.utils.json_to_sheet(data)
         const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, sheetName)
         XLSX.writeFile(wb, `${fileName}_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    }
+
+    const exportPDF = () => {
+        const doc = new jsPDF()
+        const dateRange = `${fromDate} – ${toDate}`
+        doc.setFontSize(18)
+        doc.setTextColor(75, 46, 5)
+        doc.text('Informes — Coffee Beans', 14, 16)
+        doc.setFontSize(10)
+        doc.setTextColor(120, 80, 40)
+        doc.text(`Período: ${dateRange}`, 14, 24)
+
+        let y = 32
+
+        if (profitability.length > 0) {
+            doc.setFontSize(13)
+            doc.setTextColor(75, 46, 5)
+            doc.text('Rentabilidad por Producto', 14, y)
+            autoTable(doc, {
+                startY: y + 4,
+                head: [['Producto', 'Unidades', 'Ingresos', 'Costo', 'Margen', '%']],
+                body: profitability.map(r => [
+                    r.name, r.unitsSold,
+                    FMT(r.revenue), FMT(r.cost), FMT(r.margin),
+                    `${Number(r.marginPct).toFixed(1)}%`
+                ]),
+                headStyles: { fillColor: [92, 61, 32] },
+                alternateRowStyles: { fillColor: [245, 230, 204] },
+                margin: { left: 14, right: 14 },
+            })
+            y = (doc as any).lastAutoTable.finalY + 12
+        }
+
+        if (topCustomers.length > 0) {
+            if (y > 220) { doc.addPage(); y = 14 }
+            doc.setFontSize(13)
+            doc.setTextColor(75, 46, 5)
+            doc.text('Top Clientes', 14, y)
+            autoTable(doc, {
+                startY: y + 4,
+                head: [['Cliente', 'Órdenes', 'Total']],
+                body: topCustomers.map((r: any) => [r.name, r.orders, FMT(r.total)]),
+                headStyles: { fillColor: [92, 61, 32] },
+                alternateRowStyles: { fillColor: [245, 230, 204] },
+                margin: { left: 14, right: 14 },
+            })
+            y = (doc as any).lastAutoTable.finalY + 12
+        }
+
+        if (nonRotating.length > 0) {
+            if (y > 220) { doc.addPage(); y = 14 }
+            doc.setFontSize(13)
+            doc.setTextColor(75, 46, 5)
+            doc.text('Productos Sin Rotación', 14, y)
+            autoTable(doc, {
+                startY: y + 4,
+                head: [['Producto', 'Stock', 'Última Venta']],
+                body: nonRotating.map((r: any) => [r.name, r.stock, r.lastSale ?? '—']),
+                headStyles: { fillColor: [92, 61, 32] },
+                alternateRowStyles: { fillColor: [245, 230, 204] },
+                margin: { left: 14, right: 14 },
+            })
+        }
+
+        doc.save(`informe_${fromDate}_${toDate}.pdf`)
     }
 
     const tabs = [
@@ -79,6 +150,9 @@ export default function ReportsPage() {
                     <input type="date" className="input text-sm py-1.5 px-2 w-40" value={toDate} onChange={e => setToDate(e.target.value)} />
                     <button onClick={() => window.print()} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3">
                         <Printer className="w-4 h-4" /> Imprimir
+                    </button>
+                    <button onClick={exportPDF} className="btn-primary flex items-center gap-1.5 text-sm py-1.5 px-3">
+                        <FileText className="w-4 h-4" /> Exportar PDF
                     </button>
                 </div>
             </div>

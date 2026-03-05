@@ -11,6 +11,8 @@
   "dependencies": {
     "@types/recharts": "^1.8.29",
     "axios": "^1.13.5",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "qrcode.react": "^4.2.0",
