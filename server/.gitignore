@@ -4,8 +4,7 @@ target/
 .mvn/
 
 # Secrets — real config stays local, never committed
-src/main/resources/application.properties
-
+# (Removed: application.properties must be committed for Render)
 # ── Compiled ─────────────────────────────────────────────────
 *.class
 *.jar
