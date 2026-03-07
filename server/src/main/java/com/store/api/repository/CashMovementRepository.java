@@ -12,4 +12,6 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
 
     @Query("SELECT COALESCE(SUM(m.amount), 0) FROM CashMovement m WHERE m.register.id = :registerId AND m.movementType = :type")
     BigDecimal sumByRegisterAndType(@Param("registerId") Long registerId, @Param("type") String type);
+
+    List<CashMovement> findByCreatedById(Long userId);
 }

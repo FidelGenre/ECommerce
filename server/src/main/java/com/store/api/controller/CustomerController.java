@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.jpa.domain.Specification;
 import com.store.api.entity.AccountMovement;
 import com.store.api.repository.AccountMovementRepository;
+import com.store.api.repository.SaleOrderRepository;
 
 @RestController
 @RequestMapping("/api/admin/customers")
@@ -18,6 +19,7 @@ public class CustomerController {
 
     private final CustomerRepository customerRepository;
     private final AccountMovementRepository movementRepo;
+    private final SaleOrderRepository saleRepo;
 
     @GetMapping
     public ResponseEntity<Page<Customer>> list(
@@ -62,9 +64,21 @@ public class CustomerController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        customerRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        return customerRepository.findById(id).map(c -> {
+            if (c.getAccountBalance().compareTo(java.math.BigDecimal.ZERO) != 0) {
+                return ResponseEntity.status(409)
+                        .body("El cliente no puede ser eliminado porque tiene un saldo pendiente o a favor.");
+            }
+            saleRepo.findByCustomerId(id).forEach(s -> {
+                s.setCustomer(null);
+                saleRepo.save(s);
+            });
+            movementRepo.deleteAll(movementRepo.findByCustomerIdOrderByCreatedAtDesc(id));
+            customerRepository.delete(c);
+            return ResponseEntity.<Void>noContent().build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     // Account balance adjustment

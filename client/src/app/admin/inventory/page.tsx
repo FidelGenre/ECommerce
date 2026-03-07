@@ -26,6 +26,11 @@ export default function InventoryPage() {
     // Filters
     const [q, setQ] = useState('')
     const [stockStatusFilter, setStockStatusFilter] = useState<StockStatus>('all')
+    const [categoryFilter, setCategoryFilter] = useState('all')
+    const [supplierFilter, setSupplierFilter] = useState('all')
+
+    const [categories, setCategories] = useState<{ id: number, name: string }[]>([])
+    const [suppliers, setSuppliers] = useState<{ id: number, name: string }[]>([])
 
     // Sort
     const [sortField, setSortField] = useState<SortField>('name')
@@ -52,7 +57,20 @@ export default function InventoryPage() {
             setLoading(false)
         }
     }
-    useEffect(() => { load() }, [])
+
+    const loadOptions = async () => {
+        const [catRes, supRes] = await Promise.all([
+            api.get('/api/admin/categories?type=PRODUCT'),
+            api.get('/api/admin/suppliers?size=100')
+        ]);
+        setCategories(catRes.data);
+        setSuppliers(supRes.data.content || supRes.data);
+    }
+
+    useEffect(() => {
+        load()
+        loadOptions()
+    }, [])
 
     const stockStatus = (item: Item) => {
         if (item.stock <= 0) return { label: 'Sin stock', cls: 'badge-red', key: 'out' }
@@ -75,6 +93,8 @@ export default function InventoryPage() {
     const filtered = items
         .filter(i => !q || i.name.toLowerCase().includes(q.toLowerCase()))
         .filter(i => stockStatusFilter === 'all' || stockStatus(i).key === stockStatusFilter)
+        .filter(i => categoryFilter === 'all' || String(i.category?.id) === categoryFilter)
+        .filter(i => supplierFilter === 'all' || String(i.supplier?.id) === supplierFilter)
         .sort((a, b) => {
             let av: any, bv: any
             if (sortField === 'name') { av = a.name; bv = b.name }
@@ -167,7 +187,15 @@ export default function InventoryPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
                         <input className="input pl-9 text-sm" placeholder="Buscar producto…" value={q} onChange={e => setQ(e.target.value)} />
                     </div>
-                    <select className="select text-sm w-48" value={stockStatusFilter} onChange={e => setStockStatusFilter(e.target.value as StockStatus)}>
+                    <select className="select text-sm w-48" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+                        <option value="all">Todas las Categorías</option>
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    <select className="select text-sm w-48" value={supplierFilter} onChange={e => setSupplierFilter(e.target.value)}>
+                        <option value="all">Todos los Proveedores</option>
+                        {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                    <select className="select text-sm w-40" value={stockStatusFilter} onChange={e => setStockStatusFilter(e.target.value as StockStatus)}>
                         <option value="all">Todos los estados</option>
                         <option value="ok">OK</option>
                         <option value="low">Bajo</option>

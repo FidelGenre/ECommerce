@@ -20,4 +20,8 @@ public interface PurchaseOrderRepository
         java.math.BigDecimal sumTotalBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
         List<PurchaseOrder> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
+
+        List<PurchaseOrder> findBySupplierId(Long supplierId);
+
+        List<PurchaseOrder> findByCreatedById(Long userId);
 }

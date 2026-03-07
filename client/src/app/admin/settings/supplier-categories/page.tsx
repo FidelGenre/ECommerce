@@ -12,6 +12,7 @@ export default function SupplierCategoriesPage() {
     const [open, setOpen] = useState(false)
     const [saving, setSaving] = useState(false)
     const [msg, setMsg] = useState<string | null>(null)
+    const [search, setSearch] = useState('')
 
     const load = async () => {
         const r = await api.get('/api/admin/categories?type=SUPPLIER')
@@ -40,6 +41,11 @@ export default function SupplierCategoriesPage() {
         try { await api.delete(`/api/admin/categories/${id}`); await load() } catch { alert('No se pudo eliminar.') }
     }
 
+    const filteredCats = cats.filter(c =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.description || '').toLowerCase().includes(search.toLowerCase())
+    )
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -47,6 +53,20 @@ export default function SupplierCategoriesPage() {
                 <button onClick={openNew} className="btn-primary flex items-center gap-2">
                     <Plus className="w-4 h-4" /> Nueva Categoría
                 </button>
+            </div>
+
+            {/* Filters */}
+            <div className="card py-3 px-4 border border-muted bg-warm-50/50 shadow-sm">
+                <div className="relative max-w-sm">
+                    <input
+                        className="input pl-9 text-sm py-2"
+                        placeholder="Buscar por nombre o descripción..."
+                        value={search} onChange={e => setSearch(e.target.value)}
+                    />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                </div>
             </div>
 
             <div className="card">
@@ -65,7 +85,7 @@ export default function SupplierCategoriesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-muted">
-                            {cats.map(c => (
+                            {filteredCats.map(c => (
                                 <tr key={c.id} className="hover:bg-warm-50">
                                     <td className="py-3 font-medium text-espresso">{c.name}</td>
                                     <td className="py-3 text-primary-500">{c.description || '—'}</td>

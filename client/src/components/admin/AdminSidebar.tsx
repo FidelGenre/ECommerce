@@ -19,14 +19,13 @@ const NAV = [
     { separator: true, label: 'Gestión' },
     { href: '/admin/productos', icon: Package, label: 'Productos' },
     { href: '/admin/costs', icon: ClipboardList, label: 'Costos Internos' },
-    { href: '/admin/customers', icon: Users, label: 'Clientes' },
     { href: '/admin/suppliers', icon: Truck, label: 'Proveedores' },
     { href: '/admin/notifications', icon: Bell, label: 'Notificaciones' },
     { href: '/admin/audit', icon: ClipboardList, label: 'Auditoría' },
     { separator: true, label: 'Configuración' },
     { href: '/admin/settings/categories', icon: Settings, label: 'Categorías de Productos' },
     { href: '/admin/settings/supplier-categories', icon: Truck, label: 'Categorías de Proveedores' },
-    { href: '/admin/settings/users', icon: Users, label: 'Usuarios' },
+    { href: '/admin/settings/users', icon: Users, label: 'Usuarios y Clientes' },
     { href: '/admin/settings/payments', icon: Banknote, label: 'Formas de Pago' },
     { href: '/admin/settings/statuses', icon: ClipboardList, label: 'Estados' },
 ]
@@ -50,7 +49,7 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
 
             {/* Nav */}
             <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5 sidebar-scroll">
-                {NAV.map((item, i) => {
+                {NAV.filter(item => user?.role === 'SUPPLIER' ? item.href === '/admin/inventory' : true).map((item, i) => {
                     if ('separator' in item) {
                         return (
                             <div key={i} className="pt-4 pb-1 px-3">

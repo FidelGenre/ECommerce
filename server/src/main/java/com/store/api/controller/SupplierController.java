@@ -14,6 +14,7 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import com.store.api.entity.AccountMovement;
 import com.store.api.repository.AccountMovementRepository;
+import com.store.api.repository.PurchaseOrderRepository;
 
 @RestController
 @RequestMapping("/api/admin/suppliers")
@@ -23,6 +24,7 @@ public class SupplierController {
     private final SupplierRepository supplierRepository;
     private final CategoryRepository categoryRepository;
     private final AccountMovementRepository movementRepo;
+    private final PurchaseOrderRepository purchaseRepo;
 
     @GetMapping
     public ResponseEntity<Page<Supplier>> list(
@@ -72,9 +74,21 @@ public class SupplierController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        supplierRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        return supplierRepository.findById(id).map(s -> {
+            if (s.getAccountBalance().compareTo(java.math.BigDecimal.ZERO) != 0) {
+                return ResponseEntity.status(409)
+                        .body("El proveedor no puede ser eliminado porque tiene un saldo pendiente o a favor.");
+            }
+            purchaseRepo.findBySupplierId(id).forEach(p -> {
+                p.setSupplier(null);
+                purchaseRepo.save(p);
+            });
+            movementRepo.deleteAll(movementRepo.findBySupplierIdOrderByCreatedAtDesc(id));
+            supplierRepository.delete(s);
+            return ResponseEntity.<Void>noContent().build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     // Account balance adjustment

@@ -6,7 +6,7 @@ import api from '@/lib/api'
 interface AuthUser {
     userId: number
     username: string
-    role: 'ADMIN' | 'CUSTOMER'
+    role: 'ADMIN' | 'CUSTOMER' | 'SUPPLIER'
     token: string
 }
 
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(data))
         setUser(data)
-        router.push(data.role === 'ADMIN' ? '/admin' : '/')
+        router.push(data.role === 'ADMIN' || data.role === 'SUPPLIER' ? '/admin' : '/')
     }
 
     const logout = () => {

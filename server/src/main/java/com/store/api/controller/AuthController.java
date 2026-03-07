@@ -10,6 +10,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
+import com.store.api.repository.SaleOrderRepository;
+import com.store.api.repository.CashMovementRepository;
+import com.store.api.repository.PurchaseOrderRepository;
+import com.store.api.repository.AccountMovementRepository;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,6 +25,10 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final CustomerRepository customerRepo;
+    private final SaleOrderRepository saleRepo;
+    private final CashMovementRepository cashRepo;
+    private final PurchaseOrderRepository purchaseRepo;
+    private final AccountMovementRepository accountMoveRepo;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
@@ -130,5 +139,54 @@ public class AuthController {
         userRepository.save(user);
         customerRepo.save(c);
         return ResponseEntity.ok(c);
+    }
+
+    /**
+     * Deletes the logged-in user's account and associated customer profile.
+     */
+    @DeleteMapping("/me")
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> deleteMe(org.springframework.security.core.Authentication auth) {
+        if (auth == null)
+            return ResponseEntity.status(401).build();
+        User user = userRepository.findByUsername(auth.getName()).orElse(null);
+        if (user == null)
+            return ResponseEntity.notFound().build();
+
+        if ("admin".equalsIgnoreCase(user.getUsername())) {
+            return ResponseEntity.status(403).body("Admin cannot delete itself.");
+        }
+
+        if (user.getCustomer() != null && user.getCustomer().getAccountBalance().compareTo(BigDecimal.ZERO) != 0) {
+            return ResponseEntity.status(409)
+                    .body("Tu cuenta no puede ser eliminada porque tienes un saldo pendiente o a favor en la tienda.");
+        }
+
+        Long id = user.getId();
+        saleRepo.findByCreatedById(id).forEach(s -> {
+            s.setCreatedBy(null);
+            saleRepo.save(s);
+        });
+        cashRepo.findByCreatedById(id).forEach(c -> {
+            c.setCreatedBy(null);
+            cashRepo.save(c);
+        });
+        purchaseRepo.findByCreatedById(id).forEach(p -> {
+            p.setCreatedBy(null);
+            purchaseRepo.save(p);
+        });
+
+        if (user.getCustomer() != null) {
+            Long cid = user.getCustomer().getId();
+            saleRepo.findByCustomerId(cid).forEach(s -> {
+                s.setCustomer(null);
+                saleRepo.save(s);
+            });
+            accountMoveRepo.deleteAll(accountMoveRepo.findByCustomerIdOrderByCreatedAtDesc(cid));
+            customerRepo.delete(user.getCustomer());
+        }
+
+        userRepository.delete(user);
+        return ResponseEntity.ok().build();
     }
 }

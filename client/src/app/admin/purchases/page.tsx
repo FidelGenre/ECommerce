@@ -23,6 +23,7 @@ export default function PurchasesPage() {
     const [toDate, setToDate] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
     const [supplierFilter, setSupplierFilter] = useState('')
+    const [orderCategoryFilter, setOrderCategoryFilter] = useState('')
     const [searchQ, setSearchQ] = useState('')
 
     // Expanded rows for showing product lines detail
@@ -38,6 +39,7 @@ export default function PurchasesPage() {
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
     const [payments, setPayments] = useState<PaymentMethod[]>([])
     const [items, setItems] = useState<Item[]>([])
+    const [categories, setCategories] = useState<any[]>([])
 
     const [form, setForm] = useState({ supplierId: '', statusId: '', paymentMethodId: '', notes: '' })
     const [lines, setLines] = useState<{ itemId: string; quantity: string; unitCost: string }[]>([{ itemId: '', quantity: '1', unitCost: '' }])
@@ -53,8 +55,9 @@ export default function PurchasesPage() {
         if (statusFilter) params.set('status', statusFilter)
         if (supplierFilter) params.set('supplier', supplierFilter)
         if (searchQ) params.set('q', searchQ)
+        if (orderCategoryFilter) params.set('category', orderCategoryFilter)
         return `/api/admin/purchases?${params}`
-    }, [page, fromDate, toDate, statusFilter, supplierFilter, searchQ])
+    }, [page, fromDate, toDate, statusFilter, supplierFilter, searchQ, orderCategoryFilter])
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -71,13 +74,15 @@ export default function PurchasesPage() {
             api.get('/api/admin/suppliers?size=200'),
             api.get('/api/admin/settings/payment-methods'),
             api.get('/api/admin/items?size=200'),
-        ]).then(([s, sup, pm, it]) => {
+            api.get('/api/admin/categories?type=PRODUCT'),
+        ]).then(([s, sup, pm, it, cats]) => {
             setStatuses(s.data); setSuppliers(sup.data.content)
             setPayments(pm.data); setItems(it.data.content)
+            setCategories(cats.data)
         })
     }, [])
 
-    const resetFilters = () => { setFromDate(''); setToDate(''); setStatusFilter(''); setSupplierFilter(''); setSearchQ(''); setPage(0) }
+    const resetFilters = () => { setFromDate(''); setToDate(''); setStatusFilter(''); setSupplierFilter(''); setOrderCategoryFilter(''); setSearchQ(''); setPage(0) }
 
     const toggleSort = (field: SortField) => {
         if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -146,8 +151,11 @@ export default function PurchasesPage() {
         } finally { setSaving(false) }
     }
 
-    const statusColor: Record<string, string> = {
+    const STATUS_COLORS: any = {
         Completed: 'badge-green', Pending: 'badge-yellow', Cancelled: 'badge-red', Approved: 'badge-blue'
+    }
+    const STATUS_LABELS: Record<string, string> = {
+        Completed: 'Completado', Pending: 'Pendiente', Cancelled: 'Cancelado', Approved: 'Aprobado'
     }
 
     const handleApprove = async (id: number) => {
@@ -157,14 +165,15 @@ export default function PurchasesPage() {
         await api.patch(`/api/admin/purchases/${id}/reject`); load()
     }
 
-    const hasFilters = fromDate || toDate || statusFilter || supplierFilter || searchQ
+    const hasFilters = !!fromDate || !!toDate || !!statusFilter || !!supplierFilter || !!orderCategoryFilter || !!searchQ
 
-    const currentFilters = { fromDate, toDate, statusFilter, supplierFilter }
+    const currentFilters = { fromDate, toDate, statusFilter, supplierFilter, orderCategoryFilter }
     const handleLoadFilters = (f: Record<string, any>) => {
         setFromDate(f.fromDate || '')
         setToDate(f.toDate || '')
         setStatusFilter(f.statusFilter || '')
         setSupplierFilter(f.supplierFilter || '')
+        setOrderCategoryFilter(f.orderCategoryFilter || '')
         setPage(0)
     }
 
@@ -193,11 +202,15 @@ export default function PurchasesPage() {
                     <input type="date" className="input text-sm" value={toDate} onChange={e => { setToDate(e.target.value); setPage(0) }} />
                     <select className="select text-sm" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0) }}>
                         <option value="">Todos los estados</option>
-                        {statuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        {statuses.map(s => <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>)}
                     </select>
                     <select className="select text-sm" value={supplierFilter} onChange={e => { setSupplierFilter(e.target.value); setPage(0) }}>
                         <option value="">Todos los proveedores</option>
                         {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                    <select className="select text-sm" value={orderCategoryFilter} onChange={e => { setOrderCategoryFilter(e.target.value); setPage(0) }}>
+                        <option value="">Todas las categorías</option>
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                 </div>
                 <div className="flex items-center justify-between mt-3">
@@ -242,7 +255,11 @@ export default function PurchasesPage() {
                                             <td className="font-mono text-primary-400">#{o.id}</td>
                                             <td>{o.supplier?.name ?? <span className="text-primary-300">—</span>}</td>
                                             <td>{o.createdBy ? <span className="text-primary-600">{o.createdBy.username ?? o.createdBy.email}</span> : <span className="text-primary-300">—</span>}</td>
-                                            <td><span className={statusColor[o.status?.name ?? ''] ?? 'badge-brown'}>{o.status?.name ?? '—'}</span></td>
+                                            <td>
+                                                <span className={STATUS_COLORS[o.status?.name as string] || 'badge-gray'}>
+                                                    {o.status?.name ? STATUS_LABELS[o.status.name] || o.status.name : '—'}
+                                                </span>
+                                            </td>
                                             <td className="text-primary-500">{o.paymentMethod?.name ?? '—'}</td>
                                             <td className="font-semibold">{FMT(o.total)}</td>
                                             <td className="text-primary-400 text-xs">{new Date(o.createdAt).toLocaleDateString('es-AR')}</td>
@@ -312,9 +329,9 @@ export default function PurchasesPage() {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-primary-700 mb-1">Estado</label>
-                                        <select className="select" value={form.statusId} onChange={e => setForm({ ...form, statusId: e.target.value })}>
+                                        <select className="select" value={form.statusId} onChange={e => setForm({ ...form, statusId: e.target.value })} required>
                                             <option value="">Seleccionar estado</option>
-                                            {statuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            {statuses.map(s => <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>)}
                                         </select>
                                     </div>
                                     <div>

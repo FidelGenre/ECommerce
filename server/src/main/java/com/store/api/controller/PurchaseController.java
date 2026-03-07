@@ -37,6 +37,7 @@ public class PurchaseController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Long supplier,
             @RequestParam(required = false) Long status,
+            @RequestParam(required = false) Long category,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
@@ -47,6 +48,11 @@ public class PurchaseController {
                 predicates.add(cb.equal(root.get("supplier").get("id"), supplier));
             if (status != null)
                 predicates.add(cb.equal(root.get("status").get("id"), status));
+            if (category != null) {
+                jakarta.persistence.criteria.Join<PurchaseOrder, PurchaseLine> linesJoin = root.join("lines");
+                predicates.add(cb.equal(linesJoin.get("item").get("category").get("id"), category));
+                query.distinct(true);
+            }
             if (q != null && !q.isBlank()) {
                 String pattern = "%" + q.toLowerCase() + "%";
                 predicates.add(cb.or(
