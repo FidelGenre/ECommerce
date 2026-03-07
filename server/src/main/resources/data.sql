@@ -3,8 +3,8 @@
 -- ============================================================
 
 -- Admin user (password: admin123)
-INSERT INTO users (username, email, password_hash, role) VALUES
-('admin', 'admin@coffeebeans.com', '$2a$10$RQkX7wPZ4Ivv6hJiwuliWuVokJ8.1wMBnstlS2M/T6cfHkX5TRzvm', 'ADMIN')
+INSERT INTO users (username, email, password_hash, role, active, created_at) VALUES
+('admin', 'admin@coffeebeans.com', '$2a$10$RQkX7wPZ4Ivv6hJiwuliWuVokJ8.1wMBnstlS2M/T6cfHkX5TRzvm', 'ADMIN', true, CURRENT_TIMESTAMP)
 ON CONFLICT DO NOTHING;
 
 -- Categories
@@ -37,15 +37,15 @@ INSERT INTO operation_statuses (name, type, color) VALUES
 ON CONFLICT DO NOTHING;
 
 -- Sample Supplier
-INSERT INTO suppliers (name, legal_name, alias, email, category_id) VALUES
-('Mountain Roasters', 'Mountain Roasters S.A.', 'mroast', 'contact@mountainroasters.com', 1)
+INSERT INTO suppliers (name, legal_name, alias, email, category_id, account_balance, created_at) VALUES
+('Mountain Roasters', 'Mountain Roasters S.A.', 'mroast', 'contact@mountainroasters.com', 1, 0.00, CURRENT_TIMESTAMP)
 ON CONFLICT DO NOTHING;
 
 -- Sample Items
-INSERT INTO items (name, description, price, cost, stock, min_stock, category_id, visible) VALUES
-('Arabica Select',   'Premium single-origin arabica',      2800, 1400, 50, 10, 1, TRUE),
-('Dark Roast Blend', 'Bold dark roast blend',              2400, 1200, 35, 8,  1, TRUE),
-('Medium Ground',    'Balanced medium grind',              2200, 1100, 40, 10, 2, TRUE),
-('French Press Kit', 'Glass french press 600ml',           5500, 2800, 15, 3,  3, TRUE),
-('Moka Pot',         'Stovetop espresso maker, 6-cup',     4800, 2400, 12, 3,  3, TRUE)
+INSERT INTO items (name, description, price, cost, stock, min_stock, category_id, visible, created_at) VALUES
+('Arabica Select',   'Premium single-origin arabica',      2800, 1400, 50, 10, 1, TRUE, CURRENT_TIMESTAMP),
+('Dark Roast Blend', 'Bold dark roast blend',              2400, 1200, 35, 8,  1, TRUE, CURRENT_TIMESTAMP),
+('Medium Ground',    'Balanced medium grind',              2200, 1100, 40, 10, 2, TRUE, CURRENT_TIMESTAMP),
+('French Press Kit', 'Glass french press 600ml',           5500, 2800, 15, 3,  3, TRUE, CURRENT_TIMESTAMP),
+('Moka Pot',         'Stovetop espresso maker, 6-cup',     4800, 2400, 12, 3,  3, TRUE, CURRENT_TIMESTAMP)
 ON CONFLICT DO NOTHING;
