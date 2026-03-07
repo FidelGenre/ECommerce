@@ -44,6 +44,8 @@ export default function AccountPage() {
     const [showPass, setShowPass] = useState(false)
     const [saving, setSaving] = useState(false)
     const [saveMsg, setSaveMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+    const [deleting, setDeleting] = useState(false)
+    const [confirmDelete, setConfirmDelete] = useState(false)
 
     const filteredOrders = useMemo(() => {
         let r = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -110,6 +112,17 @@ export default function AccountPage() {
         } catch {
             setSaveMsg({ type: 'err', text: 'No se pudo guardar. Intentá de nuevo.' })
         } finally { setSaving(false) }
+    }
+
+    const handleDeleteAccount = async () => {
+        setDeleting(true)
+        try {
+            await api.delete('/api/auth/me')
+            logout()
+        } catch (error: any) {
+            setSaveMsg({ type: 'err', text: error.response?.data || 'Error al eliminar cuenta.' })
+            setDeleting(false)
+        }
     }
 
     if (authLoading || !user) return (
@@ -247,6 +260,41 @@ export default function AccountPage() {
                             <p className={`text-xs font-medium rounded-lg py-2 px-3 ${saveMsg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
                                 {saveMsg.text}
                             </p>
+                        )}
+
+                        {!editMode && user?.role.toLowerCase() !== 'admin' && (
+                            <div className="pt-6 mt-4 border-t border-red-100">
+                                {!confirmDelete ? (
+                                    <button
+                                        onClick={() => setConfirmDelete(true)}
+                                        className="text-xs text-red-500 hover:text-red-700 font-medium w-full text-left flex items-center gap-1.5 transition-colors"
+                                    >
+                                        <LogOut className="w-3.5 h-3.5" /> Eliminar mi cuenta
+                                    </button>
+                                ) : (
+                                    <div className="bg-red-50 p-3 rounded-xl border border-red-100">
+                                        <p className="text-xs text-red-800 font-medium mb-3 leading-relaxed">
+                                            ¿Estás seguro/a? Esta acción no se puede deshacer y se eliminarán tus datos de acceso.
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={handleDeleteAccount}
+                                                disabled={deleting}
+                                                className="btn-primary bg-red-600 hover:bg-red-700 px-3 py-2 text-xs flex-1 shadow-sm"
+                                            >
+                                                {deleting ? 'Eliminando...' : 'Sí, eliminar'}
+                                            </button>
+                                            <button
+                                                onClick={() => setConfirmDelete(false)}
+                                                disabled={deleting}
+                                                className="btn-secondary px-3 py-2 text-xs bg-white text-gray-700 flex-1 hover:bg-gray-50 border-gray-200"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
 

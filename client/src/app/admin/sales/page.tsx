@@ -28,6 +28,7 @@ export default function SalesPage() {
     const [toDate, setToDate] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
     const [customerFilter, setCustomerFilter] = useState('')
+    const [orderCategoryFilter, setOrderCategoryFilter] = useState('')
 
     // Sort
     const [sortField, setSortField] = useState<SortField>('createdAt')
@@ -38,6 +39,7 @@ export default function SalesPage() {
     const [customers, setCustomers] = useState<Customer[]>([])
     const [payments, setPayments] = useState<PaymentMethod[]>([])
     const [items, setItems] = useState<Item[]>([])
+    const [categories, setCategories] = useState<any[]>([])
 
     // New order form
     const [form, setForm] = useState({ customerId: '', statusId: '', paymentMethodId: '', notes: '', pointsUsed: '0' })
@@ -59,8 +61,9 @@ export default function SalesPage() {
         if (toDate) params.set('to', toDate + 'T23:59:59')
         if (statusFilter) params.set('status', statusFilter)
         if (customerFilter) params.set('customer', customerFilter)
+        if (orderCategoryFilter) params.set('category', orderCategoryFilter)
         return `/api/admin/sales?${params}`
-    }, [page, fromDate, toDate, statusFilter, customerFilter])
+    }, [page, fromDate, toDate, statusFilter, customerFilter, orderCategoryFilter])
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -77,14 +80,16 @@ export default function SalesPage() {
             api.get('/api/admin/customers?size=200'),
             api.get('/api/admin/settings/payment-methods'),
             api.get('/api/admin/items?size=200'),
-        ]).then(([s, c, pm, it]) => {
+            api.get('/api/admin/categories?type=PRODUCT'),
+        ]).then(([s, c, pm, it, cats]) => {
             setStatuses(s.data); setCustomers(c.data.content)
             setPayments(pm.data); setItems(it.data.content)
+            setCategories(cats.data)
         })
     }, [])
 
     const resetFilters = () => {
-        setFromDate(''); setToDate(''); setStatusFilter(''); setCustomerFilter(''); setQ(''); setPage(0)
+        setFromDate(''); setToDate(''); setStatusFilter(''); setCustomerFilter(''); setOrderCategoryFilter(''); setQ(''); setPage(0)
     }
 
     const toggleSort = (field: SortField) => {
@@ -162,18 +167,22 @@ export default function SalesPage() {
         } finally { setSaving(false) }
     }
 
-    const statusColor: Record<string, string> = {
+    const STATUS_COLORS: any = {
         Completed: 'badge-green', Pending: 'badge-yellow', Cancelled: 'badge-red', Reserved: 'badge-blue'
     }
+    const STATUS_LABELS: Record<string, string> = {
+        Completed: 'Completado', Pending: 'Pendiente', Cancelled: 'Cancelado', Reserved: 'Reservado'
+    }
 
-    const hasFilters = fromDate || toDate || statusFilter || customerFilter
+    const hasFilters = !!fromDate || !!toDate || !!statusFilter || !!customerFilter || !!orderCategoryFilter || !!q
 
-    const currentFilters = { fromDate, toDate, statusFilter, customerFilter, q }
+    const currentFilters = { fromDate, toDate, statusFilter, customerFilter, orderCategoryFilter, q }
     const handleLoadFilters = (f: Record<string, any>) => {
         setFromDate(f.fromDate || '')
         setToDate(f.toDate || '')
         setStatusFilter(f.statusFilter || '')
         setCustomerFilter(f.customerFilter || '')
+        setOrderCategoryFilter(f.orderCategoryFilter || '')
         setQ(f.q || '')
         setPage(0)
     }
@@ -209,11 +218,15 @@ export default function SalesPage() {
                     <input type="date" className="input text-sm" value={toDate} onChange={e => { setToDate(e.target.value); setPage(0) }} />
                     <select className="select text-sm" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0) }}>
                         <option value="">Todos los estados</option>
-                        {statuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        {statuses.map(s => <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>)}
                     </select>
                     <select className="select text-sm" value={customerFilter} onChange={e => { setCustomerFilter(e.target.value); setPage(0) }}>
                         <option value="">Todos los clientes</option>
                         {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+                    </select>
+                    <select className="select text-sm" value={orderCategoryFilter} onChange={e => { setOrderCategoryFilter(e.target.value); setPage(0) }}>
+                        <option value="">Todas las categorías</option>
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                 </div>
                 <div className="flex items-center justify-between mt-3">
@@ -261,7 +274,11 @@ export default function SalesPage() {
                                             <td className="font-mono text-primary-400">#{o.id}</td>
                                             <td>{o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : <span className="text-primary-300">Walk-in</span>}</td>
                                             <td>{o.createdBy ? <span className="text-primary-600">{o.createdBy.username ?? o.createdBy.email}</span> : <span className="text-primary-300">Web</span>}</td>
-                                            <td><span className={statusColor[o.status?.name ?? ''] ?? 'badge-brown'}>{o.status?.name ?? '—'}</span></td>
+                                            <td>
+                                                <span className={STATUS_COLORS[o.status?.name as string] || 'badge-gray'}>
+                                                    {o.status?.name ? STATUS_LABELS[o.status.name] || o.status.name : '—'}
+                                                </span>
+                                            </td>
                                             <td className="text-primary-500">{o.paymentMethod?.name ?? '—'}</td>
                                             <td className="font-semibold">{FMT(o.total)}</td>
                                             <td className="text-primary-400 text-xs">{new Date(o.createdAt).toLocaleDateString('es-AR')}</td>
@@ -322,7 +339,8 @@ export default function SalesPage() {
                                 const selectedCustomer = customers.find(c => String(c.id) === form.customerId)
                                 const selectedCustomerPoints = selectedCustomer?.loyaltyPoints ?? 0
                                 const linesTotal = lines.reduce((acc, l) => acc + (Number(l.quantity || 0) * Number(l.unitPrice || 0)), 0)
-                                const discount = Number(form.pointsUsed || 0) * 10
+                                const starsUsed = Math.min(5, Math.floor(Number(form.pointsUsed || 0) / 100))
+                                const discount = linesTotal * (starsUsed / 100)
                                 const finalTotal = Math.max(0, linesTotal - discount)
                                 return (
                                     <>
@@ -336,9 +354,9 @@ export default function SalesPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-primary-700 mb-1">Estado</label>
-                                                <select className="select" value={form.statusId} onChange={e => setForm({ ...form, statusId: e.target.value })}>
-                                                    <option value="">Seleccionar estado</option>
-                                                    {statuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                <select className="select" value={form.statusId} onChange={e => setForm({ ...form, statusId: e.target.value })} required>
+                                                    <option value="">Seleccione estado</option>
+                                                    {statuses.map(s => <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>)}
                                                 </select>
                                             </div>
                                             <div>
@@ -353,9 +371,22 @@ export default function SalesPage() {
                                                 <input className="input" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-primary-700 mb-1">Puntos a descontar</label>
-                                                <input type="number" min="0" max={selectedCustomerPoints} className="input" value={form.pointsUsed} onChange={e => setForm({ ...form, pointsUsed: e.target.value })} disabled={!form.customerId} placeholder="1 punto = $10" />
-                                                {form.customerId ? <p className="text-xs text-primary-500 mt-1">Disponibles: {selectedCustomerPoints}</p> : <p className="text-xs text-primary-400 mt-1">Seleccione un cliente primero</p>}
+                                                <label className="block text-sm font-medium text-primary-700 mb-1">Descuento Fidelización</label>
+                                                {form.customerId ? (
+                                                    selectedCustomerPoints >= 100 ? (
+                                                        <div className="flex flex-col gap-1">
+                                                            <select className="select" value={form.pointsUsed} onChange={e => setForm({ ...form, pointsUsed: e.target.value })}>
+                                                                <option value="0">No usar puntos</option>
+                                                                {Array.from({ length: Math.min(5, Math.floor(selectedCustomerPoints / 100)) }).map((_, i) => (
+                                                                    <option key={i + 1} value={(i + 1) * 100}>{i + 1} Estrella{i > 0 ? 's' : ''} ({(i + 1) * 100} pts = {i + 1}%)</option>
+                                                                ))}
+                                                            </select>
+                                                            <p className="text-xs text-primary-500">Puntos disponibles: {selectedCustomerPoints}</p>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm text-primary-400 p-2 bg-warm-50 rounded border border-muted">No hay suficientes puntos (Mínimo 100pts)</p>
+                                                    )
+                                                ) : <p className="text-sm text-primary-400 p-2 bg-warm-50 rounded border border-muted">Seleccione un cliente primero</p>}
                                             </div>
                                         </div>
                                         <div>
@@ -455,10 +486,14 @@ export default function SalesPage() {
                                             {(ticketModal.pointsUsed ?? 0) > 0 && (
                                                 <tr>
                                                     <td className="py-1 pt-3 font-semibold text-emerald-600">
-                                                        Descuento Puntos ({ticketModal.pointsUsed})
+                                                        Descto. Puntos ({Math.floor(Number(ticketModal.pointsUsed) / 100)}% / {ticketModal.pointsUsed} pts)
                                                     </td>
                                                     <td className="text-right py-1 pt-3 font-semibold text-emerald-600 align-bottom">
-                                                        -${(Number(ticketModal.pointsUsed) * 10).toLocaleString('es-AR')}
+                                                        {(() => {
+                                                            const linesT = ticketModal.lines.reduce((acc: number, l: any) => acc + (Number(l.quantity) * Number(l.unitPrice)), 0);
+                                                            const desc = linesT * (Math.floor(Number(ticketModal.pointsUsed) / 100) / 100);
+                                                            return `-$${desc.toLocaleString('es-AR')}`;
+                                                        })()}
                                                     </td>
                                                 </tr>
                                             )}

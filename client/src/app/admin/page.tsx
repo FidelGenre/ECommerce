@@ -10,6 +10,8 @@ import {
     LineChart, Line, BarChart, Bar, XAxis, YAxis,
     CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
@@ -61,6 +63,15 @@ function getPresetDates(preset: Preset): { from: string; to: string; label: stri
 }
 
 export default function AdminDashboard() {
+    const { user } = useAuth()
+    const router = useRouter()
+
+    useEffect(() => {
+        if (user?.role === 'SUPPLIER') {
+            router.replace('/admin/inventory')
+        }
+    }, [user, router])
+
     const [kpi, setKpi] = useState<DashboardKpi | null>(null)
     const [sales, setSales] = useState<any[]>([])
     const [bySupplier, setBy] = useState<any[]>([])
@@ -74,6 +85,7 @@ export default function AdminDashboard() {
     const [dateTo, setDateTo] = useState(() => getPresetDates('30d').to)
 
     const load = async (from: string, to: string) => {
+        if (user?.role === 'SUPPLIER') return
         setLoading(true)
         try {
             const params = `from=${from}&to=${to}`

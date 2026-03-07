@@ -1,9 +1,21 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import api from '@/lib/api'
-import { Plus, X, Edit, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Plus, X, Edit, ToggleLeft, ToggleRight, Search, Filter, Trash2 } from 'lucide-react'
 
-interface UserRow { id: number; username: string; email: string; role: string; active: boolean; createdAt: string }
+interface UserRow {
+    id: number;
+    username: string;
+    email: string;
+    role: string;
+    active: boolean;
+    createdAt: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    accountBalance?: number;
+    loyaltyPoints?: number;
+}
 
 export default function UsersSettingsPage() {
     const [data, setData] = useState<UserRow[]>([])
@@ -12,45 +24,194 @@ export default function UsersSettingsPage() {
     const [editing, setEditing] = useState<UserRow | null>(null)
     const [form, setForm] = useState({ username: '', email: '', password: '', role: 'CUSTOMER' })
     const [saving, setSaving] = useState(false)
+    const [deleting, setDeleting] = useState<number | null>(null)
 
-    const load = async () => { setLoading(true); const r = await api.get('/api/admin/users?size=100'); setData(r.data.content); setLoading(false) }
-    useEffect(() => { load() }, [])
+    // Filters
+    const [search, setSearch] = useState('')
+    const [roleFilter, setRoleFilter] = useState('ALL')
+    const [activeFilter, setActiveFilter] = useState('ALL')
+
+    const load = async () => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams({ size: '100' })
+            if (search) params.append('search', search)
+            if (roleFilter !== 'ALL') params.append('role', roleFilter)
+            if (activeFilter !== 'ALL') params.append('active', activeFilter === '1' ? 'true' : 'false')
+
+            const r = await api.get(`/api/admin/users?${params.toString()}`)
+            setData(r.data.content);
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Auto trigger load on filter change with debounce
+    useEffect(() => {
+        const timeout = setTimeout(load, 300)
+        return () => clearTimeout(timeout)
+    }, [search, roleFilter, activeFilter])
 
     const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CUSTOMER' }); setShowModal(true) }
     const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role }); setShowModal(true) }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
-        try { if (editing) await api.put(`/api/admin/users/${editing.id}`, form); else await api.post('/api/admin/users', form); setShowModal(false); load() } finally { setSaving(false) }
+        try {
+            if (editing) await api.put(`/api/admin/users/${editing.id}`, form)
+            else await api.post('/api/admin/users', form)
+            setShowModal(false);
+            load()
+        } finally { setSaving(false) }
     }
     const toggle = async (id: number) => { await api.patch(`/api/admin/users/${id}/toggle`); load() }
+    const handleDelete = async (id: number, username: string) => {
+        if (!confirm(`¿Estás seguro que deseas eliminar permanentemente a ${username}?`)) return
+        setDeleting(id)
+        try {
+            await api.delete(`/api/admin/users/${id}`)
+            load()
+        } catch (error: any) {
+            const msg = error.response?.data?.message || (typeof error.response?.data === 'string' ? error.response.data : 'No se pudo eliminar el usuario')
+            alert(msg)
+        } finally {
+            setDeleting(null)
+        }
+    }
+
+    const formatCurrency = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n)
+    const formatDate = (d: string) => new Date(d).toLocaleDateString('es-AR')
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-espresso">Usuarios</h1>
+                <h1 className="text-2xl font-bold text-espresso">Usuarios y Clientes</h1>
                 <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar usuario</button>
             </div>
-            <div className="card p-0 overflow-hidden">
+
+            {/* Filters */}
+            <div className="card py-3 px-4 flex flex-wrap items-center gap-4 border border-muted bg-warm-50/50 shadow-sm">
+                <div className="relative flex-1 min-w-[200px]">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary-400" />
+                    <input
+                        className="input pl-9 text-sm py-2"
+                        placeholder="Buscar por usuario o email..."
+                        value={search} onChange={e => setSearch(e.target.value)}
+                    />
+                </div>
+                <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-primary-400" />
+                    <select className="input py-2 text-sm w-auto cursor-pointer font-medium" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
+                        <option value="ALL">Todos los roles</option>
+                        <option value="CUSTOMER">Cliente</option>
+                        <option value="ADMIN">Admin</option>
+                        <option value="SUPPLIER">Proveedor</option>
+                    </select>
+                </div>
+                <select className="input py-2 text-sm w-auto cursor-pointer font-medium" value={activeFilter} onChange={e => setActiveFilter(e.target.value)}>
+                    <option value="ALL">Todos los estados</option>
+                    <option value="1">Solo activos</option>
+                    <option value="0">Solo inactivos</option>
+                </select>
+            </div>
+
+            <div className="card p-0 overflow-hidden shadow-sm border border-muted">
                 {loading ? <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div> : (
-                    <table className="data-table"><thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Activo</th><th></th></tr></thead>
-                        <tbody>{data.map(u => (
-                            <tr key={u.id}><td className="font-medium">{u.username}</td><td className="text-primary-500">{u.email}</td>
-                                <td><span className={u.role === 'ADMIN' ? 'badge-blue' : 'badge-brown'}>{u.role}</span></td>
-                                <td><button onClick={() => toggle(u.id)} className="text-primary-500 hover:text-primary-700">{u.active ? <ToggleRight className="w-5 h-5 text-emerald-600" /> : <ToggleLeft className="w-5 h-5 text-red-400" />}</button></td>
-                                <td><button onClick={() => openEdit(u)} className="btn-ghost p-1.5"><Edit className="w-3.5 h-3.5" /></button></td></tr>
-                        ))}</tbody></table>
+                    <div className="overflow-x-auto">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario / Cliente</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Creado el</th>
+                                    <th className="text-right">Balance</th>
+                                    <th className="text-right">Fidelización</th>
+                                    <th>Estado</th>
+                                    <th className="text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.map(u => (
+                                    <tr key={u.id}>
+                                        <td>
+                                            <p className="font-semibold text-espresso">{u.username}</p>
+                                            {(u.firstName || u.lastName) && (
+                                                <p className="text-xs text-primary-500">{[u.firstName, u.lastName].filter(Boolean).join(' ')}</p>
+                                            )}
+                                        </td>
+                                        <td className="text-primary-600 text-sm font-medium">{u.email}</td>
+                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : u.role === 'SUPPLIER' ? 'badge-yellow' : 'badge-brown'}>{u.role}</span></td>
+                                        <td className="text-sm text-primary-500 font-medium">{formatDate(u.createdAt)}</td>
+                                        <td className="text-right font-semibold text-espresso">{u.accountBalance !== undefined ? formatCurrency(u.accountBalance) : '—'}</td>
+                                        <td className="text-right font-medium text-amber-600">{u.loyaltyPoints !== undefined ? u.loyaltyPoints + ' pts' : '—'}</td>
+                                        <td>
+                                            <button onClick={() => toggle(u.id)} className="text-primary-500 hover:text-primary-700 transition-colors">
+                                                {u.active ? <ToggleRight className="w-6 h-6 text-emerald-600" /> : <ToggleLeft className="w-6 h-6 text-red-400" />}
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <div className="flex justify-end gap-1">
+                                                <button onClick={() => openEdit(u)} title="Editar login" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400">
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                {u.username !== 'admin' && (
+                                                    <button onClick={() => handleDelete(u.id, u.username)} title="Eliminar definitivamente" disabled={deleting === u.id} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {data.length === 0 && (
+                                    <tr>
+                                        <td colSpan={8} className="text-center py-8 text-primary-400">No se encontraron usuarios</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
+
+            {/* Modal de Usuario */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
-                        <div className="flex items-center justify-between p-6 border-b border-muted"><h2 className="text-lg font-bold text-espresso">{editing ? 'Editar' : 'Nuevo'} Usuario</h2><button onClick={() => setShowModal(false)} className="btn-ghost p-1.5"><X className="w-5 h-5" /></button></div>
-                        <form onSubmit={handleSave} className="p-6 space-y-4">
-                            <div><label className="block text-sm font-medium text-primary-700 mb-1">Usuario</label><input className="input" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} required /></div>
-                            <div><label className="block text-sm font-medium text-primary-700 mb-1">Email</label><input type="email" className="input" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required /></div>
-                            <div><label className="block text-sm font-medium text-primary-700 mb-1">Contraseña {editing && '(dejar vacío para no cambiar)'}</label><input type="password" className="input" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} {...(!editing && { required: true })} /></div>
-                            <div><label className="block text-sm font-medium text-primary-700 mb-1">Rol</label><select className="select" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}><option value="CUSTOMER">Cliente</option><option value="ADMIN">Admin</option></select></div>
-                            <div className="flex gap-3"><button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancelar</button><button type="submit" className="btn-primary flex-1" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button></div>
+                        <div className="flex items-center justify-between p-5 border-b border-muted">
+                            <h2 className="text-lg font-bold text-espresso">{editing ? 'Editar Login' : 'Nuevo Usuario'}</h2>
+                            <button onClick={() => setShowModal(false)} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500"><X className="w-5 h-5" /></button>
+                        </div>
+                        <form onSubmit={handleSave} className="p-5 space-y-4">
+                            {!editing && (
+                                <div className="bg-primary-50 p-3 rounded-lg border border-primary-100 mb-2">
+                                    <p className="text-xs text-primary-700 leading-relaxed font-medium">Al crear un usuario con rol "Cliente", se generará automáticamente su perfil en el CRM.</p>
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-xs font-semibold text-primary-700 mb-1">Usuario</label>
+                                <input className="input" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} required />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-primary-700 mb-1">Email</label>
+                                <input type="email" className="input" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-primary-700 mb-1">Contraseña {editing && <span className="text-primary-400 font-normal">(dejar vacío para no cambiar)</span>}</label>
+                                <input type="password" className="input" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} {...(!editing && { required: true })} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-primary-700 mb-1">Rol</label>
+                                <select className="select" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
+                                    <option value="CUSTOMER">Cliente</option>
+                                    <option value="ADMIN">Administrador</option>
+                                    <option value="SUPPLIER">Proveedor</option>
+                                </select>
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1 py-2 text-sm shadow-sm">Cancelar</button>
+                                <button type="submit" className="btn-primary flex-1 py-2 text-sm shadow-sm" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
+                            </div>
                         </form>
                     </div>
                 </div>

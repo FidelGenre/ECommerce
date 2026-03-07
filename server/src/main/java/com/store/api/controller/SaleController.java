@@ -39,6 +39,7 @@ public class SaleController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Long customer,
             @RequestParam(required = false) Long status,
+            @RequestParam(required = false) Long category,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -48,6 +49,11 @@ public class SaleController {
                 predicates.add(cb.equal(root.get("customer").get("id"), customer));
             if (status != null)
                 predicates.add(cb.equal(root.get("status").get("id"), status));
+            if (category != null) {
+                jakarta.persistence.criteria.Join<SaleOrder, SaleLine> linesJoin = root.join("lines");
+                predicates.add(cb.equal(linesJoin.get("item").get("category").get("id"), category));
+                query.distinct(true);
+            }
             if (from != null)
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), from));
             if (to != null)
@@ -115,13 +121,21 @@ public class SaleController {
             }
         }
 
-        if (req.getPointsUsed() != null && req.getPointsUsed() > 0 && order.getCustomer() != null) {
+        if (req.getPointsUsed() != null && req.getPointsUsed() >= 100 && order.getCustomer() != null) {
             Customer c = order.getCustomer();
-            int used = Math.min(req.getPointsUsed(), c.getLoyaltyPoints() != null ? c.getLoyaltyPoints() : 0);
-            if (used > 0) {
-                c.setLoyaltyPoints(c.getLoyaltyPoints() - used);
-                order.setPointsUsed(used);
-                java.math.BigDecimal discount = java.math.BigDecimal.valueOf(used * 10L); // 1 punto = $10 de descuento
+            int requestedPoints = req.getPointsUsed();
+            int availablePoints = c.getLoyaltyPoints() != null ? c.getLoyaltyPoints() : 0;
+            int used = Math.min(requestedPoints, availablePoints);
+            int stars = used / 100;
+            if (stars > 5)
+                stars = 5;
+            int actualPointsUsed = stars * 100;
+
+            if (actualPointsUsed > 0) {
+                c.setLoyaltyPoints(c.getLoyaltyPoints() - actualPointsUsed);
+                order.setPointsUsed(actualPointsUsed);
+                java.math.BigDecimal discount = order.getTotal().multiply(java.math.BigDecimal.valueOf(stars))
+                        .divide(java.math.BigDecimal.valueOf(100));
                 order.setTotal(order.getTotal().subtract(discount));
                 if (order.getTotal().compareTo(java.math.BigDecimal.ZERO) < 0) {
                     order.setTotal(java.math.BigDecimal.ZERO);

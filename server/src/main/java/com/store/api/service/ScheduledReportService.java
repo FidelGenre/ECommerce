@@ -2,17 +2,22 @@ package com.store.api.service;
 
 import com.store.api.repository.SaleOrderRepository;
 import com.store.api.repository.CashRegisterRepository;
+import com.store.api.repository.ItemRepository;
+import com.store.api.entity.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import jakarta.mail.internet.MimeMessage;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +27,7 @@ public class ScheduledReportService {
     private final JavaMailSender emailSender;
     private final SaleOrderRepository saleRepo;
     private final CashRegisterRepository cashRepo;
+    private final ItemRepository itemRepo;
 
     @Value("${app.report.email.to:admin@coffeebeans.com}")
     private String adminEmail;
@@ -29,10 +35,10 @@ public class ScheduledReportService {
     @Value("${spring.mail.username:noreply@coffeebeans.com}")
     private String fromEmail;
 
-    // Run every day at 23:59
-    @Scheduled(cron = "0 59 23 * * ?")
+    // Run every day at 20:00 as requested
+    @Scheduled(cron = "0 0 20 * * ?")
     public void sendDailyReport() {
-        log.info("Generating daily sales report...");
+        log.info("Generating daily sales and inventory report...");
         try {
             LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
             LocalDateTime endOfDay = LocalDate.now().plusDays(1).atStartOfDay();
@@ -51,18 +57,65 @@ public class ScheduledReportService {
                     .map(c -> c.getClosingAmount())
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(adminEmail);
-            message.setSubject("Reporte Diario de Gesti\u00f3n - Coffee Beans - " + LocalDate.now());
-            message.setText("Hola,\n\nAqu\u00ed tienes el resumen del d\u00eda de hoy (" + LocalDate.now() + "):\n\n" +
-                    "- \u00d3rdenes completadas: " + totalOrders + "\n" +
-                    "- Ingresos Totales por Ventas: $" + totalSales + "\n" +
-                    "- Monto Total de Cierres de Caja hoy: $" + cashClosingAmount + "\n\n" +
-                    "Saludos,\nCoffee Beans ERP");
+            // Low stock alerts
+            List<Item> allItems = itemRepo.findAll();
+            List<Item> lowStockItems = allItems.stream()
+                    .filter(i -> i.getStock() <= i.getMinStock())
+                    .collect(Collectors.toList());
 
+            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(adminEmail);
+            helper.setSubject("Reporte Diario de Gesti\u00f3n - Coffee Beans - " + LocalDate.now());
+
+            StringBuilder html = new StringBuilder();
+            html.append("<div style='font-family: sans-serif; color: #333;'>");
+            html.append("<h2 style='color: #4A3B32;'>Resumen del día de hoy (").append(LocalDate.now())
+                    .append(")</h2>");
+            html.append(
+                    "<table style='width: 100%; max-width: 600px; border-collapse: collapse; margin-bottom: 20px;'>");
+            html.append(
+                    "<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><b>Órdenes completadas:</b></td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>")
+                    .append(totalOrders).append("</td></tr>");
+            html.append(
+                    "<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><b>Ingresos Totales por Ventas:</b></td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>$")
+                    .append(totalSales).append("</td></tr>");
+            html.append(
+                    "<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><b>Monto Total de Cierres de Caja:</b></td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>$")
+                    .append(cashClosingAmount).append("</td></tr>");
+            html.append("</table>");
+
+            if (!lowStockItems.isEmpty()) {
+                html.append("<h3 style='color: #D97706; margin-top: 30px;'>⚠️ Alertas de Stock Bajo</h3>");
+                html.append("<table style='width: 100%; max-width: 600px; border-collapse: collapse;'>");
+                html.append(
+                        "<tr style='background-color: #FEF3C7; text-align: left;'><th style='padding: 8px;'>Producto</th><th style='padding: 8px; text-align: center;'>Stock Actual</th><th style='padding: 8px; text-align: center;'>Mínimo</th></tr>");
+                for (Item item : lowStockItems) {
+                    html.append("<tr>");
+                    html.append("<td style='padding: 8px; border-bottom: 1px solid #ddd;'>").append(item.getName())
+                            .append("</td>");
+                    html.append(
+                            "<td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: center; color: red; font-weight: bold;'>")
+                            .append(item.getStock()).append("</td>");
+                    html.append("<td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: center;'>")
+                            .append(item.getMinStock()).append("</td>");
+                    html.append("</tr>");
+                }
+                html.append("</table>");
+            } else {
+                html.append("<p style='color: #10B981; font-weight: bold;'>✅ Ningún producto con stock bajo.</p>");
+            }
+
+            html.append(
+                    "<p style='margin-top: 40px; font-size: 12px; color: #777;'>Este es un reporte automático generado por Coffee Beans ERP.</p>");
+            html.append("</div>");
+
+            helper.setText(html.toString(), true);
             emailSender.send(message);
-            log.info("Daily report sent to {}", adminEmail);
+
+            log.info("Daily HTML report sent to {}", adminEmail);
         } catch (Exception e) {
             log.error("Error sending daily report: ", e);
         }
