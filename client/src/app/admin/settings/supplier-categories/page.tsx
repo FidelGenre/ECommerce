@@ -14,6 +14,17 @@ export default function SupplierCategoriesPage() {
     const [msg, setMsg] = useState<string | null>(null)
     const [search, setSearch] = useState('')
 
+    // Selection
+    const [selected, setSelected] = useState<Set<number>>(new Set())
+    const [deleting, setDeleting] = useState(false)
+
+    const toggleSelect = (id: number) => setSelected(prev => {
+        const next = new Set(prev)
+        next.has(id) ? next.delete(id) : next.add(id)
+        return next
+    })
+    const toggleAll = () => setSelected(prev => prev.size === filteredCats.length ? new Set() : new Set(filteredCats.map(c => c.id)))
+
     const load = async () => {
         const r = await api.get('/api/admin/categories?type=SUPPLIER')
         setCats(r.data)
@@ -36,9 +47,21 @@ export default function SupplierCategoriesPage() {
         } catch { setMsg('No se pudo guardar.') } finally { setSaving(false) }
     }
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('¿Eliminar esta categoría de proveedor?')) return
-        try { await api.delete(`/api/admin/categories/${id}`); await load() } catch { alert('No se pudo eliminar.') }
+    const handleDelete = async (ids: number[]) => {
+        if (!confirm(`¿Eliminar ${ids.length === 1 ? 'esta categoría' : `estas ${ids.length} categorías`} de proveedor?`)) return
+        setDeleting(true)
+        const errors: string[] = []
+        for (const id of ids) {
+            try { await api.delete(`/api/admin/categories/${id}`) }
+            catch (e: any) {
+                const name = cats.find(c => c.id === id)?.name ?? id
+                errors.push(`${name}: ${e.response?.data ?? 'Error'}`)
+            }
+        }
+        setDeleting(false)
+        setSelected(new Set())
+        if (errors.length) alert(errors.join('\n'))
+        load()
     }
 
     const filteredCats = cats.filter(c =>
@@ -50,9 +73,17 @@ export default function SupplierCategoriesPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-espresso">Categorías de Proveedores</h1>
-                <button onClick={openNew} className="btn-primary flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> Nueva Categoría
-                </button>
+                <div className="flex items-center gap-2">
+                    {selected.size > 0 && (
+                        <button onClick={() => handleDelete([...selected])} disabled={deleting}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
+                            <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
+                        </button>
+                    )}
+                    <button onClick={openNew} className="btn-primary flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Nueva Categoría
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}
@@ -79,6 +110,7 @@ export default function SupplierCategoriesPage() {
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-muted text-left text-primary-500">
+                                <th className="pb-3 w-8 pl-4"><input type="checkbox" checked={selected.size === filteredCats.length && filteredCats.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th>
                                 <th className="pb-3 font-semibold">Nombre</th>
                                 <th className="pb-3 font-semibold">Descripción</th>
                                 <th className="pb-3 font-semibold w-24">Acciones</th>
@@ -86,7 +118,8 @@ export default function SupplierCategoriesPage() {
                         </thead>
                         <tbody className="divide-y divide-muted">
                             {filteredCats.map(c => (
-                                <tr key={c.id} className="hover:bg-warm-50">
+                                <tr key={c.id} className={`hover:bg-warm-50 ${selected.has(c.id) ? 'bg-red-50' : ''}`}>
+                                    <td className="py-3 pl-4"><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
                                     <td className="py-3 font-medium text-espresso">{c.name}</td>
                                     <td className="py-3 text-primary-500">{c.description || '—'}</td>
                                     <td className="py-3">
@@ -94,7 +127,7 @@ export default function SupplierCategoriesPage() {
                                             <button onClick={() => openEdit(c)} className="w-8 h-8 rounded-lg bg-primary-100 hover:bg-primary-200 flex items-center justify-center text-primary-700 transition-colors">
                                                 <Edit2 className="w-3.5 h-3.5" />
                                             </button>
-                                            <button onClick={() => handleDelete(c.id)} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors">
+                                            <button onClick={() => handleDelete([c.id])} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors">
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </div>

@@ -32,7 +32,18 @@ export default function CostsPage() {
     const [editItem, setEditItem] = useState<InternalCost | null>(null)
     const [form, setForm] = useState(emptyForm)
     const [saving, setSaving] = useState(false)
-    const [deleteId, setDeleteId] = useState<number | null>(null)
+    const [deleteId, setDeleteId] = useState<number[] | null>(null)
+
+    // Selection
+    const [selected, setSelected] = useState<Set<number>>(new Set())
+    const [deleting, setDeleting] = useState(false)
+
+    const toggleSelect = (id: number) => setSelected(prev => {
+        const next = new Set(prev)
+        next.has(id) ? next.delete(id) : next.add(id)
+        return next
+    })
+    const toggleAll = () => setSelected(prev => prev.size === data.length ? new Set() : new Set(data.map(c => c.id)))
 
     const buildUrl = useCallback(() => {
         const params = new URLSearchParams({ page: String(page), size: '15' })
@@ -71,8 +82,17 @@ export default function CostsPage() {
 
     const handleDelete = async () => {
         if (!deleteId) return
-        await api.delete(`/api/admin/costs/${deleteId}`)
-        setDeleteId(null); load()
+        setDeleting(true)
+        const errors: string[] = []
+        for (const id of deleteId) {
+            try { await api.delete(`/api/admin/costs/${id}`) }
+            catch (e: any) { errors.push(`Costo #${id}: ${e.response?.data ?? 'Error'}`) }
+        }
+        setDeleting(false)
+        setDeleteId(null)
+        setSelected(new Set())
+        if (errors.length) alert(errors.join('\n'))
+        load()
     }
 
     const togglePaid = async (c: InternalCost) => {
@@ -107,6 +127,12 @@ export default function CostsPage() {
                     <p className="text-primary-500 text-sm">{total} registros · Total: {FMT(totalAmount)} · <span className="text-green-600">Pagado: {FMT(totalPaid)}</span> · <span className="text-red-600">Pendiente: {FMT(totalUnpaid)}</span></p>
                 </div>
                 <div className="flex items-center gap-2">
+                    {selected.size > 0 && (
+                        <button onClick={() => setDeleteId([...selected])} disabled={deleting}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
+                            <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
+                        </button>
+                    )}
                     <button onClick={exportExcel} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3">
                         <Download className="w-4 h-4" /> Excel
                     </button>
@@ -141,6 +167,7 @@ export default function CostsPage() {
                     <div className="table-wrapper rounded-none border-0">
                         <table className="data-table">
                             <thead><tr>
+                                <th className="w-8 pl-4"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th>
                                 <th>Descripción</th>
                                 <th>Categoría</th>
                                 <th className="text-right">Monto</th>
@@ -151,9 +178,10 @@ export default function CostsPage() {
                             </tr></thead>
                             <tbody>
                                 {data.length === 0 ? (
-                                    <tr><td colSpan={7} className="text-center text-primary-400 py-10">No hay costos registrados</td></tr>
+                                    <tr><td colSpan={8} className="text-center text-primary-400 py-10">No hay costos registrados</td></tr>
                                 ) : data.map(c => (
-                                    <tr key={c.id} className={c.paid ? 'opacity-60' : ''}>
+                                    <tr key={c.id} className={`${c.paid ? 'opacity-60' : ''} ${selected.has(c.id) ? 'bg-red-50' : ''}`}>
+                                        <td className="pl-4"><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
                                         <td className="font-medium">{c.description}</td>
                                         <td>
                                             {c.category ? <span className="badge-brown">{c.category}</span> : <span className="text-primary-300">—</span>}
@@ -179,7 +207,7 @@ export default function CostsPage() {
                                                 <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">
                                                     <Pencil className="w-3.5 h-3.5" />
                                                 </button>
-                                                <button onClick={() => setDeleteId(c.id)} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700">
+                                                <button onClick={() => setDeleteId([c.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700">
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
@@ -242,7 +270,7 @@ export default function CostsPage() {
             {deleteId && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
-                        <h2 className="font-bold text-espresso">¿Eliminar este costo?</h2>
+                        <h2 className="font-bold text-espresso">¿Eliminar {deleteId.length === 1 ? 'este costo' : `estos ${deleteId.length} costos`}?</h2>
                         <p className="text-primary-500 text-sm">Esta acción no se puede deshacer.</p>
                         <div className="flex gap-3">
                             <button onClick={() => setDeleteId(null)} className="btn-secondary flex-1">Cancelar</button>

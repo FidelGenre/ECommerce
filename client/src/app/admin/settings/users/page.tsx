@@ -26,8 +26,17 @@ export default function UsersSettingsPage() {
     const [editing, setEditing] = useState<UserRow | null>(null)
     const [form, setForm] = useState({ username: '', email: '', password: '', role: 'CUSTOMER' })
     const [saving, setSaving] = useState(false)
-    const [deleting, setDeleting] = useState<number | null>(null)
+    // Selection
+    const [selected, setSelected] = useState<Set<number>>(new Set())
+    const [deleting, setDeleting] = useState("")
     const [showPwd, setShowPwd] = useState(false)
+
+    const toggleSelect = (id: number) => setSelected(prev => {
+        const next = new Set(prev)
+        next.has(id) ? next.delete(id) : next.add(id)
+        return next
+    })
+    const toggleAll = () => setSelected(prev => prev.size === data.length ? new Set() : new Set(data.map(u => u.id)))
 
     // Filters
     const [search, setSearch] = useState('')
@@ -67,24 +76,30 @@ export default function UsersSettingsPage() {
         } finally { setSaving(false) }
     }
     const toggle = async (id: number) => { await api.patch(`/api/admin/users/${id}/toggle`); load() }
-    const handleDelete = async (id: number, username: string) => {
-        if (!confirm(`¿Estás seguro que deseas eliminar permanentemente a ${username}?`)) return
-        setDeleting(id)
-        try {
-            await api.delete(`/api/admin/users/${id}`)
-            // If user deleted their own account, log out
-            if (id === authUser?.userId) { logout(); return }
-            load()
-        } catch (error: any) {
-            if (error.response?.status === 403)
-                alert('No podés eliminar a otro administrador.')
-            else {
-                const msg = error.response?.data?.message || (typeof error.response?.data === 'string' ? error.response.data : 'No se pudo eliminar el usuario')
-                alert(msg)
+    const handleDelete = async (ids: number[]) => {
+        if (!confirm(`¿Eliminar permanentemente ${ids.length === 1 ? 'este usuario' : `estos ${ids.length} usuarios`}?`)) return
+        setDeleting("bulk")
+        const errors: string[] = []
+        let ownDeleted = false
+        for (const id of ids) {
+            try {
+                await api.delete(`/api/admin/users/${id}`)
+                if (id === authUser?.userId) ownDeleted = true
+            } catch (error: any) {
+                const username = data.find(u => u.id === id)?.username ?? id
+                if (error.response?.status === 403) {
+                    errors.push(`${username}: No podés eliminar a otro administrador.`)
+                } else {
+                    const msg = error.response?.data?.message || (typeof error.response?.data === 'string' ? error.response.data : 'Error desconocido')
+                    errors.push(`${username}: ${msg}`)
+                }
             }
-        } finally {
-            setDeleting(null)
         }
+        setDeleting("")
+        setSelected(new Set())
+        if (errors.length) alert(errors.join('\n'))
+        if (ownDeleted) { logout(); return }
+        load()
     }
 
     const formatCurrency = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n)
@@ -94,7 +109,15 @@ export default function UsersSettingsPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-espresso">Usuarios y Clientes</h1>
-                <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar usuario</button>
+                <div className="flex items-center gap-2">
+                    {selected.size > 0 && (
+                        <button onClick={() => handleDelete([...selected])} disabled={deleting !== ""}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
+                            <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
+                        </button>
+                    )}
+                    <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar usuario</button>
+                </div>
             </div>
 
             {/* Filters */}
@@ -129,6 +152,7 @@ export default function UsersSettingsPage() {
                         <table className="data-table">
                             <thead>
                                 <tr>
+                                    <th className="w-8 pl-4"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th>
                                     <th>Usuario / Cliente</th>
                                     <th>Email</th>
                                     <th>Rol</th>
@@ -141,7 +165,8 @@ export default function UsersSettingsPage() {
                             </thead>
                             <tbody>
                                 {data.map(u => (
-                                    <tr key={u.id}>
+                                    <tr key={u.id} className={selected.has(u.id) ? 'bg-red-50' : ''}>
+                                        <td className="pl-4"><input type="checkbox" checked={selected.has(u.id)} onChange={() => toggleSelect(u.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
                                         <td>
                                             <p className="font-semibold text-espresso">{u.username}</p>
                                             {(u.firstName || u.lastName) && (
@@ -164,7 +189,7 @@ export default function UsersSettingsPage() {
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 {u.username !== 'admin' && (
-                                                    <button onClick={() => handleDelete(u.id, u.username)} title="Eliminar definitivamente" disabled={deleting === u.id} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
+                                                    <button onClick={() => handleDelete([u.id])} title="Eliminar definitivamente" disabled={deleting !== ""} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
@@ -174,7 +199,7 @@ export default function UsersSettingsPage() {
                                 ))}
                                 {data.length === 0 && (
                                     <tr>
-                                        <td colSpan={8} className="text-center py-8 text-primary-400">No se encontraron usuarios</td>
+                                        <td colSpan={9} className="text-center py-8 text-primary-400">No se encontraron usuarios</td>
                                     </tr>
                                 )}
                             </tbody>

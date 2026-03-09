@@ -110,7 +110,16 @@ export default function ProductosAdminPage() {
     const [deleting, setDeleting] = useState(false)
     const [qrItem, setQrItem] = useState<Item | null>(null)
     const [showLabels, setShowLabels] = useState(false)
+
+    // Selection
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+
+    const toggleSelect = (id: number) => setSelectedIds(prev => {
+        const next = new Set(prev)
+        next.has(id) ? next.delete(id) : next.add(id)
+        return next
+    })
+    const toggleAll = () => setSelectedIds(prev => prev.size === displayed.length ? new Set() : new Set(displayed.map(i => i.id)))
 
     const load = async () => {
         setLoading(true)
@@ -183,11 +192,21 @@ export default function ProductosAdminPage() {
         } finally { setSaving(false) }
     }
 
-    const handleDelete = async (item: Item) => {
-        if (!confirm(`¿Eliminar "${item.name}"? Esta acción no se puede deshacer.`)) return
+    const handleDelete = async (ids: number[]) => {
+        if (!confirm(`¿Eliminar ${ids.length === 1 ? 'este producto' : `estos ${ids.length} productos`}? Esta acción no se puede deshacer.`)) return
         setDeleting(true)
-        try { await api.delete(`/api/admin/items/${item.id}`); load() }
-        finally { setDeleting(false) }
+        const errors: string[] = []
+        for (const id of ids) {
+            try { await api.delete(`/api/admin/items/${id}`) }
+            catch (e: any) {
+                const name = data.find(i => i.id === id)?.name ?? id
+                errors.push(`${name}: ${e.response?.data ?? 'Error'}`)
+            }
+        }
+        setDeleting(false)
+        setSelectedIds(new Set())
+        if (errors.length) alert(errors.join('\n'))
+        load()
     }
 
     const toggleVisibility = async (item: Item) => {
@@ -288,7 +307,7 @@ export default function ProductosAdminPage() {
                             item={item}
                             onEdit={() => openEdit(item)}
                             onToggle={() => toggleVisibility(item)}
-                            onDelete={() => handleDelete(item)}
+                            onDelete={() => handleDelete([item.id])}
                             onQr={() => setQrItem(item)}
                         />
                     ))}
@@ -344,7 +363,7 @@ export default function ProductosAdminPage() {
                                                 <button onClick={() => toggleVisibility(item)} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
                                                     {item.visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                                 </button>
-                                                <button onClick={() => handleDelete(item)} className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50 transition-colors" title="Eliminar">
+                                                <button onClick={() => handleDelete([item.id])} className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50 transition-colors" title="Eliminar">
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
