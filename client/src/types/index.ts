@@ -22,7 +22,7 @@ export interface Category {
     id: number
     name: string
     description?: string
-    type: 'PRODUCT' | 'SUPPLIER'
+    type: 'PRODUCT'
 }
 
 export interface Supplier {

@@ -133,7 +133,7 @@ export default function CashPage() {
             ) : register ? (
                 <>
                     {summary && (
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="card text-center">
                                 <p className="text-xs text-primary-500 uppercase font-semibold mb-1">Apertura</p>
                                 <p className="text-2xl font-bold text-espresso">{FMT(register.openingAmount)}</p>
@@ -145,6 +145,10 @@ export default function CashPage() {
                             <div className="card text-center bg-red-50">
                                 <p className="text-xs text-red-600 uppercase font-semibold mb-1">Egresos</p>
                                 <p className="text-2xl font-bold text-red-700">{FMT(summary.expense)}</p>
+                            </div>
+                            <div className="card text-center bg-blue-50">
+                                <p className="text-xs text-blue-600 uppercase font-semibold mb-1">Total Teórico</p>
+                                <p className="text-2xl font-bold text-blue-700">{FMT(register.openingAmount + summary.income - summary.expense)}</p>
                             </div>
                         </div>
                     )}

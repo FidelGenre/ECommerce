@@ -136,7 +136,6 @@ export default function UsersSettingsPage() {
                         <option value="ALL">Todos los roles</option>
                         <option value="CUSTOMER">Cliente</option>
                         <option value="ADMIN">Admin</option>
-                        <option value="SUPPLIER">Proveedor</option>
                     </select>
                 </div>
                 <select className="input py-2 text-sm w-auto cursor-pointer font-medium" value={activeFilter} onChange={e => setActiveFilter(e.target.value)}>
@@ -174,7 +173,7 @@ export default function UsersSettingsPage() {
                                             )}
                                         </td>
                                         <td className="text-primary-600 text-sm font-medium">{u.email}</td>
-                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : u.role === 'SUPPLIER' ? 'badge-yellow' : 'badge-brown'}>{u.role}</span></td>
+                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : 'badge-brown'}>{u.role}</span></td>
                                         <td className="text-sm text-primary-500 font-medium">{formatDate(u.createdAt)}</td>
                                         <td className="text-right font-semibold text-espresso">{u.accountBalance !== undefined ? formatCurrency(u.accountBalance) : '—'}</td>
                                         <td className="text-right font-medium text-amber-600">{u.loyaltyPoints !== undefined ? u.loyaltyPoints + ' pts' : '—'}</td>
@@ -244,7 +243,6 @@ export default function UsersSettingsPage() {
                                 <select className="select" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
                                     <option value="CUSTOMER">Cliente</option>
                                     <option value="ADMIN">Administrador</option>
-                                    <option value="SUPPLIER">Proveedor</option>
                                 </select>
                             </div>
                             <div className="flex gap-2 pt-2">

@@ -43,22 +43,7 @@ public class PurchaseController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             org.springframework.security.core.Authentication auth) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        // Auto-scope to own orders for SUPPLIER role
-        final Long effectiveSupplier;
-        if (auth != null) {
-            User caller = userRepo.findByUsername(auth.getName()).orElse(null);
-            if (caller != null && "SUPPLIER".equals(caller.getRole())) {
-                effectiveSupplier = supplierRepo.findAll().stream()
-                        .filter(s -> s.getEmail() != null && s.getEmail().equalsIgnoreCase(caller.getEmail()))
-                        .map(Supplier::getId)
-                        .findFirst().orElse(-1L);
-            } else {
-                effectiveSupplier = supplier;
-            }
-        } else {
-            effectiveSupplier = supplier;
-        }
+        final Long effectiveSupplier = supplier;
 
         Specification<PurchaseOrder> spec = (root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
