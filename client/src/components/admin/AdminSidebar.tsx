@@ -27,7 +27,6 @@ const NAV = [
     { href: '/admin/settings/supplier-categories', icon: Truck, label: 'Categorías de Proveedores' },
     { href: '/admin/settings/users', icon: Users, label: 'Usuarios y Clientes' },
     { href: '/admin/settings/payments', icon: Banknote, label: 'Formas de Pago' },
-    { href: '/admin/settings/statuses', icon: ClipboardList, label: 'Estados' },
 ]
 
 function SidebarInner({ onNav }: { onNav?: () => void }) {

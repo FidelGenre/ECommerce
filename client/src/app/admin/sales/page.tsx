@@ -152,6 +152,15 @@ export default function SalesPage() {
         setLines(next)
     }
 
+    const updateStatus = async (id: number, statusId: string) => {
+        try {
+            await api.patch(`/api/admin/sales/${id}/status?statusId=${statusId}`)
+            load()
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
         try {
@@ -275,9 +284,16 @@ export default function SalesPage() {
                                             <td>{o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : <span className="text-primary-300">Walk-in</span>}</td>
                                             <td>{o.createdBy ? <span className="text-primary-600">{o.createdBy.username ?? o.createdBy.email}</span> : <span className="text-primary-300">Web</span>}</td>
                                             <td>
-                                                <span className={STATUS_COLORS[o.status?.name as string] || 'badge-gray'}>
-                                                    {o.status?.name ? STATUS_LABELS[o.status.name] || o.status.name : '—'}
-                                                </span>
+                                                <select
+                                                    className="input py-1 px-2 text-xs font-semibold w-auto cursor-pointer"
+                                                    value={o.status?.id || ''}
+                                                    onChange={(e) => updateStatus(o.id, e.target.value)}
+                                                >
+                                                    <option value="" disabled>—</option>
+                                                    {statuses.map(s => (
+                                                        <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>
+                                                    ))}
+                                                </select>
                                             </td>
                                             <td className="text-primary-500">{o.paymentMethod?.name ?? '—'}</td>
                                             <td className="font-semibold">{FMT(o.total)}</td>
