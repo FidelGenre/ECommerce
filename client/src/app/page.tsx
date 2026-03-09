@@ -46,7 +46,7 @@ export default function StorefrontPage() {
   const updateQty = (id: number, delta: number) => {
     setCart(prev => prev.map(c => {
       if (c.item.id === id) {
-        const step = 1;
+        const step = c.item.unitSize || 1;
         const newQty = Math.max(0, Number((c.qty + delta).toFixed(3)))
         if (newQty > c.item.stock) return c
         return { ...c, qty: newQty }
@@ -67,7 +67,7 @@ export default function StorefrontPage() {
   }
 
   const addToCart = (item: Item) => {
-    const step = 1;
+    const step = item.unitSize || 1;
     setCart(prev => {
       const existing = prev.find(c => c.item.id === item.id)
       if (existing) {
