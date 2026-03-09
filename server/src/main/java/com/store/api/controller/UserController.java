@@ -98,12 +98,15 @@ public class UserController {
     public ResponseEntity<User> update(@PathVariable Long id, @RequestBody UserRequest req,
             org.springframework.security.core.Authentication auth) {
         return userRepo.findById(id).map(u -> {
-            if ("admin".equalsIgnoreCase(u.getUsername()))
+            // Block modification of supreme admin by anyone else
+            if ("admin".equalsIgnoreCase(u.getUsername())
+                    && (auth == null || !"admin".equalsIgnoreCase(auth.getName())))
                 return ResponseEntity.status(403).<User>body(null);
-            // Block admins from editing other admins
+            // Block non-supreme admins from editing other admins
             if ("ADMIN".equals(u.getRole()) && auth != null) {
                 User caller = userRepo.findByUsername(auth.getName()).orElse(null);
-                if (caller != null && !caller.getId().equals(u.getId()))
+                if (caller != null && !"admin".equalsIgnoreCase(caller.getUsername())
+                        && !caller.getId().equals(u.getId()))
                     return ResponseEntity.status(403).<User>body(null);
             }
             u.setUsername(req.getUsername());
@@ -120,11 +123,14 @@ public class UserController {
     @PatchMapping("/{id}/toggle")
     public ResponseEntity<?> toggle(@PathVariable Long id, org.springframework.security.core.Authentication auth) {
         return userRepo.findById(id).map(u -> {
+            // Never toggle supreme admin
             if ("admin".equalsIgnoreCase(u.getUsername()))
                 return ResponseEntity.status(403).<User>body(null);
+            // Block non-supreme admins from toggling other admins
             if ("ADMIN".equals(u.getRole()) && auth != null) {
                 User caller = userRepo.findByUsername(auth.getName()).orElse(null);
-                if (caller != null && !caller.getId().equals(u.getId()))
+                if (caller != null && !"admin".equalsIgnoreCase(caller.getUsername())
+                        && !caller.getId().equals(u.getId()))
                     return ResponseEntity.status(403).<User>body(null);
             }
             u.setActive(!u.getActive());
@@ -136,12 +142,14 @@ public class UserController {
     @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> delete(@PathVariable Long id, org.springframework.security.core.Authentication auth) {
         return userRepo.findById(id).map(u -> {
+            // Never delete supreme admin
             if ("admin".equalsIgnoreCase(u.getUsername()))
                 return ResponseEntity.status(403).<Void>body(null);
-            // Block admins from deleting other admins
+            // Block non-supreme admins from deleting other admins
             if ("ADMIN".equals(u.getRole()) && auth != null) {
                 User caller = userRepo.findByUsername(auth.getName()).orElse(null);
-                if (caller != null && !caller.getId().equals(u.getId()))
+                if (caller != null && !"admin".equalsIgnoreCase(caller.getUsername())
+                        && !caller.getId().equals(u.getId()))
                     return ResponseEntity.status(403).<Void>body(null);
             }
 
