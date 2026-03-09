@@ -118,14 +118,14 @@ public class PurchaseController {
                 line.setUnitCost(lineReq.getUnitCost());
                 order.getLines().add(line);
                 order.setTotal(order.getTotal()
-                        .add(lineReq.getUnitCost().multiply(java.math.BigDecimal.valueOf(lineReq.getQuantity()))));
+                        .add(lineReq.getUnitCost().multiply(lineReq.getQuantity())));
 
                 // Auto-update stock
                 java.math.BigDecimal conversion = item.getPurchaseConversion() != null ? item.getPurchaseConversion()
                         : java.math.BigDecimal.ONE;
-                int addedStock = java.math.BigDecimal.valueOf(lineReq.getQuantity()).multiply(conversion).intValue();
+                java.math.BigDecimal addedStock = lineReq.getQuantity().multiply(conversion);
 
-                item.setStock(item.getStock() + addedStock);
+                item.setStock(item.getStock().add(addedStock));
                 itemRepo.save(item);
 
                 // Record stock movement
@@ -137,7 +137,7 @@ public class PurchaseController {
                 stockMovementRepo.save(movement);
 
                 // Dismiss low-stock notifications for this item if stock now OK
-                if (item.getStock() > item.getMinStock()) {
+                if (item.getStock().compareTo(item.getMinStock()) > 0) {
                     notificationRepo.findByIsReadFalseOrderByCreatedAtDesc().stream()
                             .filter(n -> n.getMessage().contains(item.getName()))
                             .forEach(n -> {

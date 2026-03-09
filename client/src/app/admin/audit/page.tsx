@@ -168,7 +168,7 @@ export default function AuditPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Cantidad</label>
-                                <input type="number" className="input" placeholder="+10 para entrada, -3 para salida" value={adjForm.quantity} onChange={e => setAdjForm({ ...adjForm, quantity: e.target.value })} required />
+                                <input type="number" step="any" className="input" placeholder="+10.5 para entrada, -3.2 para salida" value={adjForm.quantity} onChange={e => setAdjForm({ ...adjForm, quantity: e.target.value })} required />
                                 <p className="text-xs text-primary-400 mt-1">Positivo = entrada · Negativo = salida</p>
                             </div>
                             <div>

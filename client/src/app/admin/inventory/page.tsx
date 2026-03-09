@@ -265,7 +265,7 @@ export default function InventoryPage() {
                         <form onSubmit={handleAdjust} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Cantidad</label>
-                                <input type="number" className="input" placeholder="+10 ó -3" value={adjQty} onChange={e => setAdjQty(e.target.value)} required />
+                                <input type="number" step="any" className="input" placeholder="+2.5 ó -0.5" value={adjQty} onChange={e => setAdjQty(e.target.value)} required />
                                 <p className="text-xs text-primary-400 mt-1">Positivo = entrada, negativo = salida</p>
                             </div>
                             <div>

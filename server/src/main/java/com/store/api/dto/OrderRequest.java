@@ -17,7 +17,7 @@ public class OrderRequest {
     @Data
     public static class OrderLineRequest {
         private Long itemId;
-        private Integer quantity;
+        private BigDecimal quantity;
         private BigDecimal unitPrice;
         private BigDecimal unitCost;
     }

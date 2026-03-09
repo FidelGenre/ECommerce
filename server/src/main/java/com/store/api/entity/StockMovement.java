@@ -20,8 +20,8 @@ public class StockMovement {
     @Column(name = "movement_type", nullable = false, length = 20)
     private String movementType; // IN, OUT, ADJUSTMENT
 
-    @Column(nullable = false)
-    private Integer quantity;
+    @Column(nullable = false, precision = 14, scale = 3)
+    private java.math.BigDecimal quantity;
 
     private String reason;
 

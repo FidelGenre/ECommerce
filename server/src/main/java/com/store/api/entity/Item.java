@@ -28,11 +28,11 @@ public class Item {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    @Column(nullable = false)
-    private Integer stock = 0;
+    @Column(nullable = false, precision = 14, scale = 3)
+    private BigDecimal stock = BigDecimal.ZERO;
 
-    @Column(name = "min_stock", nullable = false)
-    private Integer minStock = 0;
+    @Column(name = "min_stock", nullable = false, precision = 14, scale = 3)
+    private BigDecimal minStock = BigDecimal.ZERO;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")

@@ -24,8 +24,8 @@ public class PurchaseLine {
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Item item;
 
-    @Column(nullable = false)
-    private Integer quantity;
+    @Column(nullable = false, precision = 14, scale = 3)
+    private BigDecimal quantity;
 
     @Column(name = "unit_cost", nullable = false, precision = 14, scale = 2)
     private BigDecimal unitCost;

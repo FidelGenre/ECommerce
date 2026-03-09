@@ -24,100 +24,101 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ScheduledReportService {
 
-    private final JavaMailSender emailSender;
-    private final SaleOrderRepository saleRepo;
-    private final CashRegisterRepository cashRepo;
-    private final ItemRepository itemRepo;
+        private final JavaMailSender emailSender;
+        private final SaleOrderRepository saleRepo;
+        private final CashRegisterRepository cashRepo;
+        private final ItemRepository itemRepo;
 
-    @Value("${app.report.email.to:admin@coffeebeans.com}")
-    private String adminEmail;
+        @Value("${app.report.email.to:admin@coffeebeans.com}")
+        private String adminEmail;
 
-    @Value("${spring.mail.username:noreply@coffeebeans.com}")
-    private String fromEmail;
+        @Value("${spring.mail.username:noreply@coffeebeans.com}")
+        private String fromEmail;
 
-    // Run every day at 20:00 as requested
-    @Scheduled(cron = "0 0 20 * * ?")
-    public void sendDailyReport() {
-        log.info("Generating daily sales and inventory report...");
-        try {
-            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-            LocalDateTime endOfDay = LocalDate.now().plusDays(1).atStartOfDay();
+        // Run every day at 20:00 as requested
+        @Scheduled(cron = "0 0 20 * * ?")
+        public void sendDailyReport() {
+                log.info("Generating daily sales and inventory report...");
+                try {
+                        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+                        LocalDateTime endOfDay = LocalDate.now().plusDays(1).atStartOfDay();
 
-            var sales = saleRepo.findByCreatedAtBetween(startOfDay, endOfDay);
+                        var sales = saleRepo.findByCreatedAtBetween(startOfDay, endOfDay);
 
-            BigDecimal totalSales = sales.stream()
-                    .map(s -> s.getTotal())
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                        BigDecimal totalSales = sales.stream()
+                                        .map(s -> s.getTotal())
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            int totalOrders = sales.size();
+                        int totalOrders = sales.size();
 
-            var cjas = cashRepo.findByOpenedAtBetween(startOfDay, endOfDay);
-            BigDecimal cashClosingAmount = cjas.stream()
-                    .filter(c -> c.getClosedAt() != null && c.getClosingAmount() != null)
-                    .map(c -> c.getClosingAmount())
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                        var cjas = cashRepo.findByOpenedAtBetween(startOfDay, endOfDay);
+                        BigDecimal cashClosingAmount = cjas.stream()
+                                        .filter(c -> c.getClosedAt() != null && c.getClosingAmount() != null)
+                                        .map(c -> c.getClosingAmount())
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            // Low stock alerts
-            List<Item> allItems = itemRepo.findAll();
-            List<Item> lowStockItems = allItems.stream()
-                    .filter(i -> i.getStock() <= i.getMinStock())
-                    .collect(Collectors.toList());
+                        // Low stock alerts
+                        List<Item> allItems = itemRepo.findAll();
+                        List<Item> lowStockItems = allItems.stream()
+                                        .filter(i -> i.getStock().compareTo(i.getMinStock()) <= 0)
+                                        .collect(Collectors.toList());
 
-            MimeMessage message = emailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                        MimeMessage message = emailSender.createMimeMessage();
+                        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
-            helper.setTo(adminEmail);
-            helper.setSubject("Reporte Diario de Gesti\u00f3n - Coffee Beans - " + LocalDate.now());
+                        helper.setFrom(fromEmail);
+                        helper.setTo(adminEmail);
+                        helper.setSubject("Reporte Diario de Gesti\u00f3n - Coffee Beans - " + LocalDate.now());
 
-            StringBuilder html = new StringBuilder();
-            html.append("<div style='font-family: sans-serif; color: #333;'>");
-            html.append("<h2 style='color: #4A3B32;'>Resumen del día de hoy (").append(LocalDate.now())
-                    .append(")</h2>");
-            html.append(
-                    "<table style='width: 100%; max-width: 600px; border-collapse: collapse; margin-bottom: 20px;'>");
-            html.append(
-                    "<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><b>Órdenes completadas:</b></td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>")
-                    .append(totalOrders).append("</td></tr>");
-            html.append(
-                    "<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><b>Ingresos Totales por Ventas:</b></td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>$")
-                    .append(totalSales).append("</td></tr>");
-            html.append(
-                    "<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><b>Monto Total de Cierres de Caja:</b></td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>$")
-                    .append(cashClosingAmount).append("</td></tr>");
-            html.append("</table>");
+                        StringBuilder html = new StringBuilder();
+                        html.append("<div style='font-family: sans-serif; color: #333;'>");
+                        html.append("<h2 style='color: #4A3B32;'>Resumen del día de hoy (").append(LocalDate.now())
+                                        .append(")</h2>");
+                        html.append(
+                                        "<table style='width: 100%; max-width: 600px; border-collapse: collapse; margin-bottom: 20px;'>");
+                        html.append(
+                                        "<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><b>Órdenes completadas:</b></td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>")
+                                        .append(totalOrders).append("</td></tr>");
+                        html.append(
+                                        "<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><b>Ingresos Totales por Ventas:</b></td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>$")
+                                        .append(totalSales).append("</td></tr>");
+                        html.append(
+                                        "<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'><b>Monto Total de Cierres de Caja:</b></td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>$")
+                                        .append(cashClosingAmount).append("</td></tr>");
+                        html.append("</table>");
 
-            if (!lowStockItems.isEmpty()) {
-                html.append("<h3 style='color: #D97706; margin-top: 30px;'>⚠️ Alertas de Stock Bajo</h3>");
-                html.append("<table style='width: 100%; max-width: 600px; border-collapse: collapse;'>");
-                html.append(
-                        "<tr style='background-color: #FEF3C7; text-align: left;'><th style='padding: 8px;'>Producto</th><th style='padding: 8px; text-align: center;'>Stock Actual</th><th style='padding: 8px; text-align: center;'>Mínimo</th></tr>");
-                for (Item item : lowStockItems) {
-                    html.append("<tr>");
-                    html.append("<td style='padding: 8px; border-bottom: 1px solid #ddd;'>").append(item.getName())
-                            .append("</td>");
-                    html.append(
-                            "<td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: center; color: red; font-weight: bold;'>")
-                            .append(item.getStock()).append("</td>");
-                    html.append("<td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: center;'>")
-                            .append(item.getMinStock()).append("</td>");
-                    html.append("</tr>");
+                        if (!lowStockItems.isEmpty()) {
+                                html.append("<h3 style='color: #D97706; margin-top: 30px;'>⚠️ Alertas de Stock Bajo</h3>");
+                                html.append("<table style='width: 100%; max-width: 600px; border-collapse: collapse;'>");
+                                html.append(
+                                                "<tr style='background-color: #FEF3C7; text-align: left;'><th style='padding: 8px;'>Producto</th><th style='padding: 8px; text-align: center;'>Stock Actual</th><th style='padding: 8px; text-align: center;'>Mínimo</th></tr>");
+                                for (Item item : lowStockItems) {
+                                        html.append("<tr>");
+                                        html.append("<td style='padding: 8px; border-bottom: 1px solid #ddd;'>")
+                                                        .append(item.getName())
+                                                        .append("</td>");
+                                        html.append(
+                                                        "<td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: center; color: red; font-weight: bold;'>")
+                                                        .append(item.getStock()).append("</td>");
+                                        html.append("<td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: center;'>")
+                                                        .append(item.getMinStock()).append("</td>");
+                                        html.append("</tr>");
+                                }
+                                html.append("</table>");
+                        } else {
+                                html.append("<p style='color: #10B981; font-weight: bold;'>✅ Ningún producto con stock bajo.</p>");
+                        }
+
+                        html.append(
+                                        "<p style='margin-top: 40px; font-size: 12px; color: #777;'>Este es un reporte automático generado por Coffee Beans ERP.</p>");
+                        html.append("</div>");
+
+                        helper.setText(html.toString(), true);
+                        emailSender.send(message);
+
+                        log.info("Daily HTML report sent to {}", adminEmail);
+                } catch (Exception e) {
+                        log.error("Error sending daily report: ", e);
                 }
-                html.append("</table>");
-            } else {
-                html.append("<p style='color: #10B981; font-weight: bold;'>✅ Ningún producto con stock bajo.</p>");
-            }
-
-            html.append(
-                    "<p style='margin-top: 40px; font-size: 12px; color: #777;'>Este es un reporte automático generado por Coffee Beans ERP.</p>");
-            html.append("</div>");
-
-            helper.setText(html.toString(), true);
-            emailSender.send(message);
-
-            log.info("Daily HTML report sent to {}", adminEmail);
-        } catch (Exception e) {
-            log.error("Error sending daily report: ", e);
         }
-    }
 }

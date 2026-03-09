@@ -145,8 +145,7 @@ public class DashboardController {
                                 .collect(Collectors.groupingBy(
                                                 l -> l.getItem().getCategory().getName(),
                                                 Collectors.reducing(BigDecimal.ZERO,
-                                                                l -> l.getUnitPrice().multiply(
-                                                                                BigDecimal.valueOf(l.getQuantity())),
+                                                                l -> l.getUnitPrice().multiply(l.getQuantity()),
                                                                 BigDecimal::add)))
                                 .forEach((cat, total) -> data.add(Map.of("category", cat, "total", total)));
                 data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
@@ -323,19 +322,19 @@ public class DashboardController {
                         BigDecimal revenue = allSales.stream()
                                         .flatMap(o -> o.getLines().stream())
                                         .filter(l -> l.getItem().getId().equals(item.getId()))
-                                        .map(l -> l.getUnitPrice().multiply(BigDecimal.valueOf(l.getQuantity())))
+                                        .map(l -> l.getUnitPrice().multiply(l.getQuantity()))
                                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                        long unitsSold = allSales.stream()
+                        BigDecimal unitsSold = allSales.stream()
                                         .flatMap(o -> o.getLines().stream())
                                         .filter(l -> l.getItem().getId().equals(item.getId()))
-                                        .mapToLong(SaleLine::getQuantity)
-                                        .sum();
+                                        .map(SaleLine::getQuantity)
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                        if (unitsSold == 0)
+                        if (unitsSold.compareTo(BigDecimal.ZERO) == 0)
                                 return;
 
-                        BigDecimal cost = item.getCost().multiply(BigDecimal.valueOf(unitsSold));
+                        BigDecimal cost = item.getCost().multiply(unitsSold);
                         BigDecimal margin = revenue.subtract(cost);
                         double marginPct = revenue.compareTo(BigDecimal.ZERO) == 0 ? 0
                                         : margin.divide(revenue, 4, RoundingMode.HALF_UP)

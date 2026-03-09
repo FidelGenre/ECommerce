@@ -470,11 +470,11 @@ export default function ProductosAdminPage() {
                                 {/* Stock */}
                                 <div>
                                     <label className="block text-sm font-medium text-primary-700 mb-1">Stock actual</label>
-                                    <input type="number" min="0" className="input" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} />
+                                    <input type="number" step="any" min="0" className="input" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-primary-700 mb-1">Stock mínimo</label>
-                                    <input type="number" min="0" className="input" value={form.minStock} onChange={e => setForm({ ...form, minStock: e.target.value })} />
+                                    <input type="number" step="any" min="0" className="input" value={form.minStock} onChange={e => setForm({ ...form, minStock: e.target.value })} />
                                     <p className="text-xs text-primary-400 mt-1">Alerta cuando baje de este valor</p>
                                 </div>
 

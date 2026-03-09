@@ -91,9 +91,9 @@ public class CheckoutController {
 
                 PreferenceItemRequest mpItem = PreferenceItemRequest.builder()
                         .id(item.getId().toString())
-                        .title(item.getName())
-                        .quantity(line.getQuantity())
-                        .unitPrice(item.getPrice())
+                        .title(item.getName() + " (x" + line.getQuantity() + ")")
+                        .quantity(1)
+                        .unitPrice(item.getPrice().multiply(line.getQuantity()))
                         .currencyId("ARS")
                         .build();
                 mpItems.add(mpItem);
@@ -153,7 +153,7 @@ public class CheckoutController {
                 saleLine.setUnitPrice(item.getPrice());
                 order.getLines().add(saleLine);
                 order.setTotal(order.getTotal()
-                        .add(item.getPrice().multiply(BigDecimal.valueOf(lineReq.getQuantity()))));
+                        .add(item.getPrice().multiply(lineReq.getQuantity())));
             }
 
             saleOrderRepo.save(order); // save to get the generated ID

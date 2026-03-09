@@ -10,8 +10,8 @@ public class ItemRequest {
     private BigDecimal price;
     private BigDecimal cost;
     private String imageUrl;
-    private Integer stock;
-    private Integer minStock;
+    private BigDecimal stock;
+    private BigDecimal minStock;
     private Long categoryId;
     private Long supplierId;
     private Boolean visible;

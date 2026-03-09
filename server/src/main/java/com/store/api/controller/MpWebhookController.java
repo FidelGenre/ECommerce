@@ -64,7 +64,7 @@ public class MpWebhookController {
             // Decrement stock and record movements
             for (SaleLine line : order.getLines()) {
                 Item item = line.getItem();
-                item.setStock(item.getStock() - line.getQuantity());
+                item.setStock(item.getStock().subtract(line.getQuantity()));
                 itemRepo.save(item);
 
                 StockMovement movement = new StockMovement();
@@ -76,7 +76,7 @@ public class MpWebhookController {
                 movement.setReferenceType("SALE");
                 stockMovementRepo.save(movement);
 
-                if (item.getStock() <= item.getMinStock()) {
+                if (item.getStock().compareTo(item.getMinStock()) <= 0) {
                     Notification notification = new Notification();
                     notification.setMessage("Low stock: " + item.getName()
                             + " (" + item.getStock() + " left, min: " + item.getMinStock() + ")");

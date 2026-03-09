@@ -57,7 +57,7 @@ public class StockController {
             Authentication auth) {
         Item item = itemRepo.findById(req.getItemId()).orElseThrow();
 
-        item.setStock(item.getStock() + req.getQuantity());
+        item.setStock(item.getStock().add(req.getQuantity()));
         itemRepo.save(item);
 
         StockMovement movement = new StockMovement();
@@ -73,7 +73,7 @@ public class StockController {
 
         movementRepo.save(movement);
 
-        if (item.getStock() <= item.getMinStock()) {
+        if (item.getStock().compareTo(item.getMinStock()) <= 0) {
             Notification notification = new Notification();
             notification.setMessage("Low stock: " + item.getName() + " (" + item.getStock() + " left)");
             notification.setType("WARNING");

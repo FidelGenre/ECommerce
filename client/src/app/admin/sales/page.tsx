@@ -409,7 +409,7 @@ export default function SalesPage() {
                                                             <option value="">Seleccionar producto</option>
                                                             {items.filter(it => !categoryFilter || (it as any).category?.name === categoryFilter).map(it => <option key={it.id} value={it.id}>{it.name} (stock: {it.stock})</option>)}
                                                         </select>
-                                                        <input type="number" min="1" placeholder="Cant." className="input w-20 text-center" value={line.quantity} onChange={e => updateLine(i, 'quantity', e.target.value)} required />
+                                                        <input type="number" step="any" min="0.001" placeholder="Cant." className="input w-20 text-center" value={line.quantity} onChange={e => updateLine(i, 'quantity', e.target.value)} required />
                                                         <input type="number" min="0" placeholder="Precio" className="input w-28" value={line.unitPrice} onChange={e => updateLine(i, 'unitPrice', e.target.value)} required />
                                                         {lines.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>}
                                                     </div>

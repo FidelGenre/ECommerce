@@ -96,10 +96,10 @@ public class SaleController {
                 line.setUnitPrice(lineReq.getUnitPrice());
                 order.getLines().add(line);
                 order.setTotal(order.getTotal()
-                        .add(lineReq.getUnitPrice().multiply(java.math.BigDecimal.valueOf(lineReq.getQuantity()))));
+                        .add(lineReq.getUnitPrice().multiply(lineReq.getQuantity())));
 
                 // Auto-decrement stock
-                item.setStock(item.getStock() - lineReq.getQuantity());
+                item.setStock(item.getStock().subtract(lineReq.getQuantity()));
                 itemRepo.save(item);
 
                 // Record stock movement
@@ -111,7 +111,7 @@ public class SaleController {
                 stockMovementRepo.save(movement);
 
                 // Low-stock notification
-                if (item.getStock() <= item.getMinStock()) {
+                if (item.getStock().compareTo(item.getMinStock()) <= 0) {
                     Notification notification = new Notification();
                     notification.setMessage("Low stock: " + item.getName() + " (" + item.getStock() + " left, min: "
                             + item.getMinStock() + ")");
