@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { Plus, X, Edit, ToggleLeft, ToggleRight, Search, Filter, Trash2 } from 'lucide-react'
+import { Plus, X, Edit, ToggleLeft, ToggleRight, Search, Filter, Trash2, Eye, EyeOff } from 'lucide-react'
 
 interface UserRow {
     id: number;
@@ -27,6 +27,7 @@ export default function UsersSettingsPage() {
     const [form, setForm] = useState({ username: '', email: '', password: '', role: 'CUSTOMER' })
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState<number | null>(null)
+    const [showPwd, setShowPwd] = useState(false)
 
     // Filters
     const [search, setSearch] = useState('')
@@ -206,7 +207,12 @@ export default function UsersSettingsPage() {
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold text-primary-700 mb-1">Contraseña {editing && <span className="text-primary-400 font-normal">(dejar vacío para no cambiar)</span>}</label>
-                                <input type="password" className="input" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} {...(!editing && { required: true })} />
+                                <div className="relative">
+                                    <input type={showPwd ? 'text' : 'password'} className="input pr-10" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} {...(!editing && { required: true })} />
+                                    <button type="button" onClick={() => setShowPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-600">
+                                        {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold text-primary-700 mb-1">Rol</label>

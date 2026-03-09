@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { Coffee, Lock, User, Mail } from 'lucide-react'
+import { Coffee, Lock, User, Mail, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import api from '@/lib/api'
 
@@ -15,6 +15,8 @@ export default function RegisterPage() {
     const [confirm, setConfirm] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    const [showPwd, setShowPwd] = useState(false)
+    const [showConfirm, setShowConfirm] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -84,13 +86,16 @@ export default function RegisterPage() {
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
                                 <input
-                                    type="password"
-                                    className="input pl-10"
+                                    type={showPwd ? 'text' : 'password'}
+                                    className="input pl-10 pr-10"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
                                     required
                                 />
+                                <button type="button" onClick={() => setShowPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-600">
+                                    {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
                             </div>
                         </div>
 
@@ -99,13 +104,16 @@ export default function RegisterPage() {
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
                                 <input
-                                    type="password"
-                                    className="input pl-10"
+                                    type={showConfirm ? 'text' : 'password'}
+                                    className="input pl-10 pr-10"
                                     placeholder="••••••••"
                                     value={confirm}
                                     onChange={e => setConfirm(e.target.value)}
                                     required
                                 />
+                                <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-600">
+                                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
                             </div>
                         </div>
 

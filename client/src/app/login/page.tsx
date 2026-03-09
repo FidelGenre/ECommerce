@@ -1,12 +1,13 @@
 'use client'
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth'
-import { Coffee, Lock, User } from 'lucide-react'
+import { Coffee, Lock, User, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
     const { login } = useAuth()
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
+    const [showPwd, setShowPwd] = useState(false)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
@@ -56,13 +57,16 @@ export default function LoginPage() {
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
                                 <input
-                                    type="password"
-                                    className="input pl-10"
+                                    type={showPwd ? 'text' : 'password'}
+                                    className="input pl-10 pr-10"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
                                     required
                                 />
+                                <button type="button" onClick={() => setShowPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-600">
+                                    {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
                             </div>
                         </div>
 
