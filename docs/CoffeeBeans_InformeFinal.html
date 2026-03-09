@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Coffee Beans - Informe Final</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            line-height: 1.6; 
+            max-width: 1050px; 
+            margin: 0 auto; 
+            padding: 40px 30px; 
+            color: #333; 
+        }
+        h1, h2, h3, h4 { color: #2c3e50; margin-top: 1.5em; }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 10px; text-align: center; font-size: 2em; }
+        h2 { border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; margin-top: 40px; }
+        h3 { color: #34495e; }
+        code { 
+            background-color: #f8f9fa; 
+            padding: 2px 4px; 
+            border-radius: 4px; 
+            font-family: Consolas, monospace; 
+            font-size: 0.9em;
+        }
+        pre { background-color: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: Consolas, monospace; font-size: 0.9em; }
+        .mermaid { text-align: center; margin: 30px auto; display: flex; justify-content: center; width: 100%; }
+        
+        ul, ol { margin-bottom: 20px; }
+        li { margin-bottom: 5px; }
+
+        @media print {
+            body { 
+                padding: 0; 
+                max-width: 100%;
+                font-size: 11pt;
+            }
+            .mermaid { page-break-inside: avoid; margin-top: 20px; margin-bottom: 20px; }
+            h2, h3 { page-break-after: avoid; }
+            p, ul, ol { page-break-inside: avoid; }
+        }
+    </style>
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <h1>Coffee Beans - Proyecto de Desarrollo Web</h1>
+<p><strong>Fecha de presentación:</strong> 18/08/2025
+<strong>Integrantes:</strong> Fidel Genrebert – Francisco Guerin</p>
+<h2>1. Informe Preliminar del Proyecto</h2>
+<h3>Situación Actual</h3>
+<p>Actualmente, la empresa simulada carece de presencia digital. Toda la información corporativa y la gestión de pedidos se realizan a través de procesos tradicionales, como órdenes en papel en el local físico y llamadas telefónicas para coordinar ventas o servicios de delivery. Este modelo limita la visibilidad de la marca, reduce el alcance a nuevos clientes y dificulta la interacción eficiente con los consumidores. Asimismo, la falta de una plataforma en línea impide que los usuarios puedan consultar productos, conocer la identidad corporativa o realizar compras de manera remota.</p>
+<h3>Objetivo General</h3>
+<p>Desarrollar una aplicación web funcional, moderna y atractiva para la empresa simulada de producción y comercialización de café, &quot;Coffee Beans&quot;, con el fin de mejorar su presencia en línea, reflejar su identidad corporativa y ofrecer una experiencia de usuario que simule un entorno de comercio electrónico completo.</p>
+<h3>Objetivos Específicos</h3>
+<ul>
+<li>Diseñar una interfaz intuitiva y estéticamente coherente con la temática del café y la identidad de la empresa.</li>
+<li>Implementar un catálogo de productos y un carrito de compras funcional para los usuarios.</li>
+<li>Desarrollar un sistema de registro e inicio de sesión de clientes y administradores.</li>
+<li>Proveer una sección “Quiénes Somos” con información institucional.</li>
+<li>Implementar un sistema de contacto que permita a los usuarios enviar consultas, sugerencias o reclamos.</li>
+<li>Permitir a los usuarios seleccionar métodos de entrega y registrar la información en el sistema.</li>
+<li>Integrar un sistema de pagos online seguro (MercadoPago) para procesar transacciones.</li>
+<li>Implementar un sistema de gestión interna (Panel de Administración) para control de inventario, recetas de productos (BOM), compras a proveedores y flujos de caja.</li>
+</ul>
+<h3>Alcance</h3>
+<p>El desarrollo de la página web estará orientado en primera instancia a fortalecer la presencia digital de la empresa a nivel nacional, abarcando desde la cara visible para el cliente (Storefront) hasta la gestión interna del negocio (Backoffice). El sistema posee arquitectura escalable, permitiendo su adaptación y expansión futura.</p>
+<h3>Requerimientos Funcionales</h3>
+<ul>
+<li><strong>Autenticación</strong>: Registro e inicio de sesión de usuarios con roles definidos (Cliente, Administrador).</li>
+<li><strong>Catálogo y Carrito</strong>: Visualización detallada de productos, manejo de carrito protegido y cálculos exactos del total de la compra.</li>
+<li><strong>Gestión de Pedidos y Pagos</strong>: Checkout integrado con MercadoPago, registro de ventas (Sale Orders) y trazabilidad completa del ciclo de compra.</li>
+<li><strong>Panel de Administración</strong>: <ul>
+<li>Gestión de inventario avanzado (múltiples unidades de medida, stock mínimo).</li>
+<li>Gestión de Recetas (BOM): Deducción en cascada de insumos según componentes configurados en los productos finales (ej. descontar bolsas, gramos de café).</li>
+<li>Registro de compras a proveedores y control de caja centralizado (Cash Register).</li>
+</ul>
+</li>
+<li><strong>Módulo de Contacto</strong>: Formulario para consultas y reclamos integrado en el ecosistema.</li>
+<li><strong>Diseño Responsivo</strong>: Adaptación total a dispositivos móviles y de escritorio.</li>
+</ul>
+<h3>Requerimientos No Funcionales</h3>
+<ul>
+<li><strong>Usabilidad</strong>: Interfaz accesible y moderna adaptada al sector gastronómico especializado.</li>
+<li><strong>Rendimiento y Tolerancia a Fallos</strong>: Carga rápida del catálogo y transacciones atómicas en la base de datos para prevenir cualquier inconsistencia de stock.</li>
+<li><strong>Seguridad</strong>: Contraseñas encriptadas mediante algoritmo BCrypt, uso de JWT (Json Web Tokens) para validar el estado de las sesiones, protección de rutas y endpoints exclusivos de administrador.</li>
+<li><strong>Tecnologías Empleadas</strong>:<ul>
+<li><strong>Frontend</strong>: Next.js (React), TypeScript, Tailwind CSS, Lucide Icons.</li>
+<li><strong>Backend</strong>: Java 17, Spring Boot, Spring Security, Hibernate (JPA API).</li>
+<li><strong>Base de Datos</strong>: PostgreSQL para un robusto almacenamiento de datos relacional.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>2. Documentación de Diseño y Soporte</h2>
+<h3>2.1. Diagrama de Casos de Uso</h3>
+<div class="mermaid">flowchart LR
+  %% Actores
+  Cliente((Cliente))
+  Administrador((Administrador))
+
+  subgraph Sistema [&quot;Sistema Web (Coffee Beans)&quot;]
+      direction TB
+      UC1([&quot;Añadir/Eliminar productos del carrito&quot;])
+      UC2([&quot;Registrarse / Iniciar Sesión&quot;])
+      UC3([&quot;Completar Pago (MercadoPago)&quot;])
+      UC4([&quot;Gestionar Inventario y Recetas&quot;])
+      UC5([&quot;Modificar Catálogo de Productos&quot;])
+      UC6([&quot;Acceder al Panel Privado&quot;])
+      UC7([&quot;Gestionar Usuarios y Roles&quot;])
+      UC8([&quot;Procesar y Gestionar Pedidos&quot;])
+  end
+
+  %% Relaciones del Cliente
+  Cliente --&gt; UC1
+  Cliente --&gt; UC2
+  UC2 -. &quot;&lt;&lt;extend&gt;&gt;&quot; .-&gt; UC3
+  
+  %% Relaciones del Administrador
+  Administrador --&gt; UC4
+  Administrador --&gt; UC5
+  Administrador --&gt; UC6
+  Administrador --&gt; UC7
+  Administrador --&gt; UC8
+  
+  %% Accesos compartidos
+  Administrador --&gt; UC1
+  Administrador --&gt; UC2
+</div>
+<p><em>(Nota: El diagrama expone los casos de uso originales integrando pasarelas del entorno desarrollado para el checkout).</em></p>
+<h3>2.2. Especificación de Casos de Uso Principales</h3>
+<p><strong>CASO DE USO 1</strong>: <strong>Completar pago (Gestión de Venta Online)</strong></p>
+<ul>
+<li><strong>Actor</strong>: Cliente</li>
+<li><strong>Descripción</strong>: El proceso transaccional central de comercio electrónico.</li>
+<li><strong>Flujo Principal</strong>:<ol>
+<li>El cliente accede a su carrito de compras y confirma el pedido.</li>
+<li>El sistema front-end envía el detalle a la API.</li>
+<li>El sistema valida el stock backend (que haya existencias).</li>
+<li>Integración y redirección externa (MercadoPago) para transacción.</li>
+<li>Retorno al sistema, descuento de la base de datos y registro de la <em>Venta</em>.</li>
+</ol>
+</li>
+</ul>
+<p><strong>CASO DE USO 2</strong>: <strong>Gestionar Inventario y Productos Terminados</strong></p>
+<ul>
+<li><strong>Actor</strong>: Administrador</li>
+<li><strong>Descripción</strong>: Mantenimiento general de los activos de la cafetería.</li>
+<li><strong>Flujo Principal</strong>:<ol>
+<li>El administrador ingresa mediante JWT al panel de control protegido.</li>
+<li>Dentro del módulo de Productos, puede agregar, modificar (precios, descripciones) o eliminar oferta.</li>
+<li>Hace uso del sistema de <strong>Recetas</strong>, vinculando &quot;insumos&quot; lógicos al ítem.</li>
+<li>Los stockActual, stockMinimo se mantienen automáticos en el catálogo.</li>
+</ol>
+</li>
+</ul>
+<h3>2.3. Diagrama de Clases (Arquitectura Backend Central)</h3>
+<div class="mermaid">classDiagram
+    direction LR
+    class rol {
+        +String rolNombre: cliente, admin
+        +obtenerPermisos()
+    }
+
+    class usuario {
+        +Long id
+        +String nombre
+        +String email
+        +String contrasena
+        +iniciarSesion()
+        +registrarse()
+    }
+
+    class ordenVenta {
+        +Long id
+        +BigDecimal totalPagado
+        +String estadoPago
+        +generarVenta()
+    }
+
+    class lineaVenta {
+        +Long id
+        +BigDecimal cantidad
+        +BigDecimal subtotal
+        +restarInventario()
+    }
+
+    class producto {
+        +Long id
+        +String nombre
+        +BigDecimal precio
+        +BigDecimal tamanioUnidad
+        +tieneAgotamiento()
+    }
+
+    class inventario {
+        +Long id
+        +BigDecimal stockFisico
+        +BigDecimal stockMinimo
+        +registrarMovimiento()
+    }
+    
+    class insumoReceta {
+        +Long id
+        +BigDecimal descuentoCascada
+        +vincularBom()
+    }
+
+    class ordenCompra {
+        +Long id
+        +String fecha
+        +BigDecimal costoInterno
+        +reabastecer()
+    }
+
+    class proveedor {
+        +Long id
+        +String empresa
+        +String emailContacto
+    }
+
+    rol &quot;1&quot; -- &quot;1..*&quot; usuario
+    usuario &quot;1&quot; -- &quot;1..*&quot; ordenVenta
+    ordenVenta &quot;1&quot; -- &quot;1..*&quot; lineaVenta
+    lineaVenta &quot;1..*&quot; -- &quot;1&quot; producto
+    producto &quot;1&quot; -- &quot;1&quot; inventario
+    producto &quot;1&quot; -- &quot;1..*&quot; insumoReceta
+    producto &quot;1&quot; -- &quot;1..*&quot; ordenCompra
+    ordenCompra &quot;0..*&quot; -- &quot;1&quot; usuario
+    ordenCompra &quot;1..*&quot; -- &quot;1&quot; proveedor
+</div>
+<h3>2.4. Diagrama de Implementación de Tablas (Modelo de Datos Físico/DER)</h3>
+<div class="mermaid">erDiagram
+    usuario ||--o{ orden_venta : &quot;realiza&quot;
+    rol ||--o{ usuario : &quot;posee&quot;
+    orden_venta ||--o{ linea_venta : &quot;tiene_detalle&quot;
+    linea_venta }|--|| producto : &quot;descarga_stock&quot;
+    producto ||--|| inventario : &quot;acumula&quot;
+    producto ||--o{ receta_insumo : &quot;es_conformado_por&quot;
+    producto ||--|{ orden_compra : &quot;reabastece&quot;
+    usuario ||--o{ orden_compra : &quot;registra_ingreso&quot;
+    proveedor ||--o{ orden_compra : &quot;entrega&quot;
+
+    rol {
+        VARCHAR idRol PK
+    }
+    usuario {
+        BIGSERIAL id PK
+        VARCHAR nombre
+        VARCHAR email
+        VARCHAR contrasena
+        VARCHAR idRol FK
+    }
+    orden_venta {
+        BIGSERIAL id PK
+        DECIMAL total
+        VARCHAR payment_id
+        VARCHAR estado_transaccion
+        BIGINT usuario_id FK
+    }
+    linea_venta {
+        BIGSERIAL id PK
+        DECIMAL cantidad
+        DECIMAL precio_unitario
+        DECIMAL subtotal
+        BIGINT venta_id FK
+        BIGINT producto_id FK
+    }
+    producto {
+        BIGSERIAL id PK
+        VARCHAR nombre
+        VARCHAR descripcion
+        DECIMAL precio
+        DECIMAL tamanio_unidad
+        VARCHAR magnitud_peso
+    }
+    receta_insumo {
+        BIGSERIAL id PK
+        DECIMAL cantidad_restada
+        BIGINT insumo_asociado_id FK
+        BIGINT producto_padre_id FK
+    }
+    inventario {
+        BIGSERIAL id PK
+        DECIMAL stockActual
+        DECIMAL stockMin_Alerta
+        BIGINT producto_id FK
+    }
+    orden_compra {
+        BIGSERIAL id PK
+        VARCHAR fecha_ingreso
+        DECIMAL desembolso
+        BIGINT registrado_por_usuario FK
+        BIGINT proveedor_id FK
+    }
+    proveedor {
+        BIGSERIAL id PK
+        VARCHAR razon_social
+        VARCHAR email
+    }
+</div>
+<h3>2.5. Documentación de Pruebas y Validación</h3>
+<p>El sistema requirió a lo largo de su integración y estabilización, los siguientes escenarios de control de calidad documentados:</p>
+<ol>
+<li><p><strong>Caso: Autenticación con Token (JWT Seguridad)</strong></p>
+<ul>
+<li><strong>Acción del QA</strong>: Creación de usuario administrador mediante interceptación manual de API (POST) y validación de rutas privadas.</li>
+<li><strong>Resultado Esperado</strong>: Protección persistente de endpoints. Sin el header &quot;Authorization: Bearer [token]&quot;, cualquier solicitud al ecosistema <code>api/admin/*</code> debe ser bloqueada con Status 403 Forbidden.</li>
+<li><strong>Estado Actual</strong>: <strong>Aprobado</strong>. Las capas de filtros lógicos de Spring Security aprueban el token únicamente si fue firmado con el secreto local.</li>
+</ul>
+</li>
+<li><p><strong>Caso: Integridad del Carrito - Limitantes de Stock / Tipos de Unidad</strong></p>
+<ul>
+<li><strong>Historia</strong>: Requeríamos impedir a usuarios malintencionados o al mismo UI, generar carritos superiores al inventario limitante (ej. solicitar 50 bolsas cuando solo quedan 2), como a su vez lidiar correctamente con transacciones sin alterar el <em>monto real</em> de manera exponencial según los gramos.</li>
+<li><strong>Modificación</strong>: Se limitó por estricta directriz de pasos intermedios (step) la modificación manual a &quot;cantidades enteras&quot; en el Frontend.</li>
+<li><strong>Resultado Esperado</strong>: Ventas exclusivas de bolsas finalizadas sin decimales ambiguos de compra para el consumidor, previniendo sobrefacturaciones erróneas.</li>
+<li><strong>Estado Actual</strong>: <strong>Aprobado</strong>. El frontend impide la inserción errática (ej. 0.1 bolsas) corrigiéndolo al entero base más cercano e inhibiendo sumar items arriba del stock maestro.</li>
+</ul>
+</li>
+<li><p><strong>Caso: Transaccionalidad de Componentes Hijos de Receta (BOM)</strong></p>
+<ul>
+<li><strong>Historia</strong>: Validar la consistencia íntegra del <code>ItemComponent</code>.</li>
+<li><strong>Desarrollo</strong>: Interacción comercial ejecutada para un &quot;Item A&quot; conformado por &quot;Item B y C&quot;.</li>
+<li><strong>Auditoría</strong>: Se inspeccionó en el panel visualizador de <em><code>StockMovement</code></em> si ambos Item B e Item C fueron reducidos conforme la suma de la venta maestra de &quot;Item A&quot; por sus respectivas tasas de deducción multiplicadas por el <code>unitSize</code> subyacente de control de kilos.</li>
+<li><strong>Estado Actual</strong>: <strong>Aprobado</strong>.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2>3. Informe Tecnológico</h2>
+<p>El proyecto experimentó una migración de su pauta de tecnologías teóricas a implementaciones finales empresariales optimizadas a fin de asegurar tanto escalabilidad vertical como horizontal ante demandas reales, resultando en:</p>
+<ul>
+<li><p><strong>Frontend Arquitectura React/Next</strong>: 
+Se empleó <strong>Next.js</strong> impulsando React con el poderoso supra-lenguaje <strong>TypeScript</strong>. Abarcando un sistema altamente reactivo de estado donde variables del carrito, validaciones interactivas, y visualizaciones del catálogo actualizan de manera asíncrona la vista (Virtual-DOM) al instante de las llamadas REST a la API sin recargar la página. Para el estilado de impacto visual limpio, se aplicó íntegramente la utilidad atómica de <strong>Tailwind CSS</strong>.</p>
+</li>
+<li><p><strong>Backend Enterprise</strong>:
+En lugar del enfoque inicial propuesto basado en Node.js, para un proyecto que contempla transacciones financieras, control estricto relacional y requerimientos de seguridad bancarios; fue natural inclinar el desarrollo hacia <strong>Java 17</strong> bajo la tutela del Framework <strong>Spring Boot</strong>. Spring sirvió como un núcleo con Inversión de Control. Proveyó rutinas transaccionales fiables (vía <code>@Transactional</code>) esenciales para garantizar que si un movimiento de stock colisiona o la pasarela de pago responde fallos, ningún ítem en la base de datos sea debitado en un estado intermedio (Principio de Aislamiento ACID).</p>
+</li>
+<li><p><strong>Gestión de Sesiones Seguras y Capacidad a Pruebas de Ciberataque</strong>:
+Validación mediante cifrado fuerte (<code>BCrypt</code>). Descartamos gestiones de sesión propensas a interceptores vía inyecciones XSS tradicionales, adoptando el estándar global de <strong>Autenticación sin Estado basado en Json Web Tokens (JWT)</strong> que firman e incluyen los privilegios de los usuarios (<code>Roles</code>) para las aprobaciones de Spring Security MVC en tiempo de procesamiento.</p>
+</li>
+<li><p><strong>Base de Datos Unificada</strong>:
+Las interacciones fueron integradas nativamente mapeadas con la interfaz de persistencia Java (JPA / Hibernate) directo al motor transaccional de uso libre más poderoso mundialmente: <strong>PostgreSQL</strong>. Permitiendo una arquitectura en la nube escalable para la centralización unívoca de usuarios, recetas de componentes e información financiera.</p>
+</li>
+</ul>
+
+</body>
+</html>
