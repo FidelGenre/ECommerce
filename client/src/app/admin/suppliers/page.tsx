@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { Supplier, Category, AccountMovement } from '@/types'
-import { Plus, X, Search, ChevronLeft, ChevronRight, History, ArrowDownRight, ArrowUpRight } from 'lucide-react'
+import { Plus, X, Search, ChevronLeft, ChevronRight, History, ArrowDownRight, ArrowUpRight, Trash2 } from 'lucide-react'
 
 const FIELD_LABELS: Record<string, string> = {
     name: 'Nombre',
@@ -35,6 +35,34 @@ export default function SuppliersPage() {
     const [movements, setMovements] = useState<AccountMovement[]>([])
     const [accLoading, setAccLoading] = useState(false)
     const [accForm, setAccForm] = useState({ amount: '', description: '', type: 'PAYMENT' })
+
+    // Selection
+    const [selected, setSelected] = useState<Set<number>>(new Set())
+    const [deleting, setDeleting] = useState(false)
+
+    const toggleSelect = (id: number) => setSelected(prev => {
+        const next = new Set(prev)
+        next.has(id) ? next.delete(id) : next.add(id)
+        return next
+    })
+    const toggleAll = () => setSelected(prev => prev.size === data.length ? new Set() : new Set(data.map(s => s.id)))
+
+    const handleDelete = async (ids: number[]) => {
+        if (!confirm(`¿Eliminar ${ids.length === 1 ? 'este proveedor' : `${ids.length} proveedores`}? Solo se pueden eliminar proveedores con saldo $0.`)) return
+        setDeleting(true)
+        const errors: string[] = []
+        for (const id of ids) {
+            try { await api.delete(`/api/admin/suppliers/${id}`) }
+            catch (e: any) {
+                const name = data.find(s => s.id === id)?.name ?? id
+                errors.push(`${name}: ${e.response?.data ?? 'Error al eliminar'}`)
+            }
+        }
+        setDeleting(false)
+        setSelected(new Set())
+        if (errors.length) alert(errors.join('\n'))
+        load()
+    }
 
     const load = async () => {
         setLoading(true)
@@ -96,7 +124,15 @@ export default function SuppliersPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div><h1 className="text-2xl font-bold text-espresso">Proveedores</h1><p className="text-primary-500 text-sm">{total} proveedores</p></div>
-                <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar proveedor</button>
+                <div className="flex items-center gap-2">
+                    {selected.size > 0 && (
+                        <button onClick={() => handleDelete([...selected])} disabled={deleting}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
+                            <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
+                        </button>
+                    )}
+                    <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar proveedor</button>
+                </div>
             </div>
             <div className="card p-0 overflow-hidden">
                 <div className="p-4 border-b border-muted">
@@ -108,10 +144,14 @@ export default function SuppliersPage() {
                 {loading ? <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div> : (
                     <div className="table-wrapper rounded-none border-0">
                         <table className="data-table">
-                            <thead><tr><th>Nombre</th><th>Alias</th><th>Email</th><th>Teléfono</th><th>Categoría</th><th>Saldo C/C</th><th>Acciones</th></tr></thead>
+                            <thead><tr>
+                                <th className="w-8"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th>
+                                <th>Nombre</th><th>Alias</th><th>Email</th><th>Teléfono</th><th>Categoría</th><th>Saldo C/C</th><th>Acciones</th>
+                            </tr></thead>
                             <tbody>
                                 {data.map(s => (
-                                    <tr key={s.id}>
+                                    <tr key={s.id} className={selected.has(s.id) ? 'bg-red-50' : ''}>
+                                        <td><input type="checkbox" checked={selected.has(s.id)} onChange={() => toggleSelect(s.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
                                         <td className="font-medium">{s.name}</td>
                                         <td className="text-primary-400">{s.alias ?? '—'}</td>
                                         <td className="text-primary-500">{s.email ?? '—'}</td>
@@ -125,6 +165,9 @@ export default function SuppliersPage() {
                                                 <History className="w-3.5 h-3.5" /> Cuenta
                                             </button>
                                             <button onClick={() => openEdit(s)} className="btn-ghost py-1 px-2 text-xs">Editar</button>
+                                            <button onClick={() => handleDelete([s.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700" title="Eliminar">
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
