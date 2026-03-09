@@ -377,7 +377,7 @@ export default function SalesPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-primary-700 mb-1">Forma de Pago</label>
-                                                <select className="select" value={form.paymentMethodId} onChange={e => setForm({ ...form, paymentMethodId: e.target.value })}>
+                                                <select className="select" value={form.paymentMethodId} onChange={e => setForm({ ...form, paymentMethodId: e.target.value })} required>
                                                     <option value="">Seleccionar…</option>
                                                     {payments.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                                 </select>

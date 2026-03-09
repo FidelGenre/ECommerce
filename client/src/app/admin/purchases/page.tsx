@@ -325,7 +325,7 @@ export default function PurchasesPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-primary-700 mb-1">Proveedor</label>
-                                        <select className="select" value={form.supplierId} onChange={e => setForm({ ...form, supplierId: e.target.value })}>
+                                        <select className="select" value={form.supplierId} onChange={e => setForm({ ...form, supplierId: e.target.value })} required>
                                             <option value="">Seleccionar proveedor</option>
                                             {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
@@ -339,7 +339,7 @@ export default function PurchasesPage() {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-primary-700 mb-1">Forma de Pago</label>
-                                        <select className="select" value={form.paymentMethodId} onChange={e => setForm({ ...form, paymentMethodId: e.target.value })}>
+                                        <select className="select" value={form.paymentMethodId} onChange={e => setForm({ ...form, paymentMethodId: e.target.value })} required>
                                             <option value="">Seleccionar…</option>
                                             {payments.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                         </select>
