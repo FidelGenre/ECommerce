@@ -171,8 +171,8 @@ public class SaleController {
             int earned = order.getTotal().intValue() / 1000; // 1 punto por cada $1000
             if (earned > 0) {
                 c.setLoyaltyPoints((c.getLoyaltyPoints() != null ? c.getLoyaltyPoints() : 0) + earned);
+                customerRepo.save(c);
             }
-            customerRepo.save(c);
         }
 
         SaleOrder saved = saleRepo.save(order);

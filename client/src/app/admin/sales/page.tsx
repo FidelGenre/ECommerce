@@ -116,7 +116,7 @@ export default function SalesPage() {
     const exportCSV = () => {
         const rows = sortedData.map(o => ({
             ID: o.id,
-            Cliente: o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? 'Walk-in'),
+            Cliente: o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? 'Sin usuario'),
             Estado: o.status?.name ?? '',
             Pago: o.paymentMethod?.name ?? '',
             Total: o.total,
@@ -130,7 +130,7 @@ export default function SalesPage() {
     const exportExcel = () => {
         const rows = sortedData.map(o => ({
             ID: o.id,
-            Cliente: o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? 'Walk-in'),
+            Cliente: o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? 'Sin usuario'),
             Estado: o.status?.name ?? '',
             'Forma de Pago': o.paymentMethod?.name ?? '',
             Total: Number(o.total),
@@ -281,7 +281,7 @@ export default function SalesPage() {
                                                 {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                                             </button></td>
                                             <td className="font-mono text-primary-400">#{o.id}</td>
-                                            <td>{o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : <span className="text-primary-300">Walk-in</span>}</td>
+                                            <td>{o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : <span className="text-primary-300">Sin usuario</span>}</td>
                                             <td>{o.createdBy ? <span className="text-primary-600">{o.createdBy.username ?? o.createdBy.email}</span> : <span className="text-primary-300">Web</span>}</td>
                                             <td>
                                                 <select
@@ -364,7 +364,7 @@ export default function SalesPage() {
                                             <div>
                                                 <label className="block text-sm font-medium text-primary-700 mb-1">Cliente</label>
                                                 <select className="select" value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value, pointsUsed: '0' })}>
-                                                    <option value="">Walk-in</option>
+                                                    <option value="">Sin usuario</option>
                                                     {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
                                                 </select>
                                             </div>
