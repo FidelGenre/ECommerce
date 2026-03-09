@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { Customer, AccountMovement } from '@/types'
-import { Plus, X, ChevronLeft, ChevronRight, Search, History, ArrowDownRight, ArrowUpRight, Star } from 'lucide-react'
+import { Plus, X, ChevronLeft, ChevronRight, Search, History, ArrowDownRight, ArrowUpRight, Star, Trash2 } from 'lucide-react'
 
 const FIELD_LABELS: Record<string, string> = {
     firstName: 'Nombre',
@@ -25,6 +25,17 @@ export default function CustomersPage() {
     const [editing, setEditing] = useState<Customer | null>(null)
     const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', address: '', taxId: '', notes: '' })
     const [saving, setSaving] = useState(false)
+
+    // Selection
+    const [selected, setSelected] = useState<Set<number>>(new Set())
+    const [deleting, setDeleting] = useState(false)
+
+    const toggleSelect = (id: number) => setSelected(prev => {
+        const next = new Set(prev)
+        next.has(id) ? next.delete(id) : next.add(id)
+        return next
+    })
+    const toggleAll = () => setSelected(prev => prev.size === data.length ? new Set() : new Set(data.map(c => c.id)))
 
     // Points Modal
     const [pointsModal, setPointsModal] = useState<Customer | null>(null)
@@ -65,9 +76,21 @@ export default function CustomersPage() {
         } finally { setSaving(false) }
     }
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('¿Eliminar cliente?')) return
-        await api.delete(`/api/admin/customers/${id}`); load()
+    const handleDelete = async (ids: number[]) => {
+        if (!confirm(`¿Eliminar ${ids.length === 1 ? 'este cliente' : `estos ${ids.length} clientes`}?`)) return
+        setDeleting(true)
+        const errors: string[] = []
+        for (const id of ids) {
+            try { await api.delete(`/api/admin/customers/${id}`) }
+            catch (e: any) {
+                const name = data.find(c => c.id === id)?.firstName ?? id
+                errors.push(`${name}: ${e.response?.data ?? 'Error'}`)
+            }
+        }
+        setDeleting(false)
+        setSelected(new Set())
+        if (errors.length) alert(errors.join('\n'))
+        load()
     }
 
     const handleAddMovement = async (e: React.FormEvent) => {
@@ -103,7 +126,15 @@ export default function CustomersPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div><h1 className="text-2xl font-bold text-espresso">Clientes</h1><p className="text-primary-500 text-sm">{total} clientes</p></div>
-                <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar cliente</button>
+                <div className="flex items-center gap-2">
+                    {selected.size > 0 && (
+                        <button onClick={() => handleDelete([...selected])} disabled={deleting}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
+                            <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
+                        </button>
+                    )}
+                    <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar cliente</button>
+                </div>
             </div>
             <div className="card p-0 overflow-hidden">
                 <div className="p-4 border-b border-muted">
@@ -115,10 +146,11 @@ export default function CustomersPage() {
                 {loading ? <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div> : (
                     <div className="table-wrapper rounded-none border-0">
                         <table className="data-table">
-                            <thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Saldo C/C</th><th>Puntos</th><th>Acciones</th></tr></thead>
+                            <thead><tr><th className="w-8 pl-4"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Saldo C/C</th><th>Puntos</th><th>Acciones</th></tr></thead>
                             <tbody>
                                 {data.map(c => (
-                                    <tr key={c.id}>
+                                    <tr key={c.id} className={selected.has(c.id) ? 'bg-red-50' : ''}>
+                                        <td className="pl-4"><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
                                         <td className="font-medium">{c.firstName} {c.lastName}</td>
                                         <td className="text-primary-500">{c.email ?? '—'}</td>
                                         <td className="text-primary-500">{c.phone ?? '—'}</td>
@@ -138,7 +170,7 @@ export default function CustomersPage() {
                                                 <Star className="w-3.5 h-3.5" /> Puntos
                                             </button>
                                             <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">Editar</button>
-                                            <button onClick={() => handleDelete(c.id)} className="text-red-500 hover:text-red-700 text-xs px-2 py-1">Eliminar</button>
+                                            <button onClick={() => handleDelete([c.id])} className="text-red-500 hover:text-red-700 text-xs px-2 py-1">Eliminar</button>
                                         </td>
                                     </tr>
                                 ))}
