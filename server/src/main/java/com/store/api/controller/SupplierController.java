@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import com.store.api.entity.AccountMovement;
 import com.store.api.repository.AccountMovementRepository;
 import com.store.api.repository.PurchaseOrderRepository;
+import com.store.api.repository.ItemRepository;
 
 @RestController
 @RequestMapping("/api/admin/suppliers")

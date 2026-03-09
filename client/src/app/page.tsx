@@ -264,7 +264,7 @@ export default function StorefrontPage() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {[
-                { icon: Flame, title: 'Tueste Premium', desc: 'Cada lote se tuesta con precisión para lograr el equilibrio perfecto entre aroma, sabor y textura.' },
+                { icon: Flame, title: 'Sabor Premium', desc: 'Cada lote se tuesta con precisión para lograr el equilibrio perfecto entre aroma, sabor y textura.' },
                 { icon: Coffee, title: 'El Arte del Café', desc: 'Elaborado en pequeños lotes por tostadores apasionados que celebran la tradición artesanal.' },
                 { icon: Leaf, title: 'Origen Sustentable', desc: 'Trabajamos con fincas éticas que promueven el comercio justo, la sustentabilidad y el planeta.' },
               ].map((card, i) => (
@@ -496,7 +496,7 @@ export default function StorefrontPage() {
             <div>
               <h4 className="text-white font-bold mb-3">Enlaces</h4>
               <ul className="space-y-1.5 text-sm text-primary-200">
-                <li><a href="#productos" className="hover:text-white transition-colors">Nuestros Blends</a></li>
+                <li><a href="#productos" className="hover:text-white transition-colors">Nuestras Mezclas</a></li>
                 <li><a href="#nosotros" className="hover:text-white transition-colors">Sobre Nosotros</a></li>
                 <li><a href="#contacto" className="hover:text-white transition-colors">Contacto</a></li>
                 {user && <li><Link href="/account" className="hover:text-white transition-colors">Mi Cuenta</Link></li>}
