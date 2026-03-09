@@ -99,14 +99,18 @@ public class SaleController {
                         .add(lineReq.getUnitPrice().multiply(lineReq.getQuantity())));
 
                 // Auto-decrement stock
-                item.setStock(item.getStock().subtract(lineReq.getQuantity()));
+                java.math.BigDecimal actualQuantity = lineReq.getQuantity();
+                if (item.getUnitSize() != null && item.getUnitSize().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                    actualQuantity = actualQuantity.multiply(item.getUnitSize());
+                }
+                item.setStock(item.getStock().subtract(actualQuantity));
                 itemRepo.save(item);
 
                 // Record stock movement
                 StockMovement movement = new StockMovement();
                 movement.setItem(item);
                 movement.setMovementType("OUT");
-                movement.setQuantity(lineReq.getQuantity());
+                movement.setQuantity(actualQuantity);
                 movement.setReason("Sale order #" + order.getId());
                 stockMovementRepo.save(movement);
 

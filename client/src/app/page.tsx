@@ -46,8 +46,7 @@ export default function StorefrontPage() {
   const updateQty = (id: number, delta: number) => {
     setCart(prev => prev.map(c => {
       if (c.item.id === id) {
-        const step = c.item.unitSize || 1;
-        const newQty = Math.max(0, Number((c.qty + delta).toFixed(3)))
+        const newQty = Math.max(0, Math.floor(c.qty + delta))
         if (newQty > c.item.stock) return c
         return { ...c, qty: newQty }
       }
@@ -58,7 +57,7 @@ export default function StorefrontPage() {
   const setQtyExact = (id: number, val: number) => {
     setCart(prev => prev.map(c => {
       if (c.item.id === id) {
-        const newQty = Math.max(0, val)
+        const newQty = Math.max(0, Math.floor(val))
         if (newQty > c.item.stock) return { ...c, qty: c.item.stock }
         return { ...c, qty: newQty }
       }
@@ -67,22 +66,19 @@ export default function StorefrontPage() {
   }
 
   const addToCart = (item: Item) => {
-    const step = item.unitSize || 1;
+    const step = 1;
     setCart(prev => {
       const existing = prev.find(c => c.item.id === item.id)
       if (existing) {
-        if (existing.qty + step <= item.stock) {
-          return prev.map(c => c.item.id === item.id ? { ...c, qty: Number((c.qty + step).toFixed(3)) } : c)
-        }
-        return prev;
+        return prev.map(c => c.item.id === item.id ? { ...c, qty: c.qty + step } : c)
       } else {
         return [...prev, { item, qty: step }]
       }
     })
   }
 
-  const cartTotal = cart.reduce((s, c) => s + c.item.price * c.qty, 0)
-  const cartCount = cart.reduce((s, c) => s + c.qty, 0)
+  const cartTotal = cart.reduce((s: number, c) => s + (c.item.price * c.qty), 0)
+  const cartCount = cart.reduce((s: number, c) => s + c.qty, 0)
 
   const handleCheckout = async () => {
     if (cart.length === 0) return
@@ -222,11 +218,11 @@ export default function StorefrontPage() {
                           <p className="text-caramel font-bold text-sm">{FMT(c.item.price * c.qty)}</p>
                         </div>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => updateQty(c.item.id, -(c.item.unitSize || 1))} className="w-7 h-7 rounded-full bg-primary-100 hover:bg-primary-200 flex items-center justify-center transition-colors">
+                          <button onClick={() => updateQty(c.item.id, -1)} className="w-7 h-7 rounded-full bg-primary-100 hover:bg-primary-200 flex items-center justify-center transition-colors">
                             <Minus className="w-3 h-3 text-primary-600" />
                           </button>
-                          <input type="number" step="any" min="0.001" className="w-16 text-center text-sm font-semibold border border-muted rounded px-1 py-0.5" value={c.qty} onChange={(e) => setQtyExact(c.item.id, parseFloat(e.target.value) || 0)} />
-                          <button onClick={() => updateQty(c.item.id, (c.item.unitSize || 1))} className="w-7 h-7 rounded-full bg-primary-100 hover:bg-primary-200 flex items-center justify-center transition-colors">
+                          <input type="number" step="1" min="1" className="w-16 text-center text-sm font-semibold border border-muted rounded px-1 py-0.5" value={c.qty} onChange={(e) => setQtyExact(c.item.id, parseInt(e.target.value) || 0)} />
+                          <button onClick={() => updateQty(c.item.id, 1)} className="w-7 h-7 rounded-full bg-primary-100 hover:bg-primary-200 flex items-center justify-center transition-colors">
                             <Plus className="w-3 h-3 text-primary-600" />
                           </button>
                           <button onClick={() => removeFromCart(c.item.id)} className="w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center transition-colors ml-1">
