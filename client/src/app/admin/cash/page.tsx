@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { CashRegister, CashMovement } from '@/types'
-import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet } from 'lucide-react'
+import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
@@ -19,6 +19,21 @@ export default function CashPage() {
     const [showClose, setShowClose] = useState(false)
     const [moveForm, setMoveForm] = useState({ movementType: 'INCOME', amount: '', description: '' })
     const [saving, setSaving] = useState(false)
+    const [history, setHistory] = useState<CashRegister[]>([])
+    const [fromDate, setFromDate] = useState('')
+    const [toDate, setToDate] = useState('')
+
+    const loadHistory = async () => {
+        let url = '/api/admin/cash'
+        const params = new URLSearchParams()
+        if (fromDate) params.set('from', fromDate + 'T00:00:00')
+        if (toDate) params.set('to', toDate + 'T23:59:59')
+        if (params.toString()) url += '?' + params.toString()
+        try {
+            const r = await api.get(url)
+            setHistory(r.data)
+        } catch (e) { }
+    }
 
     const load = async () => {
         setLoading(true)
@@ -43,8 +58,10 @@ export default function CashPage() {
             setRegister(null)
         }
         setLoading(false)
+        loadHistory()
     }
     useEffect(() => { load() }, [])
+    useEffect(() => { loadHistory() }, [fromDate, toDate])
 
     const openRegister = async () => {
         setSaving(true)
@@ -90,6 +107,10 @@ export default function CashPage() {
 
     return (
         <div className="space-y-6">
+            <div className="bg-blue-50 text-blue-800 p-3 rounded-lg flex items-start gap-2 text-sm border border-blue-100">
+                <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
+                <p><strong>Aviso:</strong> La Caja Diaria solo calcula y registra movimientos pagados en <strong>Efectivo</strong> (o "Cash"). Las ventas o compras mediante tarjetas o transferencias no subirán o bajarán el saldo de caja mostrado, lo que te permite tener un control monetario perfecto de tus billetes físicos al cierre.</p>
+            </div>
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-espresso">Caja</h1>
@@ -164,6 +185,52 @@ export default function CashPage() {
                     <p className="text-primary-400 text-sm mt-1">Abrí una nueva sesión para registrar movimientos</p>
                 </div>
             )}
+
+            {/* History Section */}
+            <div className="pt-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h2 className="text-xl font-bold text-espresso">Historial de Cajas</h2>
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary-400" />
+                            <input type="date" className="input pl-9 text-sm" value={fromDate} onChange={e => setFromDate(e.target.value)} title="Desde" />
+                        </div>
+                        <div className="relative">
+                            <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary-400" />
+                            <input type="date" className="input pl-9 text-sm" value={toDate} onChange={e => setToDate(e.target.value)} title="Hasta" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card p-0 overflow-hidden">
+                    <div className="table-wrapper rounded-none border-0">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Apertura</th>
+                                    <th>Cierre</th>
+                                    <th>Fondo Inicial ($)</th>
+                                    <th>Cierre Declarado ($)</th>
+                                    <th>Notas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {history.length === 0 ? (
+                                    <tr><td colSpan={5} className="text-center text-primary-400 py-8">No hay registros en este rango</td></tr>
+                                ) : history.map(h => (
+                                    <tr key={h.id} className={h.closedAt ? '' : 'bg-primary-50'}>
+                                        <td className="text-sm">{new Date(h.openedAt).toLocaleString('es-AR')}</td>
+                                        <td className="text-sm">{h.closedAt ? new Date(h.closedAt).toLocaleString('es-AR') : <span className="text-primary-500 font-semibold">Actual / Abierta</span>}</td>
+                                        <td className="font-medium text-sm">{FMT(h.openingAmount ?? 0)}</td>
+                                        <td className="font-semibold text-sm">{h.closingAmount != null ? FMT(h.closingAmount) : '—'}</td>
+                                        <td className="text-primary-500 text-sm">{h.notes ?? '—'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
             {/* Modal Abrir */}
             {showOpen && (

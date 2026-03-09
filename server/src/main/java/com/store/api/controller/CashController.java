@@ -30,8 +30,18 @@ public class CashController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CashRegister>> history() {
-        return ResponseEntity.ok(registerRepo.findAll());
+    public ResponseEntity<List<CashRegister>> history(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        List<CashRegister> history;
+        if (from != null && to != null) {
+            history = registerRepo.findByOpenedAtBetween(from, to);
+        } else {
+            history = registerRepo.findAll();
+        }
+        return ResponseEntity.ok(history.stream()
+                .sorted((a, b) -> b.getOpenedAt().compareTo(a.getOpenedAt()))
+                .toList());
     }
 
     @PostMapping("/open")

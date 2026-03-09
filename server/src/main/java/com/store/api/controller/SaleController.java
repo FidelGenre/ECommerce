@@ -153,7 +153,11 @@ public class SaleController {
         }
 
         SaleOrder saved = saleRepo.save(order);
-        cashService.record("INCOME", saved.getTotal(), "Venta #" + saved.getId());
+        if (saved.getPaymentMethod() != null &&
+                (saved.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
+                        saved.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
+            cashService.record("INCOME", saved.getTotal(), "Venta #" + saved.getId());
+        }
         return ResponseEntity.ok(saved);
     }
 

@@ -149,7 +149,10 @@ public class PurchaseController {
         }
 
         PurchaseOrder saved = purchaseRepo.save(order);
-        if (saved.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0) {
+        if (saved.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
+                saved.getPaymentMethod() != null &&
+                (saved.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
+                        saved.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
             cashService.record("EXPENSE", saved.getTotal(), "Compra #" + saved.getId());
         }
         return ResponseEntity.ok(saved);
