@@ -20,6 +20,7 @@ public class MpWebhookController {
     private final OperationStatusRepository statusRepo;
     private final StockMovementRepository stockMovementRepo;
     private final NotificationRepository notificationRepo;
+    private final com.store.api.service.StockService stockService;
 
     @PostMapping("/webhook")
     public ResponseEntity<?> webhook(@RequestBody Map<String, Object> payload) {
@@ -61,29 +62,7 @@ public class MpWebhookController {
                     .findFirst()
                     .ifPresent(order::setStatus);
 
-            // Decrement stock and record movements
-            for (SaleLine line : order.getLines()) {
-                Item item = line.getItem();
-                item.setStock(item.getStock().subtract(line.getQuantity()));
-                itemRepo.save(item);
-
-                StockMovement movement = new StockMovement();
-                movement.setItem(item);
-                movement.setMovementType("OUT");
-                movement.setQuantity(line.getQuantity());
-                movement.setReason("Online sale - MP payment " + paymentId);
-                movement.setReferenceId(order.getId());
-                movement.setReferenceType("SALE");
-                stockMovementRepo.save(movement);
-
-                if (item.getStock().compareTo(item.getMinStock()) <= 0) {
-                    Notification notification = new Notification();
-                    notification.setMessage("Low stock: " + item.getName()
-                            + " (" + item.getStock() + " left, min: " + item.getMinStock() + ")");
-                    notification.setType("WARNING");
-                    notificationRepo.save(notification);
-                }
-            }
+            stockService.deductStockForSale(order, "Online sale - MP payment " + paymentId);
 
             saleOrderRepo.save(order);
             System.out.println("MP webhook: order " + order.getId() + " confirmed, stock decremented.");

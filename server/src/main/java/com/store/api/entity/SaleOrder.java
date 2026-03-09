@@ -40,6 +40,12 @@ public class SaleOrder {
     @Column(name = "mp_payment_id", length = 120)
     private String mpPaymentId;
 
+    @Column(name = "mp_init_point", length = 500)
+    private String mpInitPoint;
+
+    @Column(name = "stock_deducted", columnDefinition = "boolean default false")
+    private Boolean stockDeducted = false;
+
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal total = BigDecimal.ZERO;
 

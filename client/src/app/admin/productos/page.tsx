@@ -434,7 +434,7 @@ export default function ProductosAdminPage() {
 
             {/* Floating Action Bar for Selection */}
             {selectedIds.size > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white shadow-xl border border-primary-100 rounded-full px-6 py-3 flex items-center gap-4 z-40 animate-in slide-in-from-bottom-5">
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white shadow-xl border border-primary-100 rounded-full px-4 md:px-6 py-3 flex items-center gap-3 md:gap-4 z-40 animate-in slide-in-from-bottom-5 max-w-[95%] overflow-x-auto flex-nowrap whitespace-nowrap hide-scrollbar">
                     <span className="font-bold text-espresso text-sm bg-primary-50 px-3 py-1 rounded-full">{selectedIds.size} seleccionados</span>
                     <div className="w-px h-6 bg-muted"></div>
                     <button onClick={() => handleBatchVisibility(Array.from(selectedIds), true)} className="btn-ghost text-sm flex items-center gap-2">

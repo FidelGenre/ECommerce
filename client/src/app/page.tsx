@@ -89,6 +89,7 @@ export default function StorefrontPage() {
     setCheckoutLoading(true)
     try {
       const payload = {
+        frontendUrl: window.location.origin,
         lines: cart.map(c => ({
           itemId: c.item.id,
           quantity: c.qty,

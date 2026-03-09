@@ -368,6 +368,13 @@ export default function AccountPage() {
                                             <span className="text-xs font-mono font-semibold text-primary-600">#{(order as any).mpPaymentId}</span>
                                         </div>
                                     )}
+                                    {order.status?.name === 'Pendiente' && order.mpInitPoint && (
+                                        <div className="mt-3">
+                                            <a href={order.mpInitPoint} className="btn-primary w-full flex items-center justify-center gap-2 py-2 text-sm">
+                                                <CreditCard className="w-4 h-4" /> Pagar ahora
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

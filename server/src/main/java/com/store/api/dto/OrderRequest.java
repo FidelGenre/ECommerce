@@ -12,6 +12,7 @@ public class OrderRequest {
     private Long paymentMethodId;
     private Integer pointsUsed;
     private String notes;
+    private String frontendUrl;
     private List<OrderLineRequest> lines;
 
     @Data

@@ -115,6 +115,9 @@ export interface SaleOrder {
     pointsUsed?: number
     createdBy?: User
     createdAt: string
+    mpPaymentId?: string
+    mpInitPoint?: string
+    stockDeducted?: boolean
     lines: OrderLine[]
 }
 

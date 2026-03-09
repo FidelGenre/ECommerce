@@ -32,6 +32,7 @@ public class SaleController {
     private final NotificationRepository notificationRepo;
     private final UserRepository userRepo;
     private final CashService cashService;
+    private final com.store.api.service.StockService stockService;
 
     @GetMapping
     public ResponseEntity<Page<SaleOrder>> list(
@@ -97,50 +98,6 @@ public class SaleController {
                 order.getLines().add(line);
                 order.setTotal(order.getTotal()
                         .add(lineReq.getUnitPrice().multiply(lineReq.getQuantity())));
-
-                // Auto-decrement stock
-                java.math.BigDecimal actualQuantity = lineReq.getQuantity();
-                if (item.getUnitSize() != null && item.getUnitSize().compareTo(java.math.BigDecimal.ZERO) > 0) {
-                    actualQuantity = actualQuantity.multiply(item.getUnitSize());
-                }
-                item.setStock(item.getStock().subtract(actualQuantity));
-                itemRepo.save(item);
-
-                // Record stock movement
-                StockMovement movement = new StockMovement();
-                movement.setItem(item);
-                movement.setMovementType("OUT");
-                movement.setQuantity(actualQuantity);
-                movement.setReason("Sale order #" + order.getId());
-                stockMovementRepo.save(movement);
-
-                // Process Recipe / BOM (Insumos)
-                if (item.getComponents() != null && !item.getComponents().isEmpty()) {
-                    for (com.store.api.entity.ItemComponent component : item.getComponents()) {
-                        Item subItem = component.getComponentItem();
-                        java.math.BigDecimal totalDeduction = component.getQuantity().multiply(lineReq.getQuantity());
-
-                        subItem.setStock(subItem.getStock().subtract(totalDeduction));
-                        itemRepo.save(subItem);
-
-                        StockMovement subMovement = new StockMovement();
-                        subMovement.setItem(subItem);
-                        subMovement.setMovementType("OUT");
-                        subMovement.setQuantity(totalDeduction);
-                        subMovement
-                                .setReason("Recipe component for " + item.getName() + " (Sale #" + order.getId() + ")");
-                        stockMovementRepo.save(subMovement);
-                    }
-                }
-
-                // Low-stock notification
-                if (item.getStock().compareTo(item.getMinStock()) <= 0) {
-                    Notification notification = new Notification();
-                    notification.setMessage("Low stock: " + item.getName() + " (" + item.getStock() + " left, min: "
-                            + item.getMinStock() + ")");
-                    notification.setType("WARNING");
-                    notificationRepo.save(notification);
-                }
             }
         }
 
@@ -176,6 +133,17 @@ public class SaleController {
         }
 
         SaleOrder saved = saleRepo.save(order);
+
+        // Deduct stock if status is completed or reserved
+        if (saved.getStatus() != null) {
+            String statusName = saved.getStatus().getName();
+            if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)
+                    || "Reservado".equalsIgnoreCase(statusName)) {
+                stockService.deductStockForSale(saved, "Manual sale start - Status: " + statusName);
+                saved = saleRepo.save(saved);
+            }
+        }
+
         if (saved.getStatus() != null
                 && ("Completed".equals(saved.getStatus().getName()) || "Completado".equals(saved.getStatus().getName()))
                 &&
@@ -193,16 +161,27 @@ public class SaleController {
     public ResponseEntity<SaleOrder> updateStatus(@PathVariable Long id, @RequestParam Long statusId) {
         return saleRepo.findById(id).map(order -> {
             statusRepo.findById(statusId).ifPresent(order::setStatus);
-            if (order.getStatus() != null
-                    && ("Completed".equals(order.getStatus().getName())
-                            || "Completado".equals(order.getStatus().getName()))
-                    &&
-                    !Boolean.TRUE.equals(order.getCashRegistered()) &&
-                    order.getPaymentMethod() != null &&
-                    (order.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
-                            order.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
-                cashService.record("INCOME", order.getTotal(), "Venta #" + order.getId());
-                order.setCashRegistered(true);
+            if (order.getStatus() != null) {
+                String statusName = order.getStatus().getName();
+
+                // Return stock if cancelled
+                if ("Cancelado".equalsIgnoreCase(statusName) || "Cancelled".equalsIgnoreCase(statusName)) {
+                    stockService.returnStockForSale(order, "Sale cancellation");
+                }
+                // Deduct stock if now completed or reserved
+                else if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)
+                        || "Reservado".equalsIgnoreCase(statusName)) {
+                    stockService.deductStockForSale(order, "Sale status updated to " + statusName);
+                }
+
+                if (("Completed".equals(statusName) || "Completado".equals(statusName))
+                        && !Boolean.TRUE.equals(order.getCashRegistered()) &&
+                        order.getPaymentMethod() != null &&
+                        (order.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
+                                order.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
+                    cashService.record("INCOME", order.getTotal(), "Venta #" + order.getId());
+                    order.setCashRegistered(true);
+                }
             }
             return ResponseEntity.ok(saleRepo.save(order));
         }).orElse(ResponseEntity.notFound().build());

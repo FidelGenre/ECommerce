@@ -100,8 +100,10 @@ public class CheckoutController {
             }
 
             String publicBaseUrl = resolvePublicBaseUrl();
-            // Use ngrok URL for backUrls too — MP can't redirect to localhost
-            String frontendBase = publicBaseUrl;
+
+            String frontendBase = (req.getFrontendUrl() != null && !req.getFrontendUrl().isBlank())
+                    ? req.getFrontendUrl()
+                    : publicBaseUrl;
 
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
                     .success(frontendBase + "/checkout/success")
@@ -172,6 +174,7 @@ public class CheckoutController {
 
             // Link MP preference ID back to the order
             order.setMpPreferenceId(preference.getId());
+            order.setMpInitPoint(preference.getInitPoint());
             saleOrderRepo.save(order);
 
             return ResponseEntity.ok(Map.of("id", preference.getId(), "init_point", preference.getInitPoint()));
