@@ -104,7 +104,7 @@ export default function ProductosAdminPage() {
     const [editing, setEditing] = useState<Item | null>(null)
     const [categories, setCategories] = useState<Category[]>([])
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
-    const blank = { name: '', description: '', price: '', cost: '', stock: '0', minStock: '5', imageUrl: '', barcode: '', categoryId: '', supplierId: '', visible: true, unit: '', unitSize: '', purchaseUnit: '', purchaseConversion: '1' }
+    const blank = { name: '', description: '', price: '', cost: '', stock: '0', minStock: '5', imageUrl: '', barcode: '', categoryId: '', supplierId: '', visible: true, unit: '', unitSize: '', purchaseUnit: '', purchaseConversion: '1', components: [] as any[] }
     const [form, setForm] = useState(blank as any)
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
@@ -146,7 +146,7 @@ export default function ProductosAdminPage() {
 
     const [newCategoryName, setNewCategoryName] = useState('')
 
-    const openNew = () => { setEditing(null); setForm({ ...blank, visible: true }); setNewCategoryName(''); setShowModal(true) }
+    const openNew = () => { setEditing(null); setForm({ ...blank, visible: true, components: [] }); setNewCategoryName(''); setShowModal(true) }
     const openEdit = (item: Item) => {
         setEditing(item)
         setForm({
@@ -165,6 +165,7 @@ export default function ProductosAdminPage() {
             unitSize: item.unitSize ? String(item.unitSize) : '',
             purchaseUnit: item.purchaseUnit ?? '',
             purchaseConversion: item.purchaseConversion ? String(item.purchaseConversion) : '1',
+            components: item.components?.map(c => ({ componentItemId: String(c.componentItem.id), quantity: String(c.quantity) })) ?? []
         })
         setNewCategoryName('')
         setShowModal(true)
@@ -193,6 +194,7 @@ export default function ProductosAdminPage() {
                 unitSize: form.unitSize ? Number(form.unitSize) : null,
                 purchaseUnit: form.purchaseUnit || null,
                 purchaseConversion: form.purchaseConversion ? Number(form.purchaseConversion) : null,
+                components: form.components.map((c: any) => ({ componentItemId: Number(c.componentItemId), quantity: Number(c.quantity) }))
             }
             if (editing) await api.put(`/api/admin/items/${editing.id}`, payload)
             else await api.post('/api/admin/items', payload)
@@ -545,6 +547,51 @@ export default function ProductosAdminPage() {
                                         Visible en la tienda
                                         <span className="font-normal text-primary-500 ml-1">— Los clientes pueden ver y comprar este producto</span>
                                     </label>
+                                </div>
+
+                                {/* Recipe Section */}
+                                <div className="col-span-2 border-t border-muted pt-4 mt-2">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-sm font-bold text-espresso uppercase tracking-wider">Receta / Insumos</h3>
+                                        <button type="button" onClick={() => setForm({ ...form, components: [...form.components, { componentItemId: '', quantity: '1' }] })} className="text-primary-600 hover:text-primary-800 text-xs font-bold flex items-center gap-1">
+                                            <Plus className="w-3 h-3" /> AGREGAR INSUMO
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {form.components.map((comp: any, i: number) => (
+                                            <div key={i} className="flex gap-2 items-center">
+                                                <select
+                                                    className="select flex-1 text-sm py-1.5"
+                                                    value={comp.componentItemId}
+                                                    onChange={e => {
+                                                        const n = [...form.components]; n[i].componentItemId = e.target.value; setForm({ ...form, components: n })
+                                                    }}
+                                                    required
+                                                >
+                                                    <option value="">Seleccionar insumo…</option>
+                                                    {data.filter(it => editing ? it.id !== editing.id : true).map(it => (
+                                                        <option key={it.id} value={it.id}>{it.name} (stock: {it.stock})</option>
+                                                    ))}
+                                                </select>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-primary-400">Cant:</span>
+                                                    <input
+                                                        type="number" step="any" min="0.001"
+                                                        className="input w-20 py-1 text-center"
+                                                        value={comp.quantity}
+                                                        onChange={e => {
+                                                            const n = [...form.components]; n[i].quantity = e.target.value; setForm({ ...form, components: n })
+                                                        }}
+                                                        required
+                                                    />
+                                                </div>
+                                                <button type="button" onClick={() => setForm({ ...form, components: form.components.filter((_: any, idx: number) => idx !== i) })} className="text-red-500 hover:text-red-700 p-1">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {form.components.length === 0 && <p className="text-xs text-primary-400 italic text-center py-2 bg-warm-50 rounded border border-dashed border-muted">No hay insumos vinculados a este producto.</p>}
+                                    </div>
                                 </div>
                             </div>
 
