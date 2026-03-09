@@ -18,18 +18,30 @@ const FIELD_LABELS: Record<string, string> = {
     minStock: 'Stock mínimo',
 }
 
-function ProductCard({ item, onEdit, onToggle, onDelete, onQr }: {
+function ProductCard({ item, onEdit, onToggle, onDelete, onQr, selected, onSelect }: {
     item: Item
     onEdit: () => void
     onToggle: () => void
     onDelete: () => void
     onQr: () => void
+    selected: boolean
+    onSelect: () => void
 }) {
     const stockBad = item.stock <= item.minStock
     return (
         <div className={`card p-0 overflow-hidden flex flex-col transition-shadow hover:shadow-lg ${!item.visible ? 'opacity-60' : ''}`}>
             {/* Image */}
             <div className="relative h-44 bg-primary-50 flex items-center justify-center overflow-hidden">
+                {/* Selection Checkbox */}
+                <div className="absolute top-2 left-2 z-10">
+                    <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={onSelect}
+                        className="w-5 h-5 rounded accent-primary-700 cursor-pointer shadow-sm border-white"
+                    />
+                </div>
+
                 {item.imageUrl ? (
                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                 ) : (
@@ -223,6 +235,22 @@ export default function ProductosAdminPage() {
         await api.patch(`/api/admin/items/${item.id}/visibility`); load()
     }
 
+    const handleBatchVisibility = async (ids: number[], makeVisible: boolean) => {
+        setSaving(true)
+        const errors: string[] = []
+        for (const id of ids) {
+            const item = data.find(i => i.id === id)
+            if (item && item.visible !== makeVisible) {
+                try { await api.patch(`/api/admin/items/${id}/visibility`) }
+                catch (e: any) { errors.push(`${item.name || id}: ${e.response?.data ?? 'Error'}`) }
+            }
+        }
+        setSaving(false)
+        setSelectedIds(new Set())
+        if (errors.length) alert(errors.join('\n'))
+        load()
+    }
+
     const displayed = visFilter
         ? data.filter(i => visFilter === 'visible' ? i.visible : !i.visible)
         : data
@@ -319,6 +347,8 @@ export default function ProductosAdminPage() {
                             onToggle={() => toggleVisibility(item)}
                             onDelete={() => handleDelete([item.id])}
                             onQr={() => setQrItem(item)}
+                            selected={selectedIds.has(item.id)}
+                            onSelect={() => toggleSelect(item.id)}
                         />
                     ))}
                 </div>
@@ -327,6 +357,14 @@ export default function ProductosAdminPage() {
                     <div className="table-wrapper rounded-none border-0">
                         <table className="data-table">
                             <thead><tr>
+                                <th>
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4 rounded accent-primary-700 cursor-pointer"
+                                        checked={displayed.length > 0 && selectedIds.size === displayed.length}
+                                        onChange={toggleAll}
+                                    />
+                                </th>
                                 <th>Imagen</th>
                                 <th>Nombre</th>
                                 <th>Precio</th>
@@ -339,6 +377,14 @@ export default function ProductosAdminPage() {
                             <tbody>
                                 {displayed.map(item => (
                                     <tr key={item.id} className={!item.visible ? 'opacity-60' : ''}>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 rounded accent-primary-700 cursor-pointer"
+                                                checked={selectedIds.has(item.id)}
+                                                onChange={() => toggleSelect(item.id)}
+                                            />
+                                        </td>
                                         <td>
                                             <div className="w-10 h-10 rounded-lg overflow-hidden bg-primary-50 flex items-center justify-center">
                                                 {item.imageUrl
@@ -383,6 +429,27 @@ export default function ProductosAdminPage() {
                             </tbody>
                         </table>
                     </div>
+                </div>
+            )}
+
+            {/* Floating Action Bar for Selection */}
+            {selectedIds.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white shadow-xl border border-primary-100 rounded-full px-6 py-3 flex items-center gap-4 z-40 animate-in slide-in-from-bottom-5">
+                    <span className="font-bold text-espresso text-sm bg-primary-50 px-3 py-1 rounded-full">{selectedIds.size} seleccionados</span>
+                    <div className="w-px h-6 bg-muted"></div>
+                    <button onClick={() => handleBatchVisibility(Array.from(selectedIds), true)} className="btn-ghost text-sm flex items-center gap-2">
+                        <Eye className="w-4 h-4" /> Mostrar
+                    </button>
+                    <button onClick={() => handleBatchVisibility(Array.from(selectedIds), false)} className="btn-ghost text-sm flex items-center gap-2">
+                        <EyeOff className="w-4 h-4" /> Ocultar
+                    </button>
+                    <div className="w-px h-6 bg-muted"></div>
+                    <button onClick={() => handleDelete(Array.from(selectedIds))} className="text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
+                        <Trash2 className="w-4 h-4" /> Eliminar
+                    </button>
+                    <button onClick={() => setSelectedIds(new Set())} className="ml-2 btn-ghost p-1.5 rounded-full" title="Cancelar selección">
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
             )}
 

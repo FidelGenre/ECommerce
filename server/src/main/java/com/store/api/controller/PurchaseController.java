@@ -135,7 +135,9 @@ public class PurchaseController {
 
         PurchaseOrder saved = purchaseRepo.save(order);
         if (saved.getStatus() != null
-                && ("Completed".equals(saved.getStatus().getName()) || "Approved".equals(saved.getStatus().getName()))
+                && ("Completed".equals(saved.getStatus().getName()) || "Completado".equals(saved.getStatus().getName())
+                        || "Approved".equals(saved.getStatus().getName())
+                        || "Aprobado".equals(saved.getStatus().getName()))
                 &&
                 saved.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
                 saved.getPaymentMethod() != null &&
@@ -154,7 +156,9 @@ public class PurchaseController {
             statusRepo.findById(statusId).ifPresent(order::setStatus);
             if (order.getStatus() != null
                     && ("Completed".equals(order.getStatus().getName())
-                            || "Approved".equals(order.getStatus().getName()))
+                            || "Completado".equals(order.getStatus().getName())
+                            || "Approved".equals(order.getStatus().getName())
+                            || "Aprobado".equals(order.getStatus().getName()))
                     &&
                     !Boolean.TRUE.equals(order.getCashRegistered()) &&
                     order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
@@ -177,7 +181,11 @@ public class PurchaseController {
                     .filter(s -> "Approved".equals(s.getName()) && "PURCHASE".equals(s.getType()))
                     .findFirst()
                     .ifPresent(order::setStatus);
-            if (order.getStatus() != null && "Approved".equals(order.getStatus().getName()) &&
+            if (order.getStatus() != null
+                    && ("Approved".equals(order.getStatus().getName()) || "Aprobado".equals(order.getStatus().getName())
+                            || "Completed".equals(order.getStatus().getName())
+                            || "Completado".equals(order.getStatus().getName()))
+                    &&
                     !Boolean.TRUE.equals(order.getCashRegistered()) &&
                     order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
                     order.getPaymentMethod() != null &&

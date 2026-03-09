@@ -176,7 +176,9 @@ public class SaleController {
         }
 
         SaleOrder saved = saleRepo.save(order);
-        if (saved.getStatus() != null && "Completed".equals(saved.getStatus().getName()) &&
+        if (saved.getStatus() != null
+                && ("Completed".equals(saved.getStatus().getName()) || "Completado".equals(saved.getStatus().getName()))
+                &&
                 saved.getPaymentMethod() != null &&
                 (saved.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
                         saved.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
@@ -191,7 +193,10 @@ public class SaleController {
     public ResponseEntity<SaleOrder> updateStatus(@PathVariable Long id, @RequestParam Long statusId) {
         return saleRepo.findById(id).map(order -> {
             statusRepo.findById(statusId).ifPresent(order::setStatus);
-            if (order.getStatus() != null && "Completed".equals(order.getStatus().getName()) &&
+            if (order.getStatus() != null
+                    && ("Completed".equals(order.getStatus().getName())
+                            || "Completado".equals(order.getStatus().getName()))
+                    &&
                     !Boolean.TRUE.equals(order.getCashRegistered()) &&
                     order.getPaymentMethod() != null &&
                     (order.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
