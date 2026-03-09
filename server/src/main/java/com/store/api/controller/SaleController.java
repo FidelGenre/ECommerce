@@ -138,7 +138,8 @@ public class SaleController {
         if (saved.getStatus() != null) {
             String statusName = saved.getStatus().getName();
             if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)
-                    || "Reservado".equalsIgnoreCase(statusName)) {
+                    || "Reservado".equalsIgnoreCase(statusName) || "Pendiente".equalsIgnoreCase(statusName)
+                    || "Pending".equalsIgnoreCase(statusName)) {
                 stockService.deductStockForSale(saved, "Manual sale start - Status: " + statusName);
                 saved = saleRepo.save(saved);
             }
@@ -168,9 +169,10 @@ public class SaleController {
                 if ("Cancelado".equalsIgnoreCase(statusName) || "Cancelled".equalsIgnoreCase(statusName)) {
                     stockService.returnStockForSale(order, "Sale cancellation");
                 }
-                // Deduct stock if now completed or reserved
+                // Deduct stock if now completed or reserved or pending
                 else if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)
-                        || "Reservado".equalsIgnoreCase(statusName)) {
+                        || "Reservado".equalsIgnoreCase(statusName) || "Pendiente".equalsIgnoreCase(statusName)
+                        || "Pending".equalsIgnoreCase(statusName)) {
                     stockService.deductStockForSale(order, "Sale status updated to " + statusName);
                 }
 

@@ -36,6 +36,7 @@ public class CheckoutController {
     private final PaymentMethodRepository paymentMethodRepo;
     private final UserRepository userRepo;
     private final CustomerRepository customerRepo;
+    private final com.store.api.service.StockService stockService;
 
     @Value("${app.mercadopago.access-token}")
     private String mpAccessToken;
@@ -159,6 +160,10 @@ public class CheckoutController {
             }
 
             saleOrderRepo.save(order); // save to get the generated ID
+
+            // Reserva de stock inmediata al momento del checkout (queda Pendiente)
+            stockService.deductStockForSale(order, "Online checkout initialized");
+            saleOrderRepo.save(order);
 
             // Create MP preference with order ID as external_reference
             PreferenceRequest preferenceRequest = PreferenceRequest.builder()
