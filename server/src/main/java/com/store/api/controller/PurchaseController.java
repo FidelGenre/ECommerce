@@ -121,14 +121,18 @@ public class PurchaseController {
                         .add(lineReq.getUnitCost().multiply(java.math.BigDecimal.valueOf(lineReq.getQuantity()))));
 
                 // Auto-update stock
-                item.setStock(item.getStock() + lineReq.getQuantity());
+                java.math.BigDecimal conversion = item.getPurchaseConversion() != null ? item.getPurchaseConversion()
+                        : java.math.BigDecimal.ONE;
+                int addedStock = java.math.BigDecimal.valueOf(lineReq.getQuantity()).multiply(conversion).intValue();
+
+                item.setStock(item.getStock() + addedStock);
                 itemRepo.save(item);
 
                 // Record stock movement
                 StockMovement movement = new StockMovement();
                 movement.setItem(item);
                 movement.setMovementType("IN");
-                movement.setQuantity(lineReq.getQuantity());
+                movement.setQuantity(addedStock);
                 movement.setReason("Purchase order");
                 stockMovementRepo.save(movement);
 

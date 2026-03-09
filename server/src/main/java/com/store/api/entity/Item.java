@@ -54,6 +54,12 @@ public class Item {
     @Column(name = "unit_size", precision = 14, scale = 3)
     private BigDecimal unitSize;
 
+    @Column(name = "purchase_unit", length = 20)
+    private String purchaseUnit;
+
+    @Column(name = "purchase_conversion", precision = 14, scale = 3)
+    private BigDecimal purchaseConversion = BigDecimal.ONE;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 }

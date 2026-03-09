@@ -370,7 +370,10 @@ export default function StorefrontPage() {
                       </p>
 
                       <div className="flex items-center justify-between mt-auto">
-                        <span className="text-lg font-bold text-[#6B4B31]">{FMT(item.price)}</span>
+                        <span className="text-lg font-bold text-[#6B4B31]">
+                          {FMT(item.price)}
+                          {item.unit && <span className="text-sm font-normal ml-1">/ {item.unitSize || 1}{item.unit}</span>}
+                        </span>
                         <button
                           onClick={() => addToCart(item)}
                           disabled={item.stock <= 0}

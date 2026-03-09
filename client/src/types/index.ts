@@ -68,6 +68,8 @@ export interface Item {
     barcode?: string
     unit?: string
     unitSize?: number
+    purchaseUnit?: string
+    purchaseConversion?: number
     createdAt: string
 }
 

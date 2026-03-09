@@ -16,4 +16,8 @@ public class ItemRequest {
     private Long supplierId;
     private Boolean visible;
     private String barcode;
+    private String unit;
+    private BigDecimal unitSize;
+    private String purchaseUnit;
+    private BigDecimal purchaseConversion;
 }

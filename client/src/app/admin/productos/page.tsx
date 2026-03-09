@@ -104,7 +104,7 @@ export default function ProductosAdminPage() {
     const [editing, setEditing] = useState<Item | null>(null)
     const [categories, setCategories] = useState<Category[]>([])
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
-    const blank = { name: '', description: '', price: '', cost: '', stock: '0', minStock: '5', imageUrl: '', barcode: '', categoryId: '', supplierId: '', visible: true }
+    const blank = { name: '', description: '', price: '', cost: '', stock: '0', minStock: '5', imageUrl: '', barcode: '', categoryId: '', supplierId: '', visible: true, unit: '', unitSize: '', purchaseUnit: '', purchaseConversion: '1' }
     const [form, setForm] = useState(blank as any)
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
@@ -161,6 +161,10 @@ export default function ProductosAdminPage() {
             categoryId: item.category?.id ? String(item.category.id) : '',
             supplierId: item.supplier?.id ? String(item.supplier.id) : '',
             visible: item.visible,
+            unit: item.unit ?? '',
+            unitSize: item.unitSize ? String(item.unitSize) : '',
+            purchaseUnit: item.purchaseUnit ?? '',
+            purchaseConversion: item.purchaseConversion ? String(item.purchaseConversion) : '1',
         })
         setNewCategoryName('')
         setShowModal(true)
@@ -185,6 +189,10 @@ export default function ProductosAdminPage() {
                 minStock: Number(form.minStock),
                 categoryId,
                 supplierId: form.supplierId ? Number(form.supplierId) : null,
+                unit: form.unit || null,
+                unitSize: form.unitSize ? Number(form.unitSize) : null,
+                purchaseUnit: form.purchaseUnit || null,
+                purchaseConversion: form.purchaseConversion ? Number(form.purchaseConversion) : null,
             }
             if (editing) await api.put(`/api/admin/items/${editing.id}`, payload)
             else await api.post('/api/admin/items', payload)
@@ -468,6 +476,35 @@ export default function ProductosAdminPage() {
                                     <label className="block text-sm font-medium text-primary-700 mb-1">Stock mínimo</label>
                                     <input type="number" min="0" className="input" value={form.minStock} onChange={e => setForm({ ...form, minStock: e.target.value })} />
                                     <p className="text-xs text-primary-400 mt-1">Alerta cuando baje de este valor</p>
+                                </div>
+
+                                {/* Units & Conversion */}
+                                <div className="col-span-2 grid grid-cols-2 gap-4 p-4 bg-primary-50 rounded-xl border border-primary-100 mt-2">
+                                    <div className="col-span-2">
+                                        <h4 className="text-sm font-bold text-espresso mb-1">Unidades y Conversión</h4>
+                                        <p className="text-xs text-primary-500 mb-3">Configura cómo se vende este producto y cómo lo compras al proveedor.</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-primary-700 mb-1">Unidad de Venta (ej. g, u)</label>
+                                        <input className="input text-sm" value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} placeholder="Ej: g" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-primary-700 mb-1">Tamaño (ej. 100 para 100g)</label>
+                                        <input type="number" step="0.001" min="0" className="input text-sm" value={form.unitSize} onChange={e => setForm({ ...form, unitSize: e.target.value })} placeholder="100" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-primary-700 mb-1">Unidad de Compra (ej. kg, caja)</label>
+                                        <input className="input text-sm" value={form.purchaseUnit} onChange={e => setForm({ ...form, purchaseUnit: e.target.value })} placeholder="Ej: kg" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-primary-700 mb-1">Factor de Conversión</label>
+                                        <input type="number" step="0.001" min="0" className="input text-sm" value={form.purchaseConversion} onChange={e => setForm({ ...form, purchaseConversion: e.target.value })} placeholder="10" />
+                                    </div>
+                                    {form.unit && form.purchaseUnit && Number(form.purchaseConversion) > 0 && (
+                                        <div className="col-span-2 mt-1">
+                                            <p className="text-xs text-emerald-700 font-medium">💡 Cuando compres 1 {form.purchaseUnit}, ingresarán {form.purchaseConversion} unidades de {form.unitSize || 1} {form.unit} al stock.</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Category & Supplier */}

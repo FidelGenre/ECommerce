@@ -170,6 +170,11 @@ public class ItemController {
         if (req.getVisible() != null)
             item.setVisible(req.getVisible());
         item.setBarcode(req.getBarcode());
+        item.setUnit(req.getUnit());
+        item.setUnitSize(req.getUnitSize());
+        item.setPurchaseUnit(req.getPurchaseUnit());
+        item.setPurchaseConversion(
+                req.getPurchaseConversion() != null ? req.getPurchaseConversion() : java.math.BigDecimal.ONE);
         if (req.getCategoryId() != null) {
             categoryRepository.findById(req.getCategoryId()).ifPresent(item::setCategory);
         }
