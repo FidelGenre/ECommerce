@@ -62,6 +62,17 @@ public class AuthController {
         return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId()));
     }
 
+    @GetMapping("/refresh")
+    public ResponseEntity<?> refresh(org.springframework.security.core.Authentication auth) {
+        if (auth == null)
+            return ResponseEntity.status(401).build();
+        User user = userRepository.findByUsername(auth.getName()).orElse(null);
+        if (user == null)
+            return ResponseEntity.notFound().build();
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId()));
+    }
+
     @PatchMapping("/profile")
     public ResponseEntity<?> updateProfile(
             @RequestBody java.util.Map<String, String> body,

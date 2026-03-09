@@ -48,6 +48,12 @@ public class Item {
     @Column(length = 100)
     private String barcode;
 
+    @Column(length = 20)
+    private String unit;
+
+    @Column(name = "unit_size", precision = 14, scale = 3)
+    private BigDecimal unitSize;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 }

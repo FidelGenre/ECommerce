@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import api from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import { Plus, X, Edit, ToggleLeft, ToggleRight, Search, Filter, Trash2 } from 'lucide-react'
 
 interface UserRow {
@@ -18,6 +19,7 @@ interface UserRow {
 }
 
 export default function UsersSettingsPage() {
+    const { user: authUser, logout } = useAuth()
     const [data, setData] = useState<UserRow[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
@@ -69,10 +71,16 @@ export default function UsersSettingsPage() {
         setDeleting(id)
         try {
             await api.delete(`/api/admin/users/${id}`)
+            // If user deleted their own account, log out
+            if (id === authUser?.userId) { logout(); return }
             load()
         } catch (error: any) {
-            const msg = error.response?.data?.message || (typeof error.response?.data === 'string' ? error.response.data : 'No se pudo eliminar el usuario')
-            alert(msg)
+            if (error.response?.status === 403)
+                alert('No podés eliminar a otro administrador.')
+            else {
+                const msg = error.response?.data?.message || (typeof error.response?.data === 'string' ? error.response.data : 'No se pudo eliminar el usuario')
+                alert(msg)
+            }
         } finally {
             setDeleting(null)
         }

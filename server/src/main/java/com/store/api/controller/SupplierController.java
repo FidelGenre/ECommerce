@@ -25,6 +25,7 @@ public class SupplierController {
     private final CategoryRepository categoryRepository;
     private final AccountMovementRepository movementRepo;
     private final PurchaseOrderRepository purchaseRepo;
+    private final ItemRepository itemRepo;
 
     @GetMapping
     public ResponseEntity<Page<Supplier>> list(
@@ -81,6 +82,11 @@ public class SupplierController {
                 return ResponseEntity.status(409)
                         .body("El proveedor no puede ser eliminado porque tiene un saldo pendiente o a favor.");
             }
+            // Nullify FK references before deleting
+            itemRepo.findBySupplierId(id).forEach(item -> {
+                item.setSupplier(null);
+                itemRepo.save(item);
+            });
             purchaseRepo.findBySupplierId(id).forEach(p -> {
                 p.setSupplier(null);
                 purchaseRepo.save(p);

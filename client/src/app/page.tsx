@@ -240,7 +240,7 @@ export default function StorefrontPage() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                 <a href="#productos"
                   className="inline-flex items-center justify-center gap-2 bg-espresso hover:bg-primary-800 text-white font-semibold px-7 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95">
-                  Explorar Nuestros Blends
+                  Explorar Nuestras Mezclas
                   <ChevronRight className="w-4 h-4" />
                 </a>
                 <a href="#nosotros"
@@ -375,8 +375,8 @@ export default function StorefrontPage() {
                           onClick={() => addToCart(item)}
                           disabled={item.stock <= 0}
                           className={`text-sm font-semibold px-5 py-2 rounded-md transition-colors shadow-sm ${item.stock <= 0
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              : 'bg-[#5C3A21] hover:bg-[#4A2D19] text-white'
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-[#5C3A21] hover:bg-[#4A2D19] text-white'
                             }`}>
                           {item.stock <= 0 ? 'Sin stock' : 'Añadir'}
                         </button>

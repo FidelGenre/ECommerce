@@ -21,7 +21,7 @@ export default function ProductsSettingsPage() {
     const [editing, setEditing] = useState<Item | null>(null)
     const [categories, setCategories] = useState<Category[]>([])
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
-    const blank = { name: '', description: '', price: '', cost: '', stock: '0', minStock: '5', imageUrl: '', barcode: '', categoryId: '', supplierId: '', visible: true }
+    const blank = { name: '', description: '', price: '', cost: '', stock: '0', minStock: '5', imageUrl: '', barcode: '', categoryId: '', supplierId: '', visible: true, unit: '', unitSize: '' }
     const [form, setForm] = useState(blank as any)
     const [saving, setSaving] = useState(false)
 
@@ -39,12 +39,12 @@ export default function ProductsSettingsPage() {
     const openNew = () => { setEditing(null); setForm({ ...blank, visible: true }); setShowModal(true) }
     const openEdit = (item: Item) => {
         setEditing(item)
-        setForm({ name: item.name, description: item.description ?? '', price: String(item.price), cost: String(item.cost), stock: String(item.stock), minStock: String(item.minStock), imageUrl: item.imageUrl ?? '', barcode: item.barcode ?? '', categoryId: item.category?.id ? String(item.category.id) : '', supplierId: item.supplier?.id ? String(item.supplier.id) : '', visible: item.visible })
+        setForm({ name: item.name, description: item.description ?? '', price: String(item.price), cost: String(item.cost), stock: String(item.stock), minStock: String(item.minStock), imageUrl: item.imageUrl ?? '', barcode: item.barcode ?? '', categoryId: item.category?.id ? String(item.category.id) : '', supplierId: item.supplier?.id ? String(item.supplier.id) : '', visible: item.visible, unit: item.unit ?? '', unitSize: item.unitSize ? String(item.unitSize) : '' })
         setShowModal(true)
     }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
-        const payload = { ...form, price: Number(form.price), cost: Number(form.cost), stock: Number(form.stock), minStock: Number(form.minStock), categoryId: form.categoryId ? Number(form.categoryId) : null, supplierId: form.supplierId ? Number(form.supplierId) : null }
+        const payload = { ...form, price: Number(form.price), cost: Number(form.cost), stock: Number(form.stock), minStock: Number(form.minStock), categoryId: form.categoryId ? Number(form.categoryId) : null, supplierId: form.supplierId ? Number(form.supplierId) : null, unitSize: form.unitSize ? Number(form.unitSize) : null, unit: form.unit || null }
         try {
             if (editing) await api.put(`/api/admin/items/${editing.id}`, payload)
             else await api.post('/api/admin/items', payload)
@@ -132,10 +132,27 @@ export default function ProductsSettingsPage() {
                                 <div>
                                     <label className="block text-sm font-medium text-primary-700 mb-1">URL de imagen</label>
                                     <input type="url" className="input" value={form.imageUrl} onChange={e => setForm({ ...form, imageUrl: e.target.value })} />
+                                    {form.imageUrl && <img src={form.imageUrl} alt="preview" className="mt-2 w-full h-32 object-cover rounded-lg" onError={e => (e.currentTarget.style.display = 'none')} />}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-primary-700 mb-1">Código de barras</label>
                                     <input className="input" value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-primary-700 mb-1">Unidad de medida</label>
+                                    <select className="select" value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}>
+                                        <option value="">Sin unidad</option>
+                                        <option value="u">Unidades (u)</option>
+                                        <option value="kg">Kilogramos (kg)</option>
+                                        <option value="g">Gramos (g)</option>
+                                        <option value="L">Litros (L)</option>
+                                        <option value="mL">Mililitros (mL)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-primary-700 mb-1">Cantidad por unidad</label>
+                                    <input type="number" min="0" step="0.001" className="input" placeholder="ej: 0.5" value={form.unitSize} onChange={e => setForm({ ...form, unitSize: e.target.value })} />
+                                    <p className="text-xs text-primary-400 mt-1">Cuántos {form.unit || 'unidades'} contiene cada producto</p>
                                 </div>
                                 <div className="flex items-center gap-3 col-span-2">
                                     <input type="checkbox" id="visible" checked={form.visible} onChange={e => setForm({ ...form, visible: e.target.checked })} className="w-4 h-4 rounded accent-primary-700" />

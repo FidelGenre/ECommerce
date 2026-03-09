@@ -11,4 +11,6 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
         Page<Item> findByVisibleTrue(Pageable pageable);
 
         List<Item> findByStockLessThanEqualAndVisibleTrue(int threshold);
+
+        List<Item> findBySupplierId(Long supplierId);
 }

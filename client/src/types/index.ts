@@ -66,6 +66,8 @@ export interface Item {
     supplier?: Supplier
     visible: boolean
     barcode?: string
+    unit?: string
+    unitSize?: number
     createdAt: string
 }
 

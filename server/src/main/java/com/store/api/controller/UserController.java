@@ -95,10 +95,17 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> update(@PathVariable Long id, @RequestBody UserRequest req) {
+    public ResponseEntity<User> update(@PathVariable Long id, @RequestBody UserRequest req,
+            org.springframework.security.core.Authentication auth) {
         return userRepo.findById(id).map(u -> {
             if ("admin".equalsIgnoreCase(u.getUsername()))
                 return ResponseEntity.status(403).<User>body(null);
+            // Block admins from editing other admins
+            if ("ADMIN".equals(u.getRole()) && auth != null) {
+                User caller = userRepo.findByUsername(auth.getName()).orElse(null);
+                if (caller != null && !caller.getId().equals(u.getId()))
+                    return ResponseEntity.status(403).<User>body(null);
+            }
             u.setUsername(req.getUsername());
             u.setEmail(req.getEmail());
             if (req.getPassword() != null && !req.getPassword().isBlank()) {
@@ -111,10 +118,15 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/toggle")
-    public ResponseEntity<?> toggle(@PathVariable Long id) {
+    public ResponseEntity<?> toggle(@PathVariable Long id, org.springframework.security.core.Authentication auth) {
         return userRepo.findById(id).map(u -> {
             if ("admin".equalsIgnoreCase(u.getUsername()))
                 return ResponseEntity.status(403).<User>body(null);
+            if ("ADMIN".equals(u.getRole()) && auth != null) {
+                User caller = userRepo.findByUsername(auth.getName()).orElse(null);
+                if (caller != null && !caller.getId().equals(u.getId()))
+                    return ResponseEntity.status(403).<User>body(null);
+            }
             u.setActive(!u.getActive());
             return ResponseEntity.ok(userRepo.save(u));
         }).orElse(ResponseEntity.notFound().build());
@@ -122,10 +134,16 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @org.springframework.transaction.annotation.Transactional
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id, org.springframework.security.core.Authentication auth) {
         return userRepo.findById(id).map(u -> {
             if ("admin".equalsIgnoreCase(u.getUsername()))
                 return ResponseEntity.status(403).<Void>body(null);
+            // Block admins from deleting other admins
+            if ("ADMIN".equals(u.getRole()) && auth != null) {
+                User caller = userRepo.findByUsername(auth.getName()).orElse(null);
+                if (caller != null && !caller.getId().equals(u.getId()))
+                    return ResponseEntity.status(403).<Void>body(null);
+            }
 
             if (u.getCustomer() != null && u.getCustomer().getAccountBalance().compareTo(BigDecimal.ZERO) != 0) {
                 return ResponseEntity.status(409)

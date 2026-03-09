@@ -49,24 +49,26 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
 
             {/* Nav */}
             <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5 sidebar-scroll">
-                {NAV.filter(item => user?.role === 'SUPPLIER' ? item.href === '/admin/inventory' : true).map((item, i) => {
-                    if ('separator' in item) {
+                {NAV.filter(item => user?.role === 'SUPPLIER'
+                    ? item.href === '/admin/inventory' || item.href === '/admin/purchases'
+                    : true).map((item, i) => {
+                        if ('separator' in item) {
+                            return (
+                                <div key={i} className="pt-4 pb-1 px-3">
+                                    <p className="text-white/60 text-xs font-semibold uppercase tracking-wider">{item.label}</p>
+                                </div>
+                            )
+                        }
+                        const Icon = item.icon!
+                        const active = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href!))
                         return (
-                            <div key={i} className="pt-4 pb-1 px-3">
-                                <p className="text-white/60 text-xs font-semibold uppercase tracking-wider">{item.label}</p>
-                            </div>
+                            <Link key={item.href} href={item.href!} onClick={onNav} className={`sidebar-link ${active ? 'active' : ''}`}>
+                                <Icon className="w-4 h-4 shrink-0" />
+                                <span className="flex-1">{item.label}</span>
+                                {active && <ChevronRight className="w-3 h-3 opacity-60" />}
+                            </Link>
                         )
-                    }
-                    const Icon = item.icon!
-                    const active = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href!))
-                    return (
-                        <Link key={item.href} href={item.href!} onClick={onNav} className={`sidebar-link ${active ? 'active' : ''}`}>
-                            <Icon className="w-4 h-4 shrink-0" />
-                            <span className="flex-1">{item.label}</span>
-                            {active && <ChevronRight className="w-3 h-3 opacity-60" />}
-                        </Link>
-                    )
-                })}
+                    })}
             </nav>
 
             {/* User + Logout */}
