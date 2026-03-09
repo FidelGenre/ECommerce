@@ -53,6 +53,12 @@ export interface Customer {
     createdAt: string
 }
 
+export interface ItemComponent {
+    id: number
+    componentItem: Item
+    quantity: number
+}
+
 export interface Item {
     id: number
     name: string
@@ -71,6 +77,7 @@ export interface Item {
     purchaseUnit?: string
     purchaseConversion?: number
     createdAt: string
+    components?: ItemComponent[]
 }
 
 export interface OperationStatus {

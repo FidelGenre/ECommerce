@@ -37,6 +37,9 @@ public class PurchaseOrder {
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal total = BigDecimal.ZERO;
 
+    @Column(name = "cash_registered", columnDefinition = "boolean default false")
+    private Boolean cashRegistered = false;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by")
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "password" })

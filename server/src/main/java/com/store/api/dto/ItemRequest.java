@@ -20,4 +20,5 @@ public class ItemRequest {
     private BigDecimal unitSize;
     private String purchaseUnit;
     private BigDecimal purchaseConversion;
+    private java.util.List<ItemComponentRequest> components;
 }

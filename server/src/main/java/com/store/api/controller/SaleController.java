@@ -107,8 +107,27 @@ public class SaleController {
                 movement.setItem(item);
                 movement.setMovementType("OUT");
                 movement.setQuantity(lineReq.getQuantity());
-                movement.setReason("Sale order");
+                movement.setReason("Sale order #" + order.getId());
                 stockMovementRepo.save(movement);
+
+                // Process Recipe / BOM (Insumos)
+                if (item.getComponents() != null && !item.getComponents().isEmpty()) {
+                    for (com.store.api.entity.ItemComponent component : item.getComponents()) {
+                        Item subItem = component.getComponentItem();
+                        java.math.BigDecimal totalDeduction = component.getQuantity().multiply(lineReq.getQuantity());
+
+                        subItem.setStock(subItem.getStock().subtract(totalDeduction));
+                        itemRepo.save(subItem);
+
+                        StockMovement subMovement = new StockMovement();
+                        subMovement.setItem(subItem);
+                        subMovement.setMovementType("OUT");
+                        subMovement.setQuantity(totalDeduction);
+                        subMovement
+                                .setReason("Recipe component for " + item.getName() + " (Sale #" + order.getId() + ")");
+                        stockMovementRepo.save(subMovement);
+                    }
+                }
 
                 // Low-stock notification
                 if (item.getStock().compareTo(item.getMinStock()) <= 0) {
@@ -153,10 +172,13 @@ public class SaleController {
         }
 
         SaleOrder saved = saleRepo.save(order);
-        if (saved.getPaymentMethod() != null &&
+        if (saved.getStatus() != null && "Completed".equals(saved.getStatus().getName()) &&
+                saved.getPaymentMethod() != null &&
                 (saved.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
                         saved.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
             cashService.record("INCOME", saved.getTotal(), "Venta #" + saved.getId());
+            saved.setCashRegistered(true);
+            saved = saleRepo.save(saved);
         }
         return ResponseEntity.ok(saved);
     }
@@ -165,6 +187,14 @@ public class SaleController {
     public ResponseEntity<SaleOrder> updateStatus(@PathVariable Long id, @RequestParam Long statusId) {
         return saleRepo.findById(id).map(order -> {
             statusRepo.findById(statusId).ifPresent(order::setStatus);
+            if (order.getStatus() != null && "Completed".equals(order.getStatus().getName()) &&
+                    !Boolean.TRUE.equals(order.getCashRegistered()) &&
+                    order.getPaymentMethod() != null &&
+                    (order.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
+                            order.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
+                cashService.record("INCOME", order.getTotal(), "Venta #" + order.getId());
+                order.setCashRegistered(true);
+            }
             return ResponseEntity.ok(saleRepo.save(order));
         }).orElse(ResponseEntity.notFound().build());
     }

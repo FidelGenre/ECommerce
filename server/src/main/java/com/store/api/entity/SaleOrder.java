@@ -46,6 +46,9 @@ public class SaleOrder {
     @Column(name = "points_used", columnDefinition = "integer default 0")
     private Integer pointsUsed = 0;
 
+    @Column(name = "cash_registered", columnDefinition = "boolean default false")
+    private Boolean cashRegistered = false;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by")
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "passwordHash" })

@@ -134,11 +134,16 @@ public class PurchaseController {
         }
 
         PurchaseOrder saved = purchaseRepo.save(order);
-        if (saved.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
+        if (saved.getStatus() != null
+                && ("Completed".equals(saved.getStatus().getName()) || "Approved".equals(saved.getStatus().getName()))
+                &&
+                saved.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
                 saved.getPaymentMethod() != null &&
                 (saved.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
                         saved.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
             cashService.record("EXPENSE", saved.getTotal(), "Compra #" + saved.getId());
+            saved.setCashRegistered(true);
+            saved = purchaseRepo.save(saved);
         }
         return ResponseEntity.ok(saved);
     }
@@ -147,6 +152,18 @@ public class PurchaseController {
     public ResponseEntity<PurchaseOrder> updateStatus(@PathVariable Long id, @RequestParam Long statusId) {
         return purchaseRepo.findById(id).map(order -> {
             statusRepo.findById(statusId).ifPresent(order::setStatus);
+            if (order.getStatus() != null
+                    && ("Completed".equals(order.getStatus().getName())
+                            || "Approved".equals(order.getStatus().getName()))
+                    &&
+                    !Boolean.TRUE.equals(order.getCashRegistered()) &&
+                    order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
+                    order.getPaymentMethod() != null &&
+                    (order.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
+                            order.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
+                cashService.record("EXPENSE", order.getTotal(), "Compra #" + order.getId());
+                order.setCashRegistered(true);
+            }
             return ResponseEntity.ok(purchaseRepo.save(order));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -160,6 +177,15 @@ public class PurchaseController {
                     .filter(s -> "Approved".equals(s.getName()) && "PURCHASE".equals(s.getType()))
                     .findFirst()
                     .ifPresent(order::setStatus);
+            if (order.getStatus() != null && "Approved".equals(order.getStatus().getName()) &&
+                    !Boolean.TRUE.equals(order.getCashRegistered()) &&
+                    order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
+                    order.getPaymentMethod() != null &&
+                    (order.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
+                            order.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
+                cashService.record("EXPENSE", order.getTotal(), "Compra #" + order.getId());
+                order.setCashRegistered(true);
+            }
             return ResponseEntity.ok(purchaseRepo.save(order));
         }).orElse(ResponseEntity.notFound().build());
     }

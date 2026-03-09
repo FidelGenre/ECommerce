@@ -181,6 +181,24 @@ public class ItemController {
         if (req.getSupplierId() != null) {
             supplierRepository.findById(req.getSupplierId()).ifPresent(item::setSupplier);
         }
+
+        // Process sub-components (BOM Recipe)
+        item.getComponents().clear();
+        if (req.getComponents() != null) {
+            for (com.store.api.dto.ItemComponentRequest compReq : req.getComponents()) {
+                if (compReq.getComponentItemId() != null) {
+                    itemRepository.findById(compReq.getComponentItemId()).ifPresent(subItem -> {
+                        com.store.api.entity.ItemComponent ic = new com.store.api.entity.ItemComponent();
+                        ic.setParentItem(item);
+                        ic.setComponentItem(subItem);
+                        ic.setQuantity(
+                                compReq.getQuantity() != null ? compReq.getQuantity() : java.math.BigDecimal.ONE);
+                        item.getComponents().add(ic);
+                    });
+                }
+            }
+        }
+
         return item;
     }
 }

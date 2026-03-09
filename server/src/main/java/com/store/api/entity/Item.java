@@ -62,4 +62,8 @@ public class Item {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "parentItem", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "parentItem" })
+    private java.util.List<ItemComponent> components = new java.util.ArrayList<>();
 }
