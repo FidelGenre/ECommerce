@@ -28,7 +28,7 @@ export default function UsersSettingsPage() {
     const [editing, setEditing] = useState<UserRow | null>(null)
     const [form, setForm] = useState({
         username: '', email: '', password: '', role: 'CLIENTE',
-        firstName: '', lastName: '', phone: '', address: '', taxId: ''
+        firstName: '', lastName: '', phone: '', address: '', taxId: '', loyaltyPoints: 0
     })
     const [saving, setSaving] = useState(false)
     // Selection
@@ -69,8 +69,8 @@ export default function UsersSettingsPage() {
         return () => clearTimeout(timeout)
     }, [search, roleFilter, activeFilter])
 
-    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE', firstName: '', lastName: '', phone: '', address: '', taxId: '' }); setShowModal(true) }
-    const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role, firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', address: u.address || '', taxId: u.taxId || '' }); setShowModal(true) }
+    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE', firstName: '', lastName: '', phone: '', address: '', taxId: '', loyaltyPoints: 0 }); setShowModal(true) }
+    const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role, firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', address: u.address || '', taxId: u.taxId || '', loyaltyPoints: u.loyaltyPoints || 0 }); setShowModal(true) }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
         try {
@@ -283,9 +283,15 @@ export default function UsersSettingsPage() {
                                             <input className="input" value={form.taxId} onChange={e => setForm({ ...form, taxId: e.target.value })} />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-primary-700 mb-1">Dirección</label>
-                                        <input className="input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-primary-700 mb-1">Dirección</label>
+                                            <input className="input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-primary-700 mb-1">Puntos de Fidelización</label>
+                                            <input type="number" className="input" min="0" value={form.loyaltyPoints} onChange={e => setForm({ ...form, loyaltyPoints: parseInt(e.target.value) || 0 })} />
+                                        </div>
                                     </div>
                                 </>
                             )}

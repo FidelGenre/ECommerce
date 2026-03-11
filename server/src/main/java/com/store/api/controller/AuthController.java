@@ -53,7 +53,8 @@ public class AuthController {
         }
         User user = new User();
         user.setUsername(req.getUsername());
-        user.setEmail(req.getUsername() + "@placeholder.com");
+        user.setEmail(req.getEmail() != null && !req.getEmail().isBlank() ? req.getEmail()
+                : req.getUsername() + "@placeholder.com");
         user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         user.setRole("CLIENTE");
         userRepository.save(user);
