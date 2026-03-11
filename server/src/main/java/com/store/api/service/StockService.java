@@ -21,6 +21,36 @@ public class StockService {
     private final NotificationRepository notificationRepo;
 
     @Transactional
+    public void validateStockAvailability(SaleOrder order) {
+        for (SaleLine line : order.getLines()) {
+            Item item = line.getItem();
+            java.math.BigDecimal requiredQuantity = line.getQuantity();
+            if (item.getUnitSize() != null && item.getUnitSize().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                requiredQuantity = requiredQuantity.multiply(item.getUnitSize());
+            }
+
+            if (item.getStock().compareTo(requiredQuantity) < 0) {
+                throw new RuntimeException("Stock insuficiente para: " + item.getName() + ". Solicitado: "
+                        + requiredQuantity + ", Disponible: " + item.getStock());
+            }
+
+            // Recipe / Insumos
+            if (item.getComponents() != null && !item.getComponents().isEmpty()) {
+                for (com.store.api.entity.ItemComponent component : item.getComponents()) {
+                    Item subItem = component.getComponentItem();
+                    java.math.BigDecimal requiredDeduction = component.getQuantity().multiply(line.getQuantity());
+
+                    if (subItem.getStock().compareTo(requiredDeduction) < 0) {
+                        throw new RuntimeException("Insumo insuficiente para: " + item.getName() + " ("
+                                + subItem.getName() + "). Solicitado: " + requiredDeduction + ", Disponible: "
+                                + subItem.getStock());
+                    }
+                }
+            }
+        }
+    }
+
+    @Transactional
     public void deductStockForSale(SaleOrder order, String reasonStr) {
         if (Boolean.TRUE.equals(order.getStockDeducted())) {
             return; // Ya descontado

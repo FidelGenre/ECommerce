@@ -101,6 +101,9 @@ public class SaleController {
             }
         }
 
+        // Validate stock BEFORE saving or points deduction
+        stockService.validateStockAvailability(order);
+
         if (req.getPointsUsed() != null && req.getPointsUsed() >= 100 && order.getCustomer() != null) {
             Customer c = order.getCustomer();
             int requestedPoints = req.getPointsUsed();
@@ -171,6 +174,13 @@ public class SaleController {
                 else if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)
                         || "Reservado".equalsIgnoreCase(statusName) || "Pendiente".equalsIgnoreCase(statusName)
                         || "Pending".equalsIgnoreCase(statusName)) {
+                    if (!Boolean.TRUE.equals(order.getStockDeducted())) {
+                        try {
+                            stockService.validateStockAvailability(order);
+                        } catch (Exception e) {
+                            throw new RuntimeException("No se puede actualizar el estado: " + e.getMessage());
+                        }
+                    }
                     stockService.deductStockForSale(order, "Sale status updated to " + statusName);
                 }
 

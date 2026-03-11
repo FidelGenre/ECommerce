@@ -130,7 +130,7 @@ export default function CashPage() {
             ) : register ? (
                 <>
                     {summary && (
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="card text-center">
                                 <p className="text-xs text-primary-500 uppercase font-semibold mb-1">Apertura</p>
                                 <p className="text-2xl font-bold text-espresso">{FMT(register.openingAmount)}</p>

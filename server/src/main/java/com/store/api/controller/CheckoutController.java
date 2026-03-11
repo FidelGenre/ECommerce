@@ -166,8 +166,10 @@ public class CheckoutController {
                         .add(item.getPrice().multiply(lineReq.getQuantity())));
             }
 
-            saleOrderRepo.save(order); // save to get the generated ID
+            // Validate stock BEFORE saving
+            stockService.validateStockAvailability(order);
 
+            SaleOrder saved = saleOrderRepo.save(order);
             // Reserva de stock inmediata al momento del checkout (queda Pendiente)
             stockService.deductStockForSale(order, "Online checkout initialized");
             saleOrderRepo.save(order);
