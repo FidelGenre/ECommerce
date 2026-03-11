@@ -158,11 +158,14 @@ export default function PurchasesPage() {
         Completed: 'Completado', Pending: 'Pendiente', Cancelled: 'Cancelado', Approved: 'Aprobado'
     }
 
+    const HIDDEN_STATUSES = ['Aprobado', 'Approved']
+
     const uniqueStatuses = statuses.filter((s, index, self) =>
         index === self.findIndex((t) => (
             (STATUS_LABELS[t.name] || t.name) === (STATUS_LABELS[s.name] || s.name)
         ))
-    );
+    ).filter(s => !HIDDEN_STATUSES.includes(s.name));
+
 
     const updateStatus = async (id: number, statusId: string) => {
         try {
