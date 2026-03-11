@@ -86,26 +86,43 @@ flowchart LR
 
 *(Nota: El diagrama expone los casos de uso originales integrando pasarelas del entorno desarrollado para el checkout).*
 
-### 2.2. Especificación de Casos de Uso Principales
+### 2.2. Especificación de Casos de Uso Principales e Interfaces
 
-**CASO DE USO 1**: **Completar pago (Gestión de Venta Online)**
-- **Actor**: Cliente
-- **Descripción**: El proceso transaccional central de comercio electrónico.
-- **Flujo Principal**:
-  1. El cliente accede a su carrito de compras y confirma el pedido.
-  2. El sistema front-end envía el detalle a la API.
-  3. El sistema valida el stock backend (que haya existencias).
-  4. Integración y redirección externa (MercadoPago) para transacción.
-  5. Retorno al sistema, descuento de la base de datos y registro de la *Venta*.
+Este apartado detalla los procesos críticos del negocio vinculándolos con su implementación visual y lógica desarrollada.
 
-**CASO DE USO 2**: **Gestionar Inventario y Productos Terminados**
-- **Actor**: Administrador
-- **Descripción**: Mantenimiento general de los activos de la cafetería.
-- **Flujo Principal**:
-  1. El administrador ingresa mediante JWT al panel de control protegido.
-  2. Dentro del módulo de Productos, puede agregar, modificar (precios, descripciones) o eliminar oferta.
-  3. Hace uso del sistema de **Recetas**, vinculando "insumos" lógicos al ítem.
-  4. Los stockActual, stockMinimo se mantienen automáticos en el catálogo.
+#### CU01: Gestión de Venta Manual (Administrador)
+*   **Actor:** Administrador
+*   **Descripción:** Registro de ventas físicas en el local con validación de stock en tiempo real, filtro de clientes activos y cierre de caja.
+*   **Interfaz:**
+![Nueva Venta Manual](./screenshots/nueva_venta.png)
+
+#### CU02: Administración de Catálogo y Recetas (BOM)
+*   **Actor:** Administrador
+*   **Descripción:** Gestión de productos finales e insumos, permitiendo la reducción en cascada de stock según recetas configuradas. Incluye filtros guardados para eficiencia operativa.
+*   **Interfaz:**
+![Gestión de Productos](./screenshots/productos_filtros.png)
+
+#### CU03: Control de Inventario Auditado
+*   **Actor:** Administrador
+*   **Descripción:** Monitoreo y ajuste de existencias con registro obligatorio de motivos y usuario responsable para auditoría.
+*   **Interfaz:**
+![Tabla de Inventario](./screenshots/inventario_tabla.png)
+
+#### CU04: CRM y Gestión de Usuarios
+*   **Actor:** Administrador
+*   **Descripción:** Administración de perfiles de clientes con datos extendidos (DNI, Teléfono) y control de acceso basado en estados (Activo/Inactivo).
+*   **Interfaz:**
+![Formulario de Usuario](./screenshots/usuario_formulario.png)
+
+#### CU05: Venta Online y Checkout (MercadoPago)
+*   **Actor:** Cliente
+*   **Descripción:** Flujo de compra completo en el Storefront, desde la selección en catálogo hasta la transacción segura a través de la pasarela de MercadoPago.
+*   **Interfaces:**
+````carousel
+![Login](./screenshots/login_v2.png)
+<!-- slide -->
+![Registro](./screenshots/register_v2.png)
+````
 
 ### 2.3. Diagrama de Clases (Arquitectura Backend Central)
 
