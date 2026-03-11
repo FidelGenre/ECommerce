@@ -55,8 +55,9 @@ export default function StorefrontPage() {
   const updateQty = (id: number, delta: number) => {
     setCart(prev => prev.map(c => {
       if (c.item.id === id) {
+        const stock = Number(c.item.stock)
         const newQty = Math.max(0, Math.floor(c.qty + delta))
-        if (newQty > c.item.stock) return c
+        if (newQty > stock) return c
         return { ...c, qty: newQty }
       }
       return c
@@ -66,8 +67,9 @@ export default function StorefrontPage() {
   const setQtyExact = (id: number, val: number) => {
     setCart(prev => prev.map(c => {
       if (c.item.id === id) {
+        const stock = Number(c.item.stock)
         const newQty = Math.max(0, Math.floor(val))
-        if (newQty > c.item.stock) return { ...c, qty: c.item.stock }
+        if (newQty > stock) return { ...c, qty: stock }
         return { ...c, qty: newQty }
       }
       return c
@@ -76,11 +78,14 @@ export default function StorefrontPage() {
 
   const addToCart = (item: Item) => {
     const step = 1;
+    const stock = Number(item.stock);
     setCart(prev => {
       const existing = prev.find(c => c.item.id === item.id)
       if (existing) {
+        if (existing.qty + step > stock) return prev;
         return prev.map(c => c.item.id === item.id ? { ...c, qty: c.qty + step } : c)
       } else {
+        if (step > stock) return prev;
         return [...prev, { item, qty: step }]
       }
     })
@@ -433,7 +438,7 @@ export default function StorefrontPage() {
                         <div className="flex items-center justify-between mt-auto">
                           <span className="text-lg font-bold text-[#6B4B31]">
                             {FMT(item.price)}
-                            {item.unit && <span className="text-sm font-normal ml-1">/ {item.unitSize || 1}{item.unit}</span>}
+                            <span className="text-sm font-normal ml-1">/ 100 gramos cada unidad</span>
                           </span>
                           <button
                             onClick={() => addToCart(item)}
