@@ -16,6 +16,8 @@ const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 export default function StorefrontPage() {
   const { user } = useAuth()
   const [items, setItems] = useState<Item[]>([])
+  const [categories, setCategories] = useState<any[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [cart, setCart] = useState<{ item: Item; qty: number }[]>([])
   const [showCart, setShowCart] = useState(false)
@@ -35,11 +37,18 @@ export default function StorefrontPage() {
   }, [mobileMenu])
 
   useEffect(() => {
-    api.get('/api/public/items?size=24')
-      .then(r => setItems(r.data.content ?? []))
+    api.get('/api/public/items?size=100')
+      .then(r => {
+        const fetchedItems = r.data.content ?? [];
+        setItems(fetchedItems);
+        const uniqueCategories = Array.from(new Set(fetchedItems.map((it: any) => it.category?.name).filter(Boolean))).sort();
+        setCategories(uniqueCategories);
+      })
       .catch(() => setItems([]))
       .finally(() => setLoading(false))
   }, [])
+
+  const filteredItems = selectedCategory ? items.filter((it: any) => it.category?.name === selectedCategory) : items;
 
   const removeFromCart = (id: number) => setCart(prev => prev.filter(c => c.item.id !== id))
 
@@ -373,46 +382,74 @@ export default function StorefrontPage() {
                 <p className="text-[#4A2D19] text-lg font-bold">Próximamente disponibles</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {items.map(item => (
-                  <div key={item.id}
-                    className="bg-[#FFFDF8] rounded-lg overflow-hidden flex flex-col transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1">
+              <>
+                {categories.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+                    <button
+                      onClick={() => setSelectedCategory('')}
+                      className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${selectedCategory === '' ? 'bg-[#4A2D19] text-white shadow-md' : 'bg-[#FFFDF8] text-[#8B6A4B] hover:bg-[#D4A97A] hover:text-[#4A2D19]'}`}
+                    >
+                      Todos
+                    </button>
+                    {categories.map((cat, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedCategory(cat as string)}
+                        className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${selectedCategory === cat ? 'bg-[#4A2D19] text-white shadow-md' : 'bg-[#FFFDF8] text-[#8B6A4B] hover:bg-[#D4A97A] hover:text-[#4A2D19]'}`}
+                      >
+                        {cat as string}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-                    {/* Image full width */}
-                    <div className="h-56 bg-[#D4A97A] overflow-hidden relative">
-                      {item.imageUrl
-                        ? <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center"><Coffee className="w-16 h-16 text-[#8B6A4B]" /></div>
-                      }
-                    </div>
+                {filteredItems.length === 0 && selectedCategory && (
+                  <div className="text-center py-10 w-full col-span-full">
+                    <p className="text-[#4A2D19] font-medium">No hay productos en esta categoría.</p>
+                  </div>
+                )}
 
-                    {/* Card Content centered */}
-                    <div className="p-5 flex flex-col text-center flex-1">
-                      <h3 className="font-extrabold text-[#4A2D19] text-lg mb-2">{item.name.toLowerCase()}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredItems.map(item => (
+                    <div key={item.id}
+                      className="bg-[#FFFDF8] rounded-lg overflow-hidden flex flex-col transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1">
 
-                      <p className={`text-xs font-semibold mb-6 ${item.stock <= 0 ? 'text-red-500' : 'text-[#8B6A4B]'}`}>
-                        {item.stock <= 0 ? 'Sin stock' : `Stock: ${item.stock} disponibles`}
-                      </p>
+                      {/* Image full width */}
+                      <div className="h-56 bg-[#D4A97A] overflow-hidden relative">
+                        {item.imageUrl
+                          ? <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center"><Coffee className="w-16 h-16 text-[#8B6A4B]" /></div>
+                        }
+                      </div>
 
-                      <div className="flex items-center justify-between mt-auto">
-                        <span className="text-lg font-bold text-[#6B4B31]">
-                          {FMT(item.price)}
-                          {item.unit && <span className="text-sm font-normal ml-1">/ {item.unitSize || 1}{item.unit}</span>}
-                        </span>
-                        <button
-                          onClick={() => addToCart(item)}
-                          disabled={item.stock <= 0}
-                          className={`text-sm font-semibold px-5 py-2 rounded-md transition-colors shadow-sm ${item.stock <= 0
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-[#5C3A21] hover:bg-[#4A2D19] text-white'
-                            }`}>
-                          {item.stock <= 0 ? 'Sin stock' : 'Añadir'}
-                        </button>
+                      {/* Card Content centered */}
+                      <div className="p-5 flex flex-col text-center flex-1">
+                        <h3 className="font-extrabold text-[#4A2D19] text-lg mb-2">{item.name.toLowerCase()}</h3>
+
+                        <p className={`text-xs font-semibold mb-6 ${item.stock <= 0 ? 'text-red-500' : 'text-[#8B6A4B]'}`}>
+                          {item.stock <= 0 ? 'Sin stock' : `Stock: ${item.stock} disponibles`}
+                        </p>
+
+                        <div className="flex items-center justify-between mt-auto">
+                          <span className="text-lg font-bold text-[#6B4B31]">
+                            {FMT(item.price)}
+                            {item.unit && <span className="text-sm font-normal ml-1">/ {item.unitSize || 1}{item.unit}</span>}
+                          </span>
+                          <button
+                            onClick={() => addToCart(item)}
+                            disabled={item.stock <= 0}
+                            className={`text-sm font-semibold px-5 py-2 rounded-md transition-colors shadow-sm ${item.stock <= 0
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-[#5C3A21] hover:bg-[#4A2D19] text-white'
+                              }`}>
+                            {item.stock <= 0 ? 'Sin stock' : 'Añadir'}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </section>

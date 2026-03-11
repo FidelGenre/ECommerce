@@ -47,6 +47,7 @@ export default function PurchasesPage() {
 
     // Category filter for modal
     const [categoryFilter, setCategoryFilter] = useState('')
+    const [supplierCategoryFilterModal, setSupplierCategoryFilterModal] = useState('')
 
     const buildUrl = useCallback(() => {
         const params = new URLSearchParams({ page: String(page), size: '15' })
@@ -339,12 +340,25 @@ export default function PurchasesPage() {
                             </div>
                             <form onSubmit={handleCreate} className="p-6 space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-primary-700 mb-1">Proveedor</label>
-                                        <select className="select" value={form.supplierId} onChange={e => setForm({ ...form, supplierId: e.target.value })} required>
-                                            <option value="">Seleccionar proveedor</option>
-                                            {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                        </select>
+                                    <div className="col-span-2">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-primary-700 mb-1">Categoría Proveedor</label>
+                                                <select className="select" value={supplierCategoryFilterModal} onChange={e => { setSupplierCategoryFilterModal(e.target.value); setForm({ ...form, supplierId: '' }) }}>
+                                                    <option value="">Todas las categorías</option>
+                                                    {[...new Set(suppliers.map(s => (s as any).category?.name).filter(Boolean))].sort().map((cat: string) => (
+                                                        <option key={cat} value={cat}>{cat}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-primary-700 mb-1">Proveedor</label>
+                                                <select className="select" value={form.supplierId} onChange={e => setForm({ ...form, supplierId: e.target.value })} required>
+                                                    <option value="">Seleccionar proveedor</option>
+                                                    {suppliers.filter(s => !supplierCategoryFilterModal || (s as any).category?.name === supplierCategoryFilterModal).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div>
