@@ -23,7 +23,7 @@ function KpiCard({ icon: Icon, label, value, sub, color }: any) {
             </div>
             <div className="min-w-0 flex-1">
                 <p className="text-xs text-primary-500 uppercase tracking-wide font-semibold truncate">{label}</p>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-espresso mt-0.5 truncate" title={String(value)}>{value}</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-espresso mt-0.5" title={String(value)}>{value}</p>
                 {sub && <p className="text-xs text-primary-400 mt-0.5 truncate">{sub}</p>}
             </div>
         </div>
@@ -180,13 +180,13 @@ export default function AdminDashboard() {
             </div>
 
             {/* KPI Grid */}
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 <KpiCard icon={DollarSign} label="Ventas" value={FMT(kpi?.salesPeriod ?? 0)} sub={`${FMT(kpi?.salesMercadoPago ?? 0)} MP / ${FMT(kpi?.salesOther ?? 0)} Otros`} color="bg-emerald-100 text-emerald-700" />
                 <KpiCard icon={ShoppingCart} label="Compras" value={FMT(kpi?.purchasesPeriod ?? 0)} sub={`${FMT(kpi?.purchasesMercadoPago ?? 0)} MP / ${FMT(kpi?.purchasesOther ?? 0)} Otros`} color="bg-amber-100 text-amber-700" />
                 <KpiCard icon={TrendingUp} label="Margen Bruto" value={FMT(kpi?.grossMargin ?? 0)} sub={presetLabel} color="bg-primary-100 text-primary-700" />
                 <KpiCard icon={Boxes} label="Stock Crítico" value={kpi?.criticalStock ?? 0} sub="Ítems bajo mínimo" color="bg-red-100 text-red-700" />
             </div>
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 <KpiCard icon={ShoppingCart} label="Órdenes" value={kpi?.orderCount ?? 0} sub={presetLabel} color="bg-blue-100 text-blue-700" />
                 <KpiCard icon={DollarSign} label="Ticket Promedio" value={FMT(kpi?.avgTicket ?? 0)} sub={presetLabel} color="bg-violet-100 text-violet-700" />
                 <KpiCard icon={Bell} label="Alertas sin leer" value={kpi?.unreadAlerts ?? 0} color="bg-orange-100 text-orange-700" />
