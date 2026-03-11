@@ -25,16 +25,22 @@ public class CustomerController {
     public ResponseEntity<Page<Customer>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String q) {
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Boolean active) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("firstName"));
         Specification<Customer> spec = (root, query, cb) -> {
-            if (q == null || q.isBlank())
-                return cb.conjunction();
-            String pattern = "%" + q.toLowerCase() + "%";
-            return cb.or(
-                    cb.like(cb.lower(root.get("firstName")), pattern),
-                    cb.like(cb.lower(root.get("lastName")), pattern),
-                    cb.like(cb.lower(root.get("email")), pattern));
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            if (q != null && !q.isBlank()) {
+                String pattern = "%" + q.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("firstName")), pattern),
+                        cb.like(cb.lower(root.get("lastName")), pattern),
+                        cb.like(cb.lower(root.get("email")), pattern)));
+            }
+            if (active != null) {
+                predicates.add(cb.equal(root.get("user").get("active"), active));
+            }
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
         return ResponseEntity.ok(customerRepository.findAll(spec, pageable));
     }

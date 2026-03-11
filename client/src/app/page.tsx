@@ -57,7 +57,10 @@ export default function StorefrontPage() {
       if (c.item.id === id) {
         const stock = Number(c.item.stock)
         const newQty = Math.max(0, Math.floor(c.qty + delta))
-        if (newQty > stock) return c
+        if (newQty > stock) {
+          alert(`Solo hay ${stock} unidades disponibles de este producto.`);
+          return { ...c, qty: stock };
+        }
         return { ...c, qty: newQty }
       }
       return c
@@ -69,7 +72,10 @@ export default function StorefrontPage() {
       if (c.item.id === id) {
         const stock = Number(c.item.stock)
         const newQty = Math.max(0, Math.floor(val))
-        if (newQty > stock) return { ...c, qty: stock }
+        if (newQty > stock) {
+          alert(`Solo hay ${stock} unidades disponibles de este producto.`);
+          return { ...c, qty: stock };
+        }
         return { ...c, qty: newQty }
       }
       return c
@@ -82,7 +88,10 @@ export default function StorefrontPage() {
     setCart(prev => {
       const existing = prev.find(c => c.item.id === item.id)
       if (existing) {
-        if (existing.qty + step > stock) return prev;
+        if (existing.qty + step > stock) {
+          alert(`No puedes agregar más. El stock disponible es ${stock}.`);
+          return prev;
+        }
         return prev.map(c => c.item.id === item.id ? { ...c, qty: c.qty + step } : c)
       } else {
         if (step > stock) return prev;

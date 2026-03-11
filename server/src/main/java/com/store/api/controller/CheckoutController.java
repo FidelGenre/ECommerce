@@ -193,6 +193,9 @@ public class CheckoutController {
 
             return ResponseEntity.ok(Map.of("id", preference.getId(), "init_point", preference.getInitPoint()));
 
+        } catch (RuntimeException e) {
+            System.err.println("Validation error: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (MPApiException e) {
             String body = e.getApiResponse() != null ? e.getApiResponse().getContent() : "no response body";
             System.err.println("MercadoPago API Error [" + e.getStatusCode() + "]: " + body);

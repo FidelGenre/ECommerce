@@ -9,6 +9,7 @@ import {
     Tag, Boxes, ExternalLink, Filter, QrCode, Printer
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
+import { SavedFilters } from '@/components/SavedFilters'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
@@ -119,6 +120,13 @@ export default function ProductosAdminPage() {
     const [editing, setEditing] = useState<Item | null>(null)
     const [categories, setCategories] = useState<Category[]>([])
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
+    const currentFilters = { q, catFilter, visFilter }
+    const handleLoadFilters = (f: any) => {
+        setQ(f.q || '')
+        setCatFilter(f.catFilter || '')
+        setVisFilter(f.visFilter || '')
+        setPage(0)
+    }
     const blank = { name: '', description: '', price: '', cost: '', stock: '0', minStock: '5', imageUrl: '', barcode: '', categoryId: '', supplierId: '', visible: true, unit: '', unitSize: '', purchaseUnit: '', purchaseConversion: '1', components: [] as any[] }
     const [form, setForm] = useState(blank as any)
     const [saving, setSaving] = useState(false)
@@ -333,13 +341,14 @@ export default function ProductosAdminPage() {
                         </button>
                     </div>
                 </div>
-                {(q || catFilter || visFilter) && (
-                    <div className="flex items-center mt-3">
-                        <button onClick={() => { setQ(''); setCatFilter(''); setVisFilter(''); setPage(0) }} className="text-xs text-primary-500 hover:text-espresso flex items-center gap-1">
+                <div className="flex items-center justify-between mt-3">
+                    <SavedFilters storageKey="products_filters" currentFilters={currentFilters} onLoadFilters={handleLoadFilters} />
+                    {(q || catFilter || visFilter) && (
+                        <button onClick={() => { setQ(''); setCatFilter(''); setVisFilter(''); setPage(0) }} className="text-xs text-primary-500 hover:text-red-600 flex items-center gap-1 transition-colors bg-white px-2 py-1 rounded border border-transparent hover:border-red-200">
                             <X className="w-3 h-3" /> Limpiar filtros
                         </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* Content */}

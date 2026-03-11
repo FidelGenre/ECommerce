@@ -93,8 +93,8 @@ export default function CategoriesPage() {
                     <Filter className="w-4 h-4 text-primary-400" />
                     <select className="input py-2 text-sm w-auto cursor-pointer font-medium" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
                         <option value="ALL">Todos los tipos</option>
-                        <option value="PRODUCT">Solo Productos</option>
-                        <option value="SUPPLIER">Solo Proveedores</option>
+                        <option value="PRODUCT">PRODUCTO</option>
+                        <option value="SUPPLIER">PROVEEDOR</option>
                     </select>
                 </div>
             </div>
@@ -105,7 +105,7 @@ export default function CategoriesPage() {
                         <tbody>{filteredData.map(c => (
                             <tr key={c.id} className={selected.has(c.id) ? 'bg-red-50' : ''}>
                                 <td className="pl-4"><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
-                                <td className="font-medium text-espresso">{c.name}</td><td><span className={c.type === 'PRODUCT' ? 'badge-blue' : 'badge-yellow'}>{c.type}</span></td><td className="text-primary-500">{c.description ?? '—'}</td>
+                                <td className="font-medium text-espresso">{c.name}</td><td><span className={c.type === 'PRODUCT' ? 'badge-blue' : 'badge-yellow'}>{c.type === 'PRODUCT' ? 'PRODUCTO' : 'PROVEEDOR'}</span></td><td className="text-primary-500">{c.description ?? '—'}</td>
                                 <td>
                                     <div className="flex justify-end gap-1">
                                         <button onClick={() => openEdit(c)} className="btn-ghost p-1.5 hover:text-primary-700 hover:bg-primary-50 text-primary-400"><Edit className="w-4 h-4" /></button>

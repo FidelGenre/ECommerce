@@ -80,12 +80,12 @@ export default function SalesPage() {
     useEffect(() => {
         Promise.all([
             api.get('/api/admin/settings/statuses?type=SALE'),
-            api.get('/api/admin/customers?size=200'),
+            api.get('/api/admin/customers?size=500&active=true'),
             api.get('/api/admin/settings/payment-methods'),
             api.get('/api/admin/items?size=200'),
             api.get('/api/admin/categories?type=PRODUCT'),
         ]).then(([s, c, pm, it, cats]) => {
-            setStatuses(s.data); setCustomers(c.data.content)
+            setStatuses(s.data); setCustomers(c.data.content.filter((cust: any) => cust.firstName?.toLowerCase() !== 'admin'))
             setPayments(pm.data); setItems(it.data.content)
             setCategories(cats.data)
         })
@@ -143,7 +143,11 @@ export default function SalesPage() {
         const next = [...lines]
         if (k === 'itemId') {
             const item = items.find(it => it.id === Number(v))
-            next[i] = { ...next[i], [k]: v, unitPrice: item ? String(item.price) : next[i].unitPrice }
+            let qty = next[i].quantity
+            if (item && Number(qty) > Number(item.stock)) {
+                qty = String(item.stock)
+            }
+            next[i] = { ...next[i], [k]: v, quantity: qty, unitPrice: item ? String(item.price) : next[i].unitPrice }
         } else if (k === 'quantity') {
             const currentItemId = next[i].itemId;
             const item = items.find(it => it.id === Number(currentItemId));
@@ -151,6 +155,7 @@ export default function SalesPage() {
                 const maxStock = Number(item.stock) || 0;
                 let desiredQty = Number(v);
                 if (desiredQty > maxStock) desiredQty = maxStock;
+                if (desiredQty < 0) desiredQty = 0;
                 next[i] = { ...next[i], [k]: String(desiredQty) }
             } else {
                 next[i] = { ...next[i], [k]: v }
@@ -441,7 +446,7 @@ export default function SalesPage() {
                                                             <option value="">Seleccionar producto</option>
                                                             {items.filter(it => !categoryFilter || (it as any).category?.name === categoryFilter).map(it => <option key={it.id} value={it.id}>{it.name} (stock: {it.stock})</option>)}
                                                         </select>
-                                                        <input type="number" step="any" min="0.001" placeholder="Cant." className="input w-20 text-center" value={line.quantity} onChange={e => updateLine(i, 'quantity', e.target.value)} required />
+                                                        <input type="number" step="any" min="0" max={items.find(it => it.id === Number(line.itemId))?.stock} placeholder="Cant." className="input w-20 text-center" value={line.quantity} onChange={e => updateLine(i, 'quantity', e.target.value)} required />
                                                         <input type="number" min="0" placeholder="Precio" className="input w-28" value={line.unitPrice} onChange={e => updateLine(i, 'unitPrice', e.target.value)} required />
                                                         {lines.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>}
                                                     </div>
