@@ -157,7 +157,7 @@ export default function UsersSettingsPage() {
                             <thead>
                                 <tr>
                                     <th className="w-8 pl-4"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th>
-                                    <th>Usuario / Cliente</th>
+                                    <th>Usuario</th>
                                     <th>Email</th>
                                     <th>Rol</th>
                                     <th>Creado el</th>

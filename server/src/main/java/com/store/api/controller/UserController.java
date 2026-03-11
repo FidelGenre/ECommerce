@@ -50,7 +50,14 @@ public class UserController {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("active"), active));
         }
         if (role != null && !role.isBlank()) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("role"), role));
+            // Match both CLIENTE and legacy CUSTOMER value
+            if ("CLIENTE".equals(role)) {
+                spec = spec.and((root, query, cb) -> cb.or(
+                        cb.equal(root.get("role"), "CLIENTE"),
+                        cb.equal(root.get("role"), "CUSTOMER")));
+            } else {
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("role"), role));
+            }
         }
 
         Page<User> users = userRepo.findAll(spec, pageable);
@@ -98,17 +105,10 @@ public class UserController {
     public ResponseEntity<User> update(@PathVariable Long id, @RequestBody UserRequest req,
             org.springframework.security.core.Authentication auth) {
         return userRepo.findById(id).map(u -> {
-            // Block modification of supreme admin by anyone else
+            // Only protect the supreme admin from being modified by others
             if ("admin".equalsIgnoreCase(u.getUsername())
                     && (auth == null || !"admin".equalsIgnoreCase(auth.getName())))
                 return ResponseEntity.status(403).<User>body(null);
-            // Block non-supreme admins from editing other admins
-            if ("ADMIN".equals(u.getRole()) && auth != null) {
-                User caller = userRepo.findByUsername(auth.getName()).orElse(null);
-                if (caller != null && !"admin".equalsIgnoreCase(caller.getUsername())
-                        && !caller.getId().equals(u.getId()))
-                    return ResponseEntity.status(403).<User>body(null);
-            }
             u.setUsername(req.getUsername());
             u.setEmail(req.getEmail());
             if (req.getPassword() != null && !req.getPassword().isBlank()) {
