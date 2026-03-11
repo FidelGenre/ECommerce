@@ -58,9 +58,14 @@ public class PurchaseController {
             }
             if (q != null && !q.isBlank()) {
                 String pattern = "%" + q.toLowerCase() + "%";
+                jakarta.persistence.criteria.Join<PurchaseOrder, PurchaseLine> qLinesJoin = root.join("lines",
+                        jakarta.persistence.criteria.JoinType.LEFT);
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("supplier").get("name")), pattern),
-                        cb.like(cb.lower(root.get("notes")), pattern)));
+                        cb.like(cb.lower(root.get("notes")), pattern),
+                        cb.like(root.get("id").as(String.class), pattern),
+                        cb.like(cb.lower(qLinesJoin.get("item").get("name")), pattern)));
+                query.distinct(true);
             }
             if (from != null)
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), from));

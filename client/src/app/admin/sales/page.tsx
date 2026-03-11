@@ -62,8 +62,9 @@ export default function SalesPage() {
         if (statusFilter) params.set('status', statusFilter)
         if (customerFilter) params.set('customer', customerFilter)
         if (orderCategoryFilter) params.set('category', orderCategoryFilter)
+        if (q) params.set('q', q)
         return `/api/admin/sales?${params}`
-    }, [page, fromDate, toDate, statusFilter, customerFilter, orderCategoryFilter])
+    }, [page, fromDate, toDate, statusFilter, customerFilter, orderCategoryFilter, q])
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -98,7 +99,6 @@ export default function SalesPage() {
     }
 
     const sortedData = [...data]
-        .filter(o => !q || (o.customer ? `${o.customer.firstName} ${o.customer.lastName}` : '').toLowerCase().includes(q.toLowerCase()) || String(o.id).includes(q))
         .sort((a, b) => {
             let av: any = a[sortField], bv: any = b[sortField]
             if (sortField === 'total') { av = Number(a.total); bv = Number(b.total) }

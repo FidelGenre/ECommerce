@@ -42,7 +42,8 @@ public class SaleController {
             @RequestParam(required = false) Long status,
             @RequestParam(required = false) Long category,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) String q) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Specification<SaleOrder> spec = (root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
@@ -59,6 +60,19 @@ public class SaleController {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), from));
             if (to != null)
                 predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), to));
+            if (q != null && !q.isBlank()) {
+                String term = "%" + q.toLowerCase() + "%";
+                jakarta.persistence.criteria.Join<SaleOrder, SaleLine> linesJoin = root.join("lines",
+                        jakarta.persistence.criteria.JoinType.LEFT);
+                jakarta.persistence.criteria.Join<SaleOrder, Customer> customerJoin = root.join("customer",
+                        jakarta.persistence.criteria.JoinType.LEFT);
+                predicates.add(cb.or(
+                        cb.like(cb.lower(linesJoin.get("item").get("name")), term),
+                        cb.like(cb.lower(customerJoin.get("firstName")), term),
+                        cb.like(cb.lower(customerJoin.get("lastName")), term),
+                        cb.like(root.get("id").as(String.class), term)));
+                query.distinct(true);
+            }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
         return ResponseEntity.ok(saleRepo.findAll(spec, pageable));
