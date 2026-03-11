@@ -136,9 +136,17 @@ export default function SuppliersPage() {
             </div>
             <div className="card p-0 overflow-hidden">
                 <div className="p-4 border-b border-muted">
-                    <div className="relative max-w-xs">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
-                        <input className="input pl-9" placeholder="Buscar…" value={q} onChange={e => setQ(e.target.value)} />
+                    <div className="flex items-center gap-3">
+                        <div className="relative max-w-xs flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
+                            <input className="input pl-9" placeholder="Buscar…" value={q} onChange={e => setQ(e.target.value)} />
+                        </div>
+                        {q && (
+                            <button onClick={() => setQ('')}
+                                className="text-xs text-primary-500 hover:text-red-600 flex items-center gap-1 transition-colors bg-white px-2 py-1 rounded border border-transparent hover:border-red-200">
+                                <X className="w-3 h-3" /> Limpiar filtros
+                            </button>
+                        )}
                     </div>
                 </div>
                 {loading ? <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div> : (

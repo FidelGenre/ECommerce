@@ -383,4 +383,60 @@ public class DashboardController {
                 data.sort((a, b) -> ((BigDecimal) b.get("margin")).compareTo((BigDecimal) a.get("margin")));
                 return ResponseEntity.ok(data);
         }
+
+        // Sales breakdown by payment method
+        @GetMapping("/sales-by-payment")
+        public ResponseEntity<List<Map<String, Object>>> salesByPayment(
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
+                                : LocalDate.now().withDayOfMonth(1).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
+
+                List<Map<String, Object>> data = new ArrayList<>();
+                saleRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
+                                .collect(Collectors.groupingBy(
+                                                s -> s.getPaymentMethod() != null ? s.getPaymentMethod().getName()
+                                                                : "Sin método",
+                                                Collectors.toList()))
+                                .forEach((method, orders) -> {
+                                        BigDecimal total = orders.stream().map(SaleOrder::getTotal)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        Map<String, Object> row = new LinkedHashMap<>();
+                                        row.put("method", method);
+                                        row.put("total", total);
+                                        row.put("orders", orders.size());
+                                        data.add(row);
+                                });
+                data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
+                return ResponseEntity.ok(data);
+        }
+
+        // Purchases breakdown by payment method
+        @GetMapping("/purchases-by-payment")
+        public ResponseEntity<List<Map<String, Object>>> purchasesByPayment(
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
+                                : LocalDate.now().withDayOfMonth(1).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
+
+                List<Map<String, Object>> data = new ArrayList<>();
+                purchaseRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
+                                .collect(Collectors.groupingBy(
+                                                p -> p.getPaymentMethod() != null ? p.getPaymentMethod().getName()
+                                                                : "Sin método",
+                                                Collectors.toList()))
+                                .forEach((method, orders) -> {
+                                        BigDecimal total = orders.stream().map(PurchaseOrder::getTotal)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        Map<String, Object> row = new LinkedHashMap<>();
+                                        row.put("method", method);
+                                        row.put("total", total);
+                                        row.put("orders", orders.size());
+                                        data.add(row);
+                                });
+                data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
+                return ResponseEntity.ok(data);
+        }
 }

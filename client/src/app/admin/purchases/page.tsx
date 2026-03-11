@@ -158,6 +158,12 @@ export default function PurchasesPage() {
         Completed: 'Completado', Pending: 'Pendiente', Cancelled: 'Cancelado', Approved: 'Aprobado'
     }
 
+    const uniqueStatuses = statuses.filter((s, index, self) =>
+        index === self.findIndex((t) => (
+            (STATUS_LABELS[t.name] || t.name) === (STATUS_LABELS[s.name] || s.name)
+        ))
+    );
+
     const updateStatus = async (id: number, statusId: string) => {
         try {
             await api.patch(`/api/admin/purchases/${id}/status?statusId=${statusId}`)
@@ -204,7 +210,7 @@ export default function PurchasesPage() {
                     <input type="date" className="input text-sm" value={toDate} onChange={e => { setToDate(e.target.value); setPage(0) }} />
                     <select className="select text-sm" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0) }}>
                         <option value="">Todos los estados</option>
-                        {statuses.map(s => <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>)}
+                        {uniqueStatuses.map(s => <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>)}
                     </select>
                     <select className="select text-sm" value={supplierFilter} onChange={e => { setSupplierFilter(e.target.value); setPage(0) }}>
                         <option value="">Todos los proveedores</option>
@@ -265,7 +271,7 @@ export default function PurchasesPage() {
                                                     disabled={o.status?.name === 'Completado' || o.status?.name === 'Cancelado'}
                                                 >
                                                     <option value="" disabled>—</option>
-                                                    {statuses.map(s => (
+                                                    {uniqueStatuses.map(s => (
                                                         <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>
                                                     ))}
                                                 </select>
@@ -335,7 +341,7 @@ export default function PurchasesPage() {
                                         <label className="block text-sm font-medium text-primary-700 mb-1">Estado</label>
                                         <select className="select" value={form.statusId} onChange={e => setForm({ ...form, statusId: e.target.value })} required>
                                             <option value="">Seleccionar estado</option>
-                                            {statuses.map(s => <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>)}
+                                            {uniqueStatuses.map(s => <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>)}
                                         </select>
                                     </div>
                                     <div>

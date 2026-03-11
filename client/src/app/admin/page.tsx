@@ -78,6 +78,8 @@ export default function AdminDashboard() {
     const [lowStock, setLow] = useState<any[]>([])
     const [topCustomers, setTopCustomers] = useState<any[]>([])
     const [byCategory, setByCategory] = useState<any[]>([])
+    const [salesByPayment, setSalesByPayment] = useState<any[]>([])
+    const [purchasesByPayment, setPurchasesByPayment] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     const [preset, setPreset] = useState<Preset>('30d')
@@ -89,16 +91,19 @@ export default function AdminDashboard() {
         setLoading(true)
         try {
             const params = `from=${from}&to=${to}`
-            const [k, s, sup, ls, tc, cat] = await Promise.all([
+            const [k, s, sup, ls, tc, cat, sp, pp] = await Promise.all([
                 api.get(`/api/admin/dashboard/kpi?${params}`),
                 api.get(`/api/admin/dashboard/sales-by-period?${params}`),
                 api.get(`/api/admin/dashboard/purchases-by-supplier?${params}`),
                 api.get('/api/admin/dashboard/low-stock'),
                 api.get(`/api/admin/dashboard/top-customers?limit=5`),
                 api.get(`/api/admin/dashboard/sales-by-category?${params}`),
+                api.get(`/api/admin/dashboard/sales-by-payment?${params}`),
+                api.get(`/api/admin/dashboard/purchases-by-payment?${params}`),
             ])
             setKpi(k.data); setSales(s.data); setBy(sup.data); setLow(ls.data)
             setTopCustomers(tc.data); setByCategory(cat.data)
+            setSalesByPayment(sp.data); setPurchasesByPayment(pp.data)
         } finally {
             setLoading(false)
         }
@@ -286,6 +291,67 @@ export default function AdminDashboard() {
                     </div>
                 )}
             </div>
+
+            {/* Payment Method Breakdown */}
+            {(salesByPayment.length > 0 || purchasesByPayment.length > 0) && (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    {salesByPayment.length > 0 && (
+                        <div className="card">
+                            <h2 className="text-base font-semibold text-espresso mb-4">Ventas por Método de Pago</h2>
+                            <ResponsiveContainer width="100%" height={Math.max(160, salesByPayment.length * 52)}>
+                                <BarChart data={salesByPayment} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#D9C9B0" horizontal={false} />
+                                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="#A67C52" tickFormatter={(v) => `$${Number(v).toLocaleString('es-AR')}`} />
+                                    <YAxis type="category" dataKey="method" tick={{ fontSize: 11 }} width={96} stroke="#A67C52" />
+                                    <Tooltip formatter={(v: any) => FMT(v)} cursor={{ fill: '#f5ede3' }} />
+                                    <Bar dataKey="total" radius={[0, 4, 4, 0]}>
+                                        {salesByPayment.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                            <div className="mt-3 divide-y divide-muted">
+                                {salesByPayment.map((r: any) => (
+                                    <div key={r.method} className="flex items-center justify-between py-1.5 text-sm">
+                                        <span className="text-primary-600 font-medium">{r.method}</span>
+                                        <div className="text-right">
+                                            <span className="font-bold text-espresso">{FMT(r.total)}</span>
+                                            <span className="text-primary-400 text-xs ml-2">({r.orders} órd.)</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {purchasesByPayment.length > 0 && (
+                        <div className="card">
+                            <h2 className="text-base font-semibold text-espresso mb-4">Compras por Método de Pago</h2>
+                            <ResponsiveContainer width="100%" height={Math.max(160, purchasesByPayment.length * 52)}>
+                                <BarChart data={purchasesByPayment} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#D9C9B0" horizontal={false} />
+                                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="#A67C52" tickFormatter={(v) => `$${Number(v).toLocaleString('es-AR')}`} />
+                                    <YAxis type="category" dataKey="method" tick={{ fontSize: 11 }} width={96} stroke="#A67C52" />
+                                    <Tooltip formatter={(v: any) => FMT(v)} cursor={{ fill: '#f5ede3' }} />
+                                    <Bar dataKey="total" radius={[0, 4, 4, 0]}>
+                                        {purchasesByPayment.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                            <div className="mt-3 divide-y divide-muted">
+                                {purchasesByPayment.map((r: any) => (
+                                    <div key={r.method} className="flex items-center justify-between py-1.5 text-sm">
+                                        <span className="text-primary-600 font-medium">{r.method}</span>
+                                        <div className="text-right">
+                                            <span className="font-bold text-espresso">{FMT(r.total)}</span>
+                                            <span className="text-primary-400 text-xs ml-2">({r.orders} órd.)</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

@@ -202,6 +202,12 @@ export default function InventoryPage() {
                         <option value="critical">Crítico</option>
                         <option value="out">Sin stock</option>
                     </select>
+                    {(q || stockStatusFilter !== 'all' || categoryFilter !== 'all' || supplierFilter !== 'all') && (
+                        <button onClick={() => { setQ(''); setStockStatusFilter('all'); setCategoryFilter('all'); setSupplierFilter('all') }}
+                            className="text-xs text-primary-500 hover:text-red-600 flex items-center gap-1 transition-colors bg-white px-2 py-1 rounded border border-transparent hover:border-red-200">
+                            <X className="w-3 h-3" /> Limpiar filtros
+                        </button>
+                    )}
                 </div>
             </div>
 
