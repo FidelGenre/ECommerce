@@ -17,14 +17,14 @@ const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
 function KpiCard({ icon: Icon, label, value, sub, color }: any) {
     return (
-        <div className="card flex items-start gap-4 hover:shadow-md transition-shadow">
+        <div className="card flex items-start gap-3 hover:shadow-md transition-shadow p-4 min-w-0">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
                 <Icon className="w-6 h-6" />
             </div>
-            <div>
-                <p className="text-xs text-primary-500 uppercase tracking-wide font-semibold">{label}</p>
-                <p className="text-2xl font-bold text-espresso mt-0.5">{value}</p>
-                {sub && <p className="text-xs text-primary-400 mt-0.5">{sub}</p>}
+            <div className="min-w-0 flex-1">
+                <p className="text-xs text-primary-500 uppercase tracking-wide font-semibold truncate">{label}</p>
+                <p className="text-xl sm:text-2xl font-bold text-espresso mt-0.5 truncate" title={String(value)}>{value}</p>
+                {sub && <p className="text-xs text-primary-400 mt-0.5 truncate">{sub}</p>}
             </div>
         </div>
     )
@@ -171,8 +171,8 @@ export default function AdminDashboard() {
 
             {/* KPI Grid */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                <KpiCard icon={DollarSign} label="Ventas" value={FMT(kpi?.salesPeriod ?? 0)} sub={presetLabel} color="bg-emerald-100 text-emerald-700" />
-                <KpiCard icon={ShoppingCart} label="Compras" value={FMT(kpi?.purchasesPeriod ?? 0)} sub={presetLabel} color="bg-amber-100 text-amber-700" />
+                <KpiCard icon={DollarSign} label="Ventas" value={FMT(kpi?.salesPeriod ?? 0)} sub={`${FMT(kpi?.salesMercadoPago ?? 0)} MP / ${FMT(kpi?.salesOther ?? 0)} Otros`} color="bg-emerald-100 text-emerald-700" />
+                <KpiCard icon={ShoppingCart} label="Compras" value={FMT(kpi?.purchasesPeriod ?? 0)} sub={`${FMT(kpi?.purchasesMercadoPago ?? 0)} MP / ${FMT(kpi?.purchasesOther ?? 0)} Otros`} color="bg-amber-100 text-amber-700" />
                 <KpiCard icon={TrendingUp} label="Margen Bruto" value={FMT(kpi?.grossMargin ?? 0)} sub={presetLabel} color="bg-primary-100 text-primary-700" />
                 <KpiCard icon={Boxes} label="Stock Crítico" value={kpi?.criticalStock ?? 0} sub="Ítems bajo mínimo" color="bg-red-100 text-red-700" />
             </div>

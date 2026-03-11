@@ -218,7 +218,7 @@ export default function PurchasesPage() {
                 <div className="flex items-center justify-between mt-3">
                     <SavedFilters storageKey="purchases_filters" currentFilters={currentFilters} onLoadFilters={handleLoadFilters} />
                     {hasFilters && (
-                        <button onClick={resetFilters} className="text-xs text-primary-500 hover:text-espresso flex items-center gap-1">
+                        <button onClick={resetFilters} className="text-xs text-primary-500 hover:text-red-600 flex items-center gap-1 transition-colors bg-white px-2 py-1 rounded border border-transparent hover:border-red-200">
                             <X className="w-3 h-3" /> Limpiar filtros
                         </button>
                     )}
@@ -259,9 +259,10 @@ export default function PurchasesPage() {
                                             <td>{o.createdBy ? <span className="text-primary-600">{o.createdBy.username ?? o.createdBy.email}</span> : <span className="text-primary-300">—</span>}</td>
                                             <td>
                                                 <select
-                                                    className="input py-1 px-2 text-xs font-semibold w-auto cursor-pointer"
+                                                    className={`input py-1 px-2 text-xs font-semibold w-auto ${o.status?.name === 'Completado' || o.status?.name === 'Cancelado' ? 'bg-primary-50 text-primary-500 border-transparent cursor-not-allowed appearance-none' : 'cursor-pointer'}`}
                                                     value={o.status?.id || ''}
                                                     onChange={(e) => updateStatus(o.id, e.target.value)}
+                                                    disabled={o.status?.name === 'Completado' || o.status?.name === 'Cancelado'}
                                                 >
                                                     <option value="" disabled>—</option>
                                                     {statuses.map(s => (

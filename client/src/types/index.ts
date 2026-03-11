@@ -184,7 +184,11 @@ export interface DashboardKpi {
     salesToday: number
     salesWeek: number
     salesPeriod: number
+    salesMercadoPago: number
+    salesOther: number
     purchasesPeriod: number
+    purchasesMercadoPago: number
+    purchasesOther: number
     grossMargin: number
     criticalStock: number
     unreadAlerts: number

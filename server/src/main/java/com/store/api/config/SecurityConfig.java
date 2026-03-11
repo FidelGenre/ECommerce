@@ -38,9 +38,10 @@ public class SecurityConfig {
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/api/auth/**").permitAll()
                                                 .requestMatchers("/api/public/**").permitAll()
-                                                .requestMatchers("/uploads/**").permitAll()
+                                                .requestMatchers("/api/auth/**").permitAll()
+                                                .requestMatchers("/api/upload/**").permitAll()
+                                                .requestMatchers("/api/payment/webhook").permitAll()
                                                 .requestMatchers("/checkout/**").permitAll()
                                                 .requestMatchers("/error").permitAll()
                                                 .requestMatchers("/api/admin/**").hasAuthority("ADMIN")

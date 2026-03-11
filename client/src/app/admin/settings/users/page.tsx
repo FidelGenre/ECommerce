@@ -143,6 +143,11 @@ export default function UsersSettingsPage() {
                     <option value="1">Solo activos</option>
                     <option value="0">Solo inactivos</option>
                 </select>
+                {(search || roleFilter !== 'ALL' || activeFilter !== 'ALL') && (
+                    <button onClick={() => { setSearch(''); setRoleFilter('ALL'); setActiveFilter('ALL') }} className="text-xs text-primary-500 hover:text-red-600 flex items-center gap-1 transition-colors bg-white px-2 py-1 rounded border border-transparent hover:border-red-200">
+                        <X className="w-3 h-3" /> Limpiar filtros
+                    </button>
+                )}
             </div>
 
             <div className="card p-0 overflow-hidden shadow-sm border border-muted">

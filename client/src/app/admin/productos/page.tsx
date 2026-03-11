@@ -321,6 +321,13 @@ export default function ProductosAdminPage() {
                         </button>
                     </div>
                 </div>
+                {(q || catFilter || visFilter) && (
+                    <div className="flex items-center mt-3">
+                        <button onClick={() => { setQ(''); setCatFilter(''); setVisFilter(''); setPage(0) }} className="text-xs text-primary-500 hover:text-espresso flex items-center gap-1">
+                            <X className="w-3 h-3" /> Limpiar filtros
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Content */}

@@ -40,6 +40,34 @@ public class DashboardController {
                 BigDecimal salesPeriod = saleRepo.sumTotalBetween(rangeFrom, rangeTo);
                 BigDecimal purchasesPeriod = purchaseRepo.sumTotalBetween(rangeFrom, rangeTo);
 
+                List<com.store.api.entity.SaleOrder> periodSales = saleRepo.findByCreatedAtBetween(rangeFrom, rangeTo);
+                List<com.store.api.entity.PurchaseOrder> periodPurchases = purchaseRepo
+                                .findByCreatedAtBetween(rangeFrom, rangeTo);
+
+                BigDecimal salesMercadoPago = periodSales.stream()
+                                .filter(s -> s.getPaymentMethod() != null
+                                                && "MercadoPago".equalsIgnoreCase(s.getPaymentMethod().getName()))
+                                .map(com.store.api.entity.SaleOrder::getTotal)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal salesOther = periodSales.stream()
+                                .filter(s -> s.getPaymentMethod() == null
+                                                || !"MercadoPago".equalsIgnoreCase(s.getPaymentMethod().getName()))
+                                .map(com.store.api.entity.SaleOrder::getTotal)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal purchasesMercadoPago = periodPurchases.stream()
+                                .filter(p -> p.getPaymentMethod() != null
+                                                && "MercadoPago".equalsIgnoreCase(p.getPaymentMethod().getName()))
+                                .map(com.store.api.entity.PurchaseOrder::getTotal)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal purchasesOther = periodPurchases.stream()
+                                .filter(p -> p.getPaymentMethod() == null
+                                                || !"MercadoPago".equalsIgnoreCase(p.getPaymentMethod().getName()))
+                                .map(com.store.api.entity.PurchaseOrder::getTotal)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
                 BigDecimal grossMargin = (salesPeriod != null ? salesPeriod : BigDecimal.ZERO)
                                 .subtract(purchasesPeriod != null ? purchasesPeriod : BigDecimal.ZERO);
 
@@ -52,8 +80,6 @@ public class DashboardController {
                 long criticalStock = itemRepo.findByStockLessThanEqualAndVisibleTrue(5).size();
                 long unreadAlerts = notificationRepo.countByIsReadFalse();
 
-                // Order count and avg ticket for period
-                List<com.store.api.entity.SaleOrder> periodSales = saleRepo.findByCreatedAtBetween(rangeFrom, rangeTo);
                 long orderCount = periodSales.size();
                 BigDecimal avgTicket = orderCount > 0
                                 ? (salesPeriod != null ? salesPeriod : BigDecimal.ZERO)
@@ -65,7 +91,11 @@ public class DashboardController {
                 result.put("salesToday", salesToday);
                 result.put("salesWeek", salesWeek);
                 result.put("salesPeriod", salesPeriod);
+                result.put("salesMercadoPago", salesMercadoPago);
+                result.put("salesOther", salesOther);
                 result.put("purchasesPeriod", purchasesPeriod);
+                result.put("purchasesMercadoPago", purchasesMercadoPago);
+                result.put("purchasesOther", purchasesOther);
                 result.put("grossMargin", grossMargin);
                 result.put("criticalStock", criticalStock);
                 result.put("unreadAlerts", unreadAlerts);
