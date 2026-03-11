@@ -13,7 +13,7 @@ export interface User {
     id: number
     username: string
     email: string
-    role: 'ADMIN' | 'CUSTOMER'
+    role: 'ADMIN' | 'USER'
     active: boolean
     createdAt: string
 }

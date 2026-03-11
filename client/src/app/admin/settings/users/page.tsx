@@ -24,7 +24,7 @@ export default function UsersSettingsPage() {
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [editing, setEditing] = useState<UserRow | null>(null)
-    const [form, setForm] = useState({ username: '', email: '', password: '', role: 'CUSTOMER' })
+    const [form, setForm] = useState({ username: '', email: '', password: '', role: 'USER' })
     const [saving, setSaving] = useState(false)
     // Selection
     const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -64,7 +64,7 @@ export default function UsersSettingsPage() {
         return () => clearTimeout(timeout)
     }, [search, roleFilter, activeFilter])
 
-    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CUSTOMER' }); setShowModal(true) }
+    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'USER' }); setShowModal(true) }
     const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role }); setShowModal(true) }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
@@ -134,7 +134,7 @@ export default function UsersSettingsPage() {
                     <Filter className="w-4 h-4 text-primary-400" />
                     <select className="input py-2 text-sm w-auto cursor-pointer font-medium" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
                         <option value="ALL">Todos los roles</option>
-                        <option value="CUSTOMER">Cliente</option>
+                        <option value="USER">Usuario Web</option>
                         <option value="ADMIN">Admin</option>
                     </select>
                 </div>
@@ -246,7 +246,7 @@ export default function UsersSettingsPage() {
                             <div>
                                 <label className="block text-xs font-semibold text-primary-700 mb-1">Rol</label>
                                 <select className="select" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-                                    <option value="CUSTOMER">Cliente</option>
+                                    <option value="USER">Usuario Web</option>
                                     <option value="ADMIN">Administrador</option>
                                 </select>
                             </div>

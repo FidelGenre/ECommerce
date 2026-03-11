@@ -79,11 +79,11 @@ public class UserController {
         user.setUsername(req.getUsername());
         user.setEmail(req.getEmail());
         user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
-        user.setRole(req.getRole() != null ? req.getRole() : "CUSTOMER");
+        user.setRole(req.getRole() != null ? req.getRole() : "USER");
         user = userRepo.save(user);
 
-        // Auto-create customer profile
-        if ("CUSTOMER".equals(user.getRole())) {
+        // Auto-create customer profile for web users
+        if ("USER".equals(user.getRole())) {
             com.store.api.entity.Customer c = new com.store.api.entity.Customer();
             c.setUser(user);
             c.setEmail(user.getEmail());
