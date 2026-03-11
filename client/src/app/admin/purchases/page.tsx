@@ -79,6 +79,12 @@ export default function PurchasesPage() {
             setStatuses(s.data); setSuppliers(sup.data.content)
             setPayments(pm.data); setItems(it.data.content)
             setCategories(cats.data)
+            // Auto-select COMPLETADO status for new purchases
+            const completado = s.data.find((st: OperationStatus) =>
+                st.name?.toUpperCase().includes('COMPLET') ||
+                st.name?.toUpperCase().includes('COMPLETE')
+            )
+            if (completado) setForm(f => ({ ...f, statusId: String(completado.id) }))
         })
     }, [])
 
@@ -340,13 +346,7 @@ export default function PurchasesPage() {
                                             {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-primary-700 mb-1">Estado</label>
-                                        <select className="select" value={form.statusId} onChange={e => setForm({ ...form, statusId: e.target.value })} required>
-                                            <option value="">Seleccionar estado</option>
-                                            {uniqueStatuses.map(s => <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>)}
-                                        </select>
-                                    </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-primary-700 mb-1">Forma de Pago</label>
                                         <select className="select" value={form.paymentMethodId} onChange={e => setForm({ ...form, paymentMethodId: e.target.value })} required>
