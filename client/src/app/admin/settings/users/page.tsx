@@ -24,7 +24,7 @@ export default function UsersSettingsPage() {
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [editing, setEditing] = useState<UserRow | null>(null)
-    const [form, setForm] = useState({ username: '', email: '', password: '', role: 'USER' })
+    const [form, setForm] = useState({ username: '', email: '', password: '', role: 'CLIENTE' })
     const [saving, setSaving] = useState(false)
     // Selection
     const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -64,7 +64,7 @@ export default function UsersSettingsPage() {
         return () => clearTimeout(timeout)
     }, [search, roleFilter, activeFilter])
 
-    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'USER' }); setShowModal(true) }
+    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE' }); setShowModal(true) }
     const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role }); setShowModal(true) }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
@@ -108,7 +108,7 @@ export default function UsersSettingsPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-espresso">Usuarios y Clientes</h1>
+                <h1 className="text-2xl font-bold text-espresso">Usuarios</h1>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
                         <button onClick={() => handleDelete([...selected])} disabled={deleting !== ""}
@@ -134,7 +134,7 @@ export default function UsersSettingsPage() {
                     <Filter className="w-4 h-4 text-primary-400" />
                     <select className="input py-2 text-sm w-auto cursor-pointer font-medium" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
                         <option value="ALL">Todos los roles</option>
-                        <option value="USER">Usuario Web</option>
+                        <option value="CLIENTE">Cliente</option>
                         <option value="ADMIN">Admin</option>
                     </select>
                 </div>
@@ -178,7 +178,7 @@ export default function UsersSettingsPage() {
                                             )}
                                         </td>
                                         <td className="text-primary-600 text-sm font-medium">{u.email}</td>
-                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : 'badge-brown'}>{u.role}</span></td>
+                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : 'badge-brown'}>{u.role === 'ADMIN' ? 'Admin' : u.role === 'CLIENTE' ? 'Cliente' : u.role}</span></td>
                                         <td className="text-sm text-primary-500 font-medium">{formatDate(u.createdAt)}</td>
                                         <td className="text-right font-semibold text-espresso">{u.accountBalance !== undefined ? formatCurrency(u.accountBalance) : '—'}</td>
                                         <td className="text-right font-medium text-amber-600">{u.loyaltyPoints ? u.loyaltyPoints + ' pts' : <span className="text-primary-300 font-normal">Sin puntos</span>}</td>
@@ -246,7 +246,7 @@ export default function UsersSettingsPage() {
                             <div>
                                 <label className="block text-xs font-semibold text-primary-700 mb-1">Rol</label>
                                 <select className="select" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-                                    <option value="USER">Usuario Web</option>
+                                    <option value="CLIENTE">Cliente</option>
                                     <option value="ADMIN">Administrador</option>
                                 </select>
                             </div>

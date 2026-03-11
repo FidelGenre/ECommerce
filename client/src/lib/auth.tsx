@@ -6,7 +6,7 @@ import api from '@/lib/api'
 interface AuthUser {
     userId: number
     username: string
-    role: 'ADMIN' | 'USER' | 'SUPPLIER'
+    role: 'ADMIN' | 'CLIENTE' | 'SUPPLIER'
     token: string
 }
 

@@ -25,7 +25,7 @@ const NAV = [
     { separator: true, label: 'Configuración' },
     { href: '/admin/settings/categories', icon: Settings, label: 'Categorías de Productos' },
     { href: '/admin/settings/supplier-categories', icon: Truck, label: 'Categorías de Proveedores' },
-    { href: '/admin/settings/users', icon: Users, label: 'Usuarios y Clientes' },
+    { href: '/admin/settings/users', icon: Users, label: 'Usuarios' },
     { href: '/admin/settings/payments', icon: Banknote, label: 'Formas de Pago' },
 ]
 

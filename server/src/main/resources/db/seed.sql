@@ -59,7 +59,7 @@ VALUES ('admin', 'admin@coffeebeans.com', '$2a$10$sdEpNBCY12Od7pxPvHkzpOpU2a1iBo
 
 -- Demo customer
 INSERT INTO users(username, email, password_hash, role, active)
-VALUES ('maria', 'maria@example.com', '$2a$10$sdEpNBCY12Od7pxPvHkzpOpU2a1iBov8hJ5nlTqpj0JQolisnxb/m', 'USER', true);
+VALUES ('maria', 'maria@example.com', '$2a$10$sdEpNBCY12Od7pxPvHkzpOpU2a1iBov8hJ5nlTqpj0JQolisnxb/m', 'CLIENTE', true);
 
 INSERT INTO customers(first_name, last_name, email, phone, account_balance)
 VALUES ('María', 'García', 'maria@example.com', '+54 9 11 0000 0001', 0.00);

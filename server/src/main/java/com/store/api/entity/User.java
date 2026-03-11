@@ -22,7 +22,7 @@ public class User {
     private String passwordHash;
 
     @Column(nullable = false, length = 20)
-    private String role = "USER";
+    private String role = "CLIENTE";
 
     @Column(nullable = false)
     private Boolean active = true;
