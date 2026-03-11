@@ -318,15 +318,17 @@
         +eliminarProducto()
         }
 
-        usuario "1" --> "1..*" rol
-        usuario "1" --> "1..*" venta
-        venta "1" --> "1..*" detalleVenta
-        detalleVenta "1..*" --> "1" inventario
-        detalleVenta "1..*" --> "1..*" producto
-        inventario "1" --> "1" detalleCompra
-        compra "1" --> "1..*" detalleCompra
-        compra "0..*" --> "1" proveedor
-        compra "0..*" --> "1" usuario
+        usuario "1" -- "1..*" rol
+        usuario "1" -- "1..*" venta
+        venta "1" -- "1..*" detalleVenta
+        detalleVenta "1..*" -- "1..*" producto
+        detalleVenta "1..*" -- "1" inventario
+        inventario "1" -- "1" detalleCompra
+        producto "1" -- "1" inventario
+        producto "1..*" -- "1..*" detalleCompra
+        compra "1" -- "1..*" detalleCompra
+        compra "0..*" -- "1" proveedor
+        compra "0..*" -- "1" usuario
     </div>
     <h3>2.4. Diagrama de Implementación de Tablas (Modelo de Datos Físico/DER)</h3>
     <div class="mermaid">erDiagram
