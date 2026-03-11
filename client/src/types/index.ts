@@ -152,6 +152,7 @@ export interface CashRegister {
     openedAt: string
     closedAt?: string
     notes?: string
+    paymentTotals?: Record<string, number>
 }
 
 export interface CashMovement {

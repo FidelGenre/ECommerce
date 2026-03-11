@@ -39,6 +39,34 @@ public class CashController {
         } else {
             history = registerRepo.findAll();
         }
+
+        List<Long> regIds = history.stream().map(CashRegister::getId).toList();
+        if (!regIds.isEmpty()) {
+            List<CashMovement> allMovements = movementRepo.findByRegisterIdIn(regIds);
+            Map<Long, List<CashMovement>> byReg = allMovements.stream()
+                    .collect(java.util.stream.Collectors.groupingBy(m -> m.getRegister().getId()));
+
+            for (CashRegister r : history) {
+                List<CashMovement> movements = byReg.getOrDefault(r.getId(), java.util.Collections.emptyList());
+                Map<String, BigDecimal> totals = new java.util.HashMap<>();
+                for (CashMovement m : movements) {
+                    String desc = m.getDescription();
+                    if (desc != null && desc.startsWith("[")) {
+                        int end = desc.indexOf("]");
+                        if (end > 0) {
+                            String method = desc.substring(1, end);
+                            BigDecimal amount = m.getAmount();
+                            if ("EXPENSE".equals(m.getMovementType())) {
+                                amount = amount.negate();
+                            }
+                            totals.merge(method, amount, BigDecimal::add);
+                        }
+                    }
+                }
+                r.setPaymentTotals(totals);
+            }
+        }
+
         return ResponseEntity.ok(history.stream()
                 .sorted((a, b) -> b.getOpenedAt().compareTo(a.getOpenedAt()))
                 .toList());

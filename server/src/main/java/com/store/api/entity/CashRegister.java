@@ -30,4 +30,7 @@ public class CashRegister {
     private User openedBy;
 
     private String notes;
+
+    @Transient
+    private java.util.Map<String, BigDecimal> paymentTotals;
 }

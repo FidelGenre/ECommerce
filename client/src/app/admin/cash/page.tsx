@@ -232,6 +232,7 @@ export default function CashPage() {
                                     <th>Cierre</th>
                                     <th>Fondo Inicial ($)</th>
                                     <th>Cierre Declarado ($)</th>
+                                    <th>Medios de Pago</th>
                                     <th>Notas</th>
                                 </tr>
                             </thead>
@@ -240,11 +241,25 @@ export default function CashPage() {
                                     <tr><td colSpan={5} className="text-center text-primary-400 py-8">No hay registros en este rango</td></tr>
                                 ) : history.map(h => (
                                     <tr key={h.id} className={h.closedAt ? '' : 'bg-primary-50'}>
-                                        <td className="text-sm">{new Date(h.openedAt).toLocaleString('es-AR')}</td>
-                                        <td className="text-sm">{h.closedAt ? new Date(h.closedAt).toLocaleString('es-AR') : <span className="text-primary-500 font-semibold">Actual / Abierta</span>}</td>
+                                        <td className="text-sm min-w-[140px]">{new Date(h.openedAt).toLocaleString('es-AR')}</td>
+                                        <td className="text-sm min-w-[140px]">{h.closedAt ? new Date(h.closedAt).toLocaleString('es-AR') : <span className="text-primary-500 font-semibold">Actual / Abierta</span>}</td>
                                         <td className="font-medium text-sm">{FMT(h.openingAmount ?? 0)}</td>
                                         <td className="font-semibold text-sm">{h.closingAmount != null ? FMT(h.closingAmount) : '—'}</td>
-                                        <td className="text-primary-500 text-sm">{h.notes ?? '—'}</td>
+                                        <td className="text-xs">
+                                            {h.paymentTotals && Object.keys(h.paymentTotals).length > 0 ? (
+                                                <div className="flex flex-col gap-0.5">
+                                                    {Object.entries(h.paymentTotals).map(([method, amount]) => (
+                                                        <div key={method} className="flex justify-between gap-4 border-b border-primary-100 last:border-0 pb-0.5 mb-0.5">
+                                                            <span className="text-primary-500 font-semibold">{method}</span>
+                                                            <span className={amount >= 0 ? 'text-emerald-700 font-medium' : 'text-red-600 font-medium'}>{FMT(amount)}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-primary-300">Sin mov. integrados</span>
+                                            )}
+                                        </td>
+                                        <td className="text-primary-500 text-sm max-w-[200px] truncate" title={h.notes}>{h.notes ?? '—'}</td>
                                     </tr>
                                 ))}
                             </tbody>
