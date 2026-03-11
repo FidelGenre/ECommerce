@@ -61,9 +61,12 @@ public class ItemController {
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Long category,
-            @RequestParam(required = false) Long supplier) {
+            @RequestParam(required = false) Long supplier,
+            @RequestParam(required = false) Boolean visible,
+            @RequestParam(defaultValue = "ASC") String dir) {
         try {
-            Sort s = sort != null ? Sort.by(sort) : Sort.by("id");
+            Sort.Direction direction = dir.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+            Sort s = sort != null ? Sort.by(direction, sort) : Sort.by(direction, "id");
             Pageable pageable = PageRequest.of(page, size, s);
             Specification<Item> spec = (root, query, cb) -> {
                 var predicates = new ArrayList<Predicate>();
@@ -73,6 +76,8 @@ public class ItemController {
                     predicates.add(cb.equal(root.get("category").get("id"), category));
                 if (supplier != null)
                     predicates.add(cb.equal(root.get("supplier").get("id"), supplier));
+                if (visible != null)
+                    predicates.add(cb.equal(root.get("visible"), visible));
                 return cb.and(predicates.toArray(new Predicate[0]));
             };
             return ResponseEntity.ok(itemRepository.findAll(spec, pageable));

@@ -63,8 +63,10 @@ export default function SalesPage() {
         if (customerFilter) params.set('customer', customerFilter)
         if (orderCategoryFilter) params.set('category', orderCategoryFilter)
         if (q) params.set('q', q)
+        if (sortField) params.set('sort', sortField)
+        if (sortDir) params.set('dir', sortDir.toUpperCase())
         return `/api/admin/sales?${params}`
-    }, [page, fromDate, toDate, statusFilter, customerFilter, orderCategoryFilter, q])
+    }, [page, fromDate, toDate, statusFilter, customerFilter, orderCategoryFilter, q, sortField, sortDir])
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -94,18 +96,12 @@ export default function SalesPage() {
     }
 
     const toggleSort = (field: SortField) => {
+        setPage(0)
         if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
         else { setSortField(field); setSortDir('asc') }
     }
 
     const sortedData = [...data]
-        .sort((a, b) => {
-            let av: any = a[sortField], bv: any = b[sortField]
-            if (sortField === 'total') { av = Number(a.total); bv = Number(b.total) }
-            if (av < bv) return sortDir === 'asc' ? -1 : 1
-            if (av > bv) return sortDir === 'asc' ? 1 : -1
-            return 0
-        })
 
     const SortIcon = ({ field }: { field: SortField }) => (
         <span className="inline-flex items-center ml-1">

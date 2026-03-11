@@ -57,8 +57,10 @@ export default function PurchasesPage() {
         if (supplierFilter) params.set('supplier', supplierFilter)
         if (searchQ) params.set('q', searchQ)
         if (orderCategoryFilter) params.set('category', orderCategoryFilter)
+        if (sortField) params.set('sort', sortField)
+        if (sortDir) params.set('dir', sortDir.toUpperCase())
         return `/api/admin/purchases?${params}`
-    }, [page, fromDate, toDate, statusFilter, supplierFilter, searchQ, orderCategoryFilter])
+    }, [page, fromDate, toDate, statusFilter, supplierFilter, searchQ, orderCategoryFilter, sortField, sortDir])
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -92,17 +94,12 @@ export default function PurchasesPage() {
     const resetFilters = () => { setFromDate(''); setToDate(''); setStatusFilter(''); setSupplierFilter(''); setOrderCategoryFilter(''); setSearchQ(''); setPage(0) }
 
     const toggleSort = (field: SortField) => {
+        setPage(0)
         if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
         else { setSortField(field); setSortDir('asc') }
     }
 
-    const sortedData = [...data].sort((a, b) => {
-        let av: any = a[sortField], bv: any = b[sortField]
-        if (sortField === 'total') { av = Number(a.total); bv = Number(b.total) }
-        if (av < bv) return sortDir === 'asc' ? -1 : 1
-        if (av > bv) return sortDir === 'asc' ? 1 : -1
-        return 0
-    })
+    const sortedData = [...data]
 
     const SortIcon = ({ field }: { field: SortField }) => (
         <span className="inline-flex items-center ml-1">
@@ -214,7 +211,7 @@ export default function PurchasesPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="relative col-span-2 md:col-span-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
-                        <input className="input pl-9 w-full text-sm" placeholder="Buscar por proveedor o notas..." value={searchQ} onChange={e => { setSearchQ(e.target.value); setPage(0) }} />
+                        <input className="input pl-9 w-full text-sm" placeholder="Buscar por proveedor, notas o producto..." value={searchQ} onChange={e => { setSearchQ(e.target.value); setPage(0) }} />
                     </div>
                     <input type="date" className="input text-sm" value={fromDate} onChange={e => { setFromDate(e.target.value); setPage(0) }} />
                     <input type="date" className="input text-sm" value={toDate} onChange={e => { setToDate(e.target.value); setPage(0) }} />

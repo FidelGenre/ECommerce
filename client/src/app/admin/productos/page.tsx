@@ -5,6 +5,7 @@ import { Item, Category, Supplier } from '@/types'
 import {
     Plus, X, Search, Eye, EyeOff, Edit, Trash2,
     Package, ImageOff, ChevronLeft, ChevronRight,
+    ChevronUp, ChevronDown,
     Tag, Boxes, ExternalLink, Filter, QrCode, Printer
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -112,6 +113,8 @@ export default function ProductosAdminPage() {
     const [catFilter, setCatFilter] = useState('')
     const [visFilter, setVisFilter] = useState('')
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
+    const [sortField, setSortField] = useState('id')
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
     const [showModal, setShowModal] = useState(false)
     const [editing, setEditing] = useState<Item | null>(null)
     const [categories, setCategories] = useState<Category[]>([])
@@ -131,7 +134,7 @@ export default function ProductosAdminPage() {
         next.has(id) ? next.delete(id) : next.add(id)
         return next
     })
-    const toggleAll = () => setSelectedIds(prev => prev.size === displayed.length ? new Set() : new Set(displayed.map(i => i.id)))
+    const toggleAll = () => setSelectedIds(prev => prev.size === data.length ? new Set() : new Set(data.map(i => i.id)))
 
     const load = async () => {
         setLoading(true)
@@ -139,16 +142,16 @@ export default function ProductosAdminPage() {
             let url = `/api/admin/items?page=${page}&size=24`
             if (q) url += `&q=${q}`
             if (catFilter) url += `&category=${catFilter}`
+            if (visFilter) url += `&visible=${visFilter === 'visible'}`
+            if (sortField) url += `&sort=${sortField}`
+            if (sortDir) url += `&dir=${sortDir.toUpperCase()}`
             const r = await api.get(url)
-            let items = r.data.content as Item[]
-            if (visFilter === 'visible') items = items.filter(i => i.visible)
-            if (visFilter === 'hidden') items = items.filter(i => !i.visible)
-            setData(items)
+            setData(r.data.content)
             setTotal(r.data.totalElements)
         } finally { setLoading(false) }
     }
 
-    useEffect(() => { load() }, [page, q, catFilter])
+    useEffect(() => { load() }, [page, q, catFilter, visFilter, sortField, sortDir])
     useEffect(() => {
         Promise.all([
             api.get('/api/admin/categories?type=PRODUCT'),
@@ -251,9 +254,18 @@ export default function ProductosAdminPage() {
         load()
     }
 
-    const displayed = visFilter
-        ? data.filter(i => visFilter === 'visible' ? i.visible : !i.visible)
-        : data
+    const toggleSort = (field: string) => {
+        setPage(0)
+        if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+        else { setSortField(field); setSortDir('asc') }
+    }
+    const SortIcon = ({ field }: { field: string }) => (
+        <span className="inline-flex items-center ml-1">
+            {sortField === field && sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : sortField === field && sortDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <span className="opacity-30">↕</span>}
+        </span>
+    )
+
+    const displayed = data
 
     return (
         <div className="space-y-6">
@@ -373,10 +385,10 @@ export default function ProductosAdminPage() {
                                     />
                                 </th>
                                 <th>Imagen</th>
-                                <th>Nombre</th>
-                                <th>Precio</th>
-                                <th>Costo</th>
-                                <th>Stock</th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('name')}>Nombre <SortIcon field="name" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('price')}>Precio <SortIcon field="price" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('cost')}>Costo <SortIcon field="cost" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('stock')}>Stock <SortIcon field="stock" /></th>
                                 <th>Categoría</th>
                                 <th>Visible</th>
                                 <th>Acciones</th>
