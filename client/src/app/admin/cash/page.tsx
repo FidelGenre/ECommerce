@@ -138,10 +138,30 @@ export default function CashPage() {
                             <div className="card text-center bg-emerald-50">
                                 <p className="text-xs text-emerald-600 uppercase font-semibold mb-1">Ingresos</p>
                                 <p className="text-2xl font-bold text-emerald-700">{FMT(summary.income)}</p>
+                                {summary.salesByPayment && Object.keys(summary.salesByPayment).length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-emerald-200/50 text-xs text-emerald-700/80 text-left space-y-0.5 max-h-24 overflow-y-auto">
+                                        {Object.entries(summary.salesByPayment).map(([method, amount]: any) => (
+                                            <div key={method} className="flex justify-between">
+                                                <span className="truncate mr-2">{method}</span>
+                                                <span className="font-medium whitespace-nowrap">{FMT(amount)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div className="card text-center bg-red-50">
                                 <p className="text-xs text-red-600 uppercase font-semibold mb-1">Egresos</p>
                                 <p className="text-2xl font-bold text-red-700">{FMT(summary.expense)}</p>
+                                {summary.purchasesByPayment && Object.keys(summary.purchasesByPayment).length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-red-200/50 text-xs text-red-700/80 text-left space-y-0.5 max-h-24 overflow-y-auto">
+                                        {Object.entries(summary.purchasesByPayment).map(([method, amount]: any) => (
+                                            <div key={method} className="flex justify-between">
+                                                <span className="truncate mr-2">{method}</span>
+                                                <span className="font-medium whitespace-nowrap">{FMT(amount)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div className="card text-center bg-blue-50">
                                 <p className="text-xs text-blue-600 uppercase font-semibold mb-1">Total</p>
@@ -204,7 +224,7 @@ export default function CashPage() {
                 </div>
 
                 <div className="card p-0 overflow-hidden">
-                    <div className="table-wrapper rounded-none border-0">
+                    <div className="table-wrapper rounded-none border-0 max-h-[400px] overflow-y-auto">
                         <table className="data-table">
                             <thead>
                                 <tr>
