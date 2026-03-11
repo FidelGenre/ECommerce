@@ -204,34 +204,166 @@
     </div>
     <p><em>Nota: El administrador posee acceso exclusivo al panel de administración. El cliente puede registrarse,
             iniciar sesión y gestionar su carrito; el pago es una extensión del flujo de sesión.</em></p>
-    <h3>2.2. Especificación de Casos de Uso Principales</h3>
-    <p><strong>CASO DE USO 1</strong>: <strong>Completar pago (Gestión de Venta Online)</strong></p>
-    <ul>
-        <li><strong>Actor</strong>: Cliente</li>
-        <li><strong>Descripción</strong>: El proceso transaccional central de comercio electrónico.</li>
-        <li><strong>Flujo Principal</strong>:<ol>
-                <li>El cliente accede a su carrito de compras y confirma el pedido.</li>
-                <li>El sistema front-end envía el detalle a la API.</li>
-                <li>El sistema valida el stock backend (que haya existencias).</li>
-                <li>Integración y redirección externa (MercadoPago) para transacción.</li>
-                <li>Retorno al sistema, descuento de la base de datos y registro de la <em>Venta</em>.</li>
-            </ol>
-        </li>
-    </ul>
-    <p><strong>CASO DE USO 2</strong>: <strong>Gestionar Inventario y Productos Terminados</strong></p>
-    <ul>
-        <li><strong>Actor</strong>: Administrador</li>
-        <li><strong>Descripción</strong>: Mantenimiento general de los activos de la cafetería.</li>
-        <li><strong>Flujo Principal</strong>:<ol>
-                <li>El administrador ingresa mediante JWT al panel de control protegido.</li>
-                <li>Dentro del módulo de Productos, puede agregar, modificar (precios, descripciones) o eliminar oferta.
-                </li>
-                <li>Hace uso del sistema de <strong>Recetas</strong>, vinculando &quot;insumos&quot; lógicos al ítem.
-                </li>
-                <li>Los stockActual, stockMinimo se mantienen automáticos en el catálogo.</li>
-            </ol>
-        </li>
-    </ul>
+    <h3>2.2. Especificaciones de Casos de Uso y sus Respectivas Interfaces</h3>
+
+    <style>
+        .uc-block {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+
+        .uc-block img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin: 12px 0;
+            display: block;
+        }
+
+        .uc-block h4 {
+            text-decoration: underline;
+            font-size: 1.1em;
+            margin-bottom: 6px;
+            margin-top: 18px;
+        }
+
+        .uc-block p {
+            margin: 4px 0;
+        }
+    </style>
+
+    <!-- CU1: Iniciar sesión -->
+    <div class="uc-block">
+        <h4>Interfaz de Login:</h4>
+        <img src="./screenshots/login.png" alt="Interfaz de Login - Coffee Beans">
+        <p><strong>Iniciar sesión</strong></p>
+        <p><strong>Actor:</strong> Administrador / Cliente</p>
+        <p><strong>Descripción:</strong> Permite acceder al sistema mediante usuario y contraseña.</p>
+        <p><strong>Precondición:</strong> Usuario registrado en el sistema.</p>
+        <p><strong>Flujo principal:</strong></p>
+        <ol>
+            <li>El usuario ingresa su nombre de usuario y contraseña.</li>
+            <li>El sistema valida las credenciales contra la base de datos.</li>
+            <li>Si son correctas, el servidor genera un JWT y lo devuelve al cliente.</li>
+            <li>El usuario accede al sistema con vista de Admin o Cliente según su rol.</li>
+        </ol>
+        <p><strong>Postcondición:</strong> Sesión iniciada con token JWT válido.</p>
+        <p><strong>Interfaz:</strong> campos: usuario, contraseña; botón "Iniciar sesión"; enlace "Registrarse".</p>
+        <p><strong>Alternativo:</strong></p>
+        <ol>
+            <li>Credenciales incorrectas: el sistema muestra "Invalid credentials".</li>
+            <li>Cuenta inactiva: el sistema muestra "Account disabled".</li>
+        </ol>
+    </div>
+
+    <!-- CU2: Registrarse -->
+    <div class="uc-block">
+        <h4>Interfaz de Registro:</h4>
+        <img src="./screenshots/register.png" alt="Interfaz de Registro - Coffee Beans">
+        <p><strong>Registrarse</strong></p>
+        <p><strong>Actor:</strong> Cliente</p>
+        <p><strong>Descripción:</strong> Permite crear una nueva cuenta en el sistema para poder iniciar sesión y
+            comprar.</p>
+        <p><strong>Precondición:</strong> No poseer una cuenta registrada con el mismo usuario o email.</p>
+        <p><strong>Flujo principal:</strong></p>
+        <ol>
+            <li>El usuario completa el formulario con nombre de usuario, email y contraseña.</li>
+            <li>El sistema valida que el usuario no esté repetido.</li>
+            <li>Se crea el usuario con rol <em>Cliente</em> y se genera automáticamente su perfil en el CRM.</li>
+            <li>El sistema devuelve un JWT y redirige al catálogo.</li>
+        </ol>
+        <p><strong>Postcondición:</strong> Usuario registrado en la base de datos, sesión iniciada.</p>
+        <p><strong>Interfaz:</strong> campos: usuario, email, contraseña; botón "Registrarse"; enlace "Iniciar sesión".
+        </p>
+        <p><strong>Alternativo:</strong></p>
+        <ol>
+            <li>Usuario ya registrado: el sistema muestra "Username already taken".</li>
+        </ol>
+    </div>
+
+    <!-- CU3: Gestionar Usuarios -->
+    <div class="uc-block">
+        <h4>Interfaz de Usuarios:</h4>
+        <img src="./screenshots/usuarios.png" alt="Interfaz de Gestión de Usuarios - Coffee Beans">
+        <p><strong>Gestionar usuarios</strong></p>
+        <p><strong>Actor:</strong> Administrador</p>
+        <p><strong>Descripción:</strong> Administrar los usuarios del sistema: crear, editar rol, activar/desactivar y
+            eliminar.</p>
+        <p><strong>Precondición:</strong> Usuario autenticado con rol Administrador.</p>
+        <p><strong>Flujo principal:</strong></p>
+        <ol>
+            <li>El administrador accede a la sección Usuarios del panel.</li>
+            <li>Visualiza el listado de usuarios con nombre, email, rol y estado.</li>
+            <li>Puede crear un nuevo usuario asignándole rol Admin o Cliente.</li>
+            <li>Puede editar el rol de un usuario existente.</li>
+            <li>Puede activar o desactivar la cuenta de un usuario.</li>
+            <li>Puede eliminar usuarios (excepto el admin principal).</li>
+        </ol>
+        <p><strong>Postcondición:</strong> Cambios persistidos en la base de datos.</p>
+        <p><strong>Interfaz:</strong> tabla con nombre, email, rol, balance, fidelización, estado; botones de editar y
+            eliminar; filtros de búsqueda y rol.</p>
+        <p><strong>Alternativo:</strong></p>
+        <ol>
+            <li>Eliminar admin principal: el sistema devuelve error 403.</li>
+            <li>Eliminar usuario con saldo pendiente: el sistema bloquea la operación con mensaje de error.</li>
+        </ol>
+    </div>
+
+    <!-- CU4: Gestionar Productos -->
+    <div class="uc-block">
+        <h4>Interfaz de Productos:</h4>
+        <img src="./screenshots/productos.png" alt="Interfaz de Gestión de Productos - Coffee Beans">
+        <p><strong>Gestionar productos</strong></p>
+        <p><strong>Actor:</strong> Administrador</p>
+        <p><strong>Descripción:</strong> Crear, editar, ocultar y eliminar productos del catálogo.</p>
+        <p><strong>Precondición:</strong> Usuario autenticado con rol Administrador.</p>
+        <p><strong>Flujo principal:</strong></p>
+        <ol>
+            <li>El administrador accede al módulo de Productos.</li>
+            <li>Visualiza el catálogo completo con nombre, precio, categoría, stock y estado.</li>
+            <li>Puede añadir un nuevo producto con nombre, descripción, imagen, precio y categoría.</li>
+            <li>Puede editar cualquier campo de un producto existente.</li>
+            <li>Puede ocultar un producto para que no aparezca en el catálogo público.</li>
+            <li>Puede eliminar productos sin ventas asociadas.</li>
+        </ol>
+        <p><strong>Postcondición:</strong> Catálogo actualizado. Cambios visibles en el panel y en la tienda.</p>
+        <p><strong>Interfaz:</strong> campos: nombre, descripción, imagen, precio, categoría, proveedor, stock mínimo;
+            botones: Guardar, Cancelar, Ocultar/Mostrar.</p>
+        <p><strong>Alternativo:</strong></p>
+        <ol>
+            <li>Campos vacíos obligatorios: el sistema muestra validación de error.</li>
+            <li>Eliminar producto con ventas: el sistema bloquea la operación.</li>
+        </ol>
+    </div>
+
+    <!-- CU5: Ajustar Inventario -->
+    <div class="uc-block">
+        <h4>Interfaz de Inventario y Compras:</h4>
+        <img src="./screenshots/inventario.png" alt="Interfaz de Inventario - Coffee Beans">
+        <p><strong>Ajustar inventario / Registrar compra</strong></p>
+        <p><strong>Actor:</strong> Administrador</p>
+        <p><strong>Descripción:</strong> Controla el stock de productos e ingresa compras a proveedores para reabastecer
+            inventario.</p>
+        <p><strong>Precondición:</strong> Usuario autenticado con rol Administrador.</p>
+        <p><strong>Flujo principal:</strong></p>
+        <ol>
+            <li>El administrador accede al módulo de Inventario.</li>
+            <li>Visualiza el listado de ítems con stock actual, stock mínimo y proveedor asociado.</li>
+            <li>Puede ajustar el stock manualmente por correcciones o pérdidas.</li>
+            <li>Para reabastecer: selecciona el ítem, ingresa cantidad y costo, selecciona proveedor y confirma la
+                compra.</li>
+            <li>El sistema registra el movimiento de stock y la orden de compra al proveedor.</li>
+            <li>El sistema alerta visualmente los ítems con stock por debajo del mínimo.</li>
+        </ol>
+        <p><strong>Postcondición:</strong> Stock actualizado e incrementado. Orden de compra registrada.</p>
+        <p><strong>Interfaz:</strong> tabla con nombre, stock actual, stock mínimo, proveedor; campos de ajuste:
+            cantidad, costo; botones: Comprar, Editar, Borrar; filtros de categoría y proveedor.</p>
+        <p><strong>Alternativo:</strong></p>
+        <ol>
+            <li>Cantidad inválida (negativa o no numérica): el sistema muestra mensaje de error.</li>
+        </ol>
+    </div>
+
     <h3>2.3. Diagrama de Clases (Arquitectura Backend Central)</h3>
     <div class="mermaid">classDiagram
         direction LR
