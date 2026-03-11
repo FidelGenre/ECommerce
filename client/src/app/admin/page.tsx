@@ -91,19 +91,24 @@ export default function AdminDashboard() {
         setLoading(true)
         try {
             const params = `from=${from}&to=${to}`
-            const [k, s, sup, ls, tc, cat, sp, pp] = await Promise.all([
+            const [k, s, sup, ls, tc, cat] = await Promise.all([
                 api.get(`/api/admin/dashboard/kpi?${params}`),
                 api.get(`/api/admin/dashboard/sales-by-period?${params}`),
                 api.get(`/api/admin/dashboard/purchases-by-supplier?${params}`),
                 api.get('/api/admin/dashboard/low-stock'),
                 api.get(`/api/admin/dashboard/top-customers?limit=5`),
                 api.get(`/api/admin/dashboard/sales-by-category?${params}`),
-                api.get(`/api/admin/dashboard/sales-by-payment?${params}`),
-                api.get(`/api/admin/dashboard/purchases-by-payment?${params}`),
             ])
             setKpi(k.data); setSales(s.data); setBy(sup.data); setLow(ls.data)
             setTopCustomers(tc.data); setByCategory(cat.data)
-            setSalesByPayment(sp.data); setPurchasesByPayment(pp.data)
+
+            // Payment breakdown — optional (won't crash dashboard if endpoint missing)
+            const [spResult, ppResult] = await Promise.allSettled([
+                api.get(`/api/admin/dashboard/sales-by-payment?${params}`),
+                api.get(`/api/admin/dashboard/purchases-by-payment?${params}`),
+            ])
+            if (spResult.status === 'fulfilled') setSalesByPayment(spResult.value.data)
+            if (ppResult.status === 'fulfilled') setPurchasesByPayment(ppResult.value.data)
         } finally {
             setLoading(false)
         }
