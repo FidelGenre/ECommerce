@@ -181,7 +181,7 @@ export default function UsersSettingsPage() {
                                         <td><span className={u.role === 'ADMIN' ? 'badge-blue' : 'badge-brown'}>{u.role}</span></td>
                                         <td className="text-sm text-primary-500 font-medium">{formatDate(u.createdAt)}</td>
                                         <td className="text-right font-semibold text-espresso">{u.accountBalance !== undefined ? formatCurrency(u.accountBalance) : '—'}</td>
-                                        <td className="text-right font-medium text-amber-600">{u.loyaltyPoints !== undefined ? u.loyaltyPoints + ' pts' : '—'}</td>
+                                        <td className="text-right font-medium text-amber-600">{u.loyaltyPoints ? u.loyaltyPoints + ' pts' : <span className="text-primary-300 font-normal">Sin puntos</span>}</td>
                                         <td>
                                             <button onClick={() => toggle(u.id)} className="text-primary-500 hover:text-primary-700 transition-colors">
                                                 {u.active ? <ToggleRight className="w-6 h-6 text-emerald-600" /> : <ToggleLeft className="w-6 h-6 text-red-400" />}
