@@ -177,40 +177,33 @@
     <h2>2. Documentación de Diseño y Soporte</h2>
     <h3>2.1. Diagrama de Casos de Uso</h3>
     <div class="mermaid">flowchart LR
-        %% Actores
-        Cliente((Cliente))
-        Administrador((Administrador))
+        Cliente(["🧍 Cliente"])
+        Administrador(["🧍 Administrador"])
 
-        subgraph Sistema [&quot;Sistema Web (Coffee Beans)&quot;]
+        subgraph Sistema
         direction TB
-        UC1([&quot;Añadir/Eliminar productos del carrito&quot;])
-        UC2([&quot;Registrarse / Iniciar Sesión&quot;])
-        UC3([&quot;Completar Pago (MercadoPago)&quot;])
-        UC4([&quot;Gestionar Inventario y Recetas&quot;])
-        UC5([&quot;Modificar Catálogo de Productos&quot;])
-        UC6([&quot;Acceder al Panel Privado&quot;])
-        UC7([&quot;Gestionar Usuarios y Roles&quot;])
-        UC8([&quot;Procesar y Gestionar Pedidos&quot;])
+        UC1(["Añadir/Eliminar\nproductos en el carrito"])
+        UC2(["Registrarse en la web /\nIniciar sesión"])
+        UC3(["Completar pago"])
+        UC4(["Gestionar\ninventario/stock"])
+        UC5(["Modificar Productos"])
+        UC6(["Iniciar sesión en el\npanel de administración"])
+        UC7(["Gestionar usuarios"])
+        UC8(["Gestionar pedidos"])
         end
 
-        %% Relaciones del Cliente
-        Cliente --&gt; UC1
-        Cliente --&gt; UC2
-        UC2 -. &quot;&lt;&lt;extend&gt;&gt;&quot; .-&gt; UC3
+        Cliente --> UC1
+        Cliente --> UC2
+        UC2 -. "&lt;&lt;extend&gt;&gt;" .-> UC3
 
-        %% Relaciones del Administrador
-        Administrador --&gt; UC4
-        Administrador --&gt; UC5
-        Administrador --&gt; UC6
-        Administrador --&gt; UC7
-        Administrador --&gt; UC8
-
-        %% Accesos compartidos
-        Administrador --&gt; UC1
-        Administrador --&gt; UC2
+        Administrador --> UC4
+        Administrador --> UC5
+        Administrador --> UC6
+        Administrador --> UC7
+        Administrador --> UC8
     </div>
-    <p><em>(Nota: El diagrama expone los casos de uso originales integrando pasarelas del entorno desarrollado para el
-            checkout).</em></p>
+    <p><em>Nota: El administrador posee acceso exclusivo al panel de administración. El cliente puede registrarse,
+            iniciar sesión y gestionar su carrito; el pago es una extensión del flujo de sesión.</em></p>
     <h3>2.2. Especificación de Casos de Uso Principales</h3>
     <p><strong>CASO DE USO 1</strong>: <strong>Completar pago (Gestión de Venta Online)</strong></p>
     <ul>
@@ -241,11 +234,7 @@
     </ul>
     <h3>2.3. Diagrama de Clases (Arquitectura Backend Central)</h3>
     <div class="mermaid">classDiagram
-        direction LR
-        class rol {
-        +String rolNombre: cliente, admin
-        +obtenerPermisos()
-        }
+        direction TB
 
         class usuario {
         +Long id
@@ -256,63 +245,88 @@
         +registrarse()
         }
 
-        class ordenVenta {
-        +Long id
-        +BigDecimal totalPagado
-        +String estadoPago
-        +generarVenta()
+        class rol {
+        +String idRol: cliente, administrador
+        +gestionarUsuarios()
+        +gestionarPedidos()
+        +gestionarInventario()
+        +emitirCompras()
         }
 
-        class lineaVenta {
+        class venta {
         +Long id
-        +BigDecimal cantidad
-        +BigDecimal subtotal
-        +restarInventario()
+        +Decimal total
+        +añadirProducto()
+        +eliminarProducto()
+        +calcularTotal()
+        }
+
+        class detalleVenta {
+        +Long id
+        +Integer cantidad
+        +Decimal precio
+        +Decimal subtotal
+        +String producto
+        +calcularSubtotal()
+        +generarNumeroOrden()
+        }
+
+        class inventario {
+        +Long id
+        +Integer stockMinimo
+        +Integer stockActual
+        +Integer stockMaximo
+        +actualizarStock()
+        }
+
+        class compra {
+        +Long id
+        +Date fecha
+        +Decimal total
+        +String usuario
+        +confirmarCompra()
+        +cancelarCompra()
+        +calcularTotal()
+        }
+
+        class detalleCompra {
+        +Long id
+        +Integer cantidad
+        +Decimal precio
+        +String producto
+        +Decimal subtotal
+        +calcularSubtotal()
         }
 
         class producto {
         +Long id
         +String nombre
-        +BigDecimal precio
-        +BigDecimal tamanioUnidad
-        +tieneAgotamiento()
-        }
-
-        class inventario {
-        +Long id
-        +BigDecimal stockFisico
-        +BigDecimal stockMinimo
-        +registrarMovimiento()
-        }
-
-        class insumoReceta {
-        +Long id
-        +BigDecimal descuentoCascada
-        +vincularBom()
-        }
-
-        class ordenCompra {
-        +Long id
-        +String fecha
-        +BigDecimal costoInterno
-        +reabastecer()
+        +String descripcion
+        +Decimal precio
+        +Integer cantidad
+        +obtenerPrecio()
+        +modificarPrecio()
+        +actualizar()
         }
 
         class proveedor {
         +Long id
-        +String empresa
-        +String emailContacto
+        +String nombre
+        +String email
+        +String direccion
+        +añadirProducto()
+        +eliminarProducto()
         }
 
-        rol &quot;1&quot; -- &quot;1..*&quot; usuario
-        usuario &quot;1&quot; -- &quot;1..*&quot; ordenVenta
-        ordenVenta &quot;1&quot; -- &quot;1..*&quot; lineaVenta
-        lineaVenta &quot;1..*&quot; -- &quot;1&quot; producto
-        producto &quot;1&quot; -- &quot;1&quot; inventario
-        producto &quot;1&quot; -- &quot;1..*&quot; insumoReceta
-        producto &quot;1&quot; -- &quot;1..*&quot; ordenCompra
-        ordenCompra &quot;0..*&quot; -- &quot;1&quot; usuario
-        ordenCompra &quot;1..*&quot; -- &quot;1&quot; proveedor
+        usuario "1" --> "1..*" rol
+        usuario "1" --> "1..*" venta
+        venta "1" --> "1..*" detalleVenta
+        detalleVenta "1..*" --> "1" inventario
+        detalleVenta "1..*" --> "1..*" producto
+        inventario "1" --> "1" detalleCompra
+        compra "1" --> "1..*" detalleCompra
+        compra "0..*" --> "1" proveedor
+        compra "0..*" --> "1" usuario
     </div>
     <h3>2.4. Diagrama de Implementación de Tablas (Modelo de Datos Físico/DER)</h3>
     <div class="mermaid">erDiagram
@@ -395,7 +409,8 @@
                     API (POST) y validación de rutas privadas.</li>
                 <li><strong>Resultado Esperado</strong>: Protección persistente de endpoints. Sin el header
                     &quot;Authorization: Bearer [token]&quot;, cualquier solicitud al ecosistema
-                    <code>api/admin/*</code> debe ser bloqueada con Status 403 Forbidden.</li>
+                    <code>api/admin/*</code> debe ser bloqueada con Status 403 Forbidden.
+                </li>
                 <li><strong>Estado Actual</strong>: <strong>Aprobado</strong>. Las capas de filtros lógicos de Spring
                     Security aprueban el token únicamente si fue firmado con el secreto local.</li>
             </ul>
@@ -425,7 +440,8 @@
                 <li><strong>Auditoría</strong>: Se inspeccionó en el panel visualizador de
                     <em><code>StockMovement</code></em> si ambos Item B e Item C fueron reducidos conforme la suma de la
                     venta maestra de &quot;Item A&quot; por sus respectivas tasas de deducción multiplicadas por el
-                    <code>unitSize</code> subyacente de control de kilos.</li>
+                    <code>unitSize</code> subyacente de control de kilos.
+                </li>
                 <li><strong>Estado Actual</strong>: <strong>Aprobado</strong>.</li>
             </ul>
         </li>
@@ -453,7 +469,8 @@
                 Spring sirvió como un núcleo con Inversión de Control. Proveyó rutinas transaccionales fiables (vía
                 <code>@Transactional</code>) esenciales para garantizar que si un movimiento de stock colisiona o la
                 pasarela de pago responde fallos, ningún ítem en la base de datos sea debitado en un estado intermedio
-                (Principio de Aislamiento ACID).</p>
+                (Principio de Aislamiento ACID).
+            </p>
         </li>
         <li>
             <p><strong>Gestión de Sesiones Seguras y Capacidad a Pruebas de Ciberataque</strong>:
@@ -468,7 +485,8 @@
                 Las interacciones fueron integradas nativamente mapeadas con la interfaz de persistencia Java (JPA /
                 Hibernate) directo al motor transaccional de uso libre más poderoso mundialmente:
                 <strong>PostgreSQL</strong>. Permitiendo una arquitectura en la nube escalable para la centralización
-                unívoca de usuarios, recetas de componentes e información financiera.</p>
+                unívoca de usuarios, recetas de componentes e información financiera.
+            </p>
         </li>
     </ul>
 
