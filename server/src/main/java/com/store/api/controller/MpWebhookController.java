@@ -56,10 +56,12 @@ public class MpWebhookController {
             statusRepo.findByType("SALE").stream()
                     .filter(s -> {
                         String n = s.getName().toLowerCase();
-                        return n.contains("complet") || n.contains("pagad") ||
-                                n.contains("paid") || n.contains("aprobad") || n.contains("approved");
+                        return n.equals("completed") || n.equals("completado");
                     })
                     .findFirst()
+                    .or(() -> statusRepo.findByType("SALE").stream()
+                            .filter(s -> s.getName().toLowerCase().contains("complet"))
+                            .findFirst())
                     .ifPresent(order::setStatus);
 
             stockService.deductStockForSale(order, "Online sale - MP payment " + paymentId);
