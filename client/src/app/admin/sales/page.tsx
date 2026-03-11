@@ -108,8 +108,8 @@ export default function SalesPage() {
         })
 
     const SortIcon = ({ field }: { field: SortField }) => (
-        <span className="inline-flex flex-col ml-1">
-            {sortField === field && sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : sortField === field && sortDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <span className="w-3 h-3 opacity-30">↕</span>}
+        <span className="inline-flex items-center ml-1">
+            {sortField === field && sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : sortField === field && sortDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <span className="opacity-30">↕</span>}
         </span>
     )
 
@@ -146,8 +146,19 @@ export default function SalesPage() {
     const updateLine = (i: number, k: string, v: string) => {
         const next = [...lines]
         if (k === 'itemId') {
-            const item = items.find(x => String(x.id) === v)
+            const item = items.find(it => it.id === Number(v))
             next[i] = { ...next[i], [k]: v, unitPrice: item ? String(item.price) : next[i].unitPrice }
+        } else if (k === 'quantity') {
+            const currentItemId = next[i].itemId;
+            const item = items.find(it => it.id === Number(currentItemId));
+            if (item) {
+                const maxStock = Number(item.stock) || 0;
+                let desiredQty = Number(v);
+                if (desiredQty > maxStock) desiredQty = maxStock;
+                next[i] = { ...next[i], [k]: String(desiredQty) }
+            } else {
+                next[i] = { ...next[i], [k]: v }
+            }
         } else { next[i] = { ...next[i], [k]: v } }
         setLines(next)
     }
@@ -346,7 +357,7 @@ export default function SalesPage() {
                     <p className="text-xs text-primary-400">Página {page + 1} · {total} resultados</p>
                     <div className="flex gap-2">
                         <button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="btn-ghost p-1.5 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
-                        <button onClick={() => setPage(p => p + 1)} className="btn-ghost p-1.5"><ChevronRight className="w-4 h-4" /></button>
+                        <button disabled={(page + 1) * 15 >= total} onClick={() => setPage(p => p + 1)} className="btn-ghost p-1.5 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
                     </div>
                 </div>
             </div>

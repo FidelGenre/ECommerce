@@ -187,7 +187,7 @@ export default function SuppliersPage() {
                     <p className="text-xs text-primary-400">Página {page + 1}</p>
                     <div className="flex gap-2">
                         <button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="btn-ghost p-1.5 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
-                        <button onClick={() => setPage(p => p + 1)} className="btn-ghost p-1.5"><ChevronRight className="w-4 h-4" /></button>
+                        <button disabled={(page + 1) * 15 >= total} onClick={() => setPage(p => p + 1)} className="btn-ghost p-1.5 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
                     </div>
                 </div>
             </div>
