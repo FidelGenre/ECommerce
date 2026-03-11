@@ -13,4 +13,6 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
         List<Item> findByStockLessThanEqualAndVisibleTrue(int threshold);
 
         List<Item> findBySupplierId(Long supplierId);
+
+        java.util.Optional<Item> findFirstByNameContainingIgnoreCase(String name);
 }

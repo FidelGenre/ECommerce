@@ -183,7 +183,7 @@ export default function SalesPage() {
         Completed: 'Completado', Pending: 'Pendiente', Cancelled: 'Cancelado', Reserved: 'Reservado'
     }
 
-    const HIDDEN_STATUSES = ['Aprobado', 'Approved']
+    const HIDDEN_STATUSES = ['Aprobado', 'Approved', 'Reserved', 'Reservado']
 
     const uniqueStatuses = statuses.filter((s, index, self) =>
         index === self.findIndex((t) => (

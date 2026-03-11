@@ -82,6 +82,13 @@ public class CheckoutController {
     @PostMapping("/preference")
     public ResponseEntity<?> createPreference(@RequestBody OrderRequest req, Authentication auth) {
         try {
+            if (auth != null) {
+                User user = userRepo.findByUsername(auth.getName()).orElse(null);
+                if (user != null && "NONE".equals(user.getRole())) {
+                    return ResponseEntity.status(403)
+                            .body(Map.of("error", "Su cuenta está suspendida. No tiene permisos para comprar."));
+                }
+            }
             List<PreferenceItemRequest> mpItems = new ArrayList<>();
             List<Item> resolvedItems = new ArrayList<>();
 

@@ -147,11 +147,9 @@ public class SaleController {
 
         if (saved.getStatus() != null
                 && ("Completed".equals(saved.getStatus().getName()) || "Completado".equals(saved.getStatus().getName()))
-                &&
-                saved.getPaymentMethod() != null &&
-                (saved.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
-                        saved.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
-            cashService.record("INCOME", saved.getTotal(), "Venta #" + saved.getId());
+                && saved.getPaymentMethod() != null) {
+            String method = saved.getPaymentMethod().getName();
+            cashService.record("INCOME", saved.getTotal(), "[" + method + "] Venta #" + saved.getId());
             saved.setCashRegistered(true);
             saved = saleRepo.save(saved);
         }
@@ -178,10 +176,10 @@ public class SaleController {
 
                 if (("Completed".equals(statusName) || "Completado".equals(statusName))
                         && !Boolean.TRUE.equals(order.getCashRegistered()) &&
-                        order.getPaymentMethod() != null &&
-                        (order.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
-                                order.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
-                    cashService.record("INCOME", order.getTotal(), "Venta #" + order.getId());
+                        order.getPaymentMethod() != null) {
+
+                    String method = order.getPaymentMethod().getName();
+                    cashService.record("INCOME", order.getTotal(), "[" + method + "] Venta #" + order.getId());
                     order.setCashRegistered(true);
                 }
             }

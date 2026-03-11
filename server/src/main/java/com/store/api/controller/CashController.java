@@ -76,13 +76,40 @@ public class CashController {
     }
 
     @GetMapping("/{id}/summary")
-    public ResponseEntity<Map<String, BigDecimal>> summary(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> summary(@PathVariable Long id) {
         BigDecimal income = movementRepo.sumByRegisterAndType(id, "INCOME");
         BigDecimal expense = movementRepo.sumByRegisterAndType(id, "EXPENSE");
+        if (income == null)
+            income = BigDecimal.ZERO;
+        if (expense == null)
+            expense = BigDecimal.ZERO;
+
+        List<CashMovement> movements = movementRepo.findByRegisterId(id);
+
+        Map<String, BigDecimal> salesByPayment = new java.util.HashMap<>();
+        Map<String, BigDecimal> purchasesByPayment = new java.util.HashMap<>();
+
+        for (CashMovement m : movements) {
+            String desc = m.getDescription();
+            if (desc != null && desc.startsWith("[")) {
+                int end = desc.indexOf("]");
+                if (end > 0) {
+                    String method = desc.substring(1, end);
+                    if ("INCOME".equals(m.getMovementType()) && desc.contains("Venta")) {
+                        salesByPayment.merge(method, m.getAmount(), BigDecimal::add);
+                    } else if ("EXPENSE".equals(m.getMovementType()) && desc.contains("Compra")) {
+                        purchasesByPayment.merge(method, m.getAmount(), BigDecimal::add);
+                    }
+                }
+            }
+        }
+
         return ResponseEntity.ok(Map.of(
                 "income", income,
                 "expense", expense,
-                "net", income.subtract(expense)));
+                "net", income.subtract(expense),
+                "salesByPayment", salesByPayment,
+                "purchasesByPayment", purchasesByPayment));
     }
 
     @Data

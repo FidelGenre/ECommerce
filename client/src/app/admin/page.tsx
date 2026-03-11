@@ -23,7 +23,7 @@ function KpiCard({ icon: Icon, label, value, sub, color }: any) {
             </div>
             <div className="min-w-0 flex-1">
                 <p className="text-xs text-primary-500 uppercase tracking-wide font-semibold truncate">{label}</p>
-                <p className="text-xl sm:text-2xl font-bold text-espresso mt-0.5 truncate" title={String(value)}>{value}</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-espresso mt-0.5 truncate" title={String(value)}>{value}</p>
                 {sub && <p className="text-xs text-primary-400 mt-0.5 truncate">{sub}</p>}
             </div>
         </div>

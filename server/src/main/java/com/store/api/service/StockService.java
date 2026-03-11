@@ -72,6 +72,29 @@ public class StockService {
             }
         }
 
+        // Deduct 1 'Bolsa' per unit sold globally
+        try {
+            itemRepo.findFirstByNameContainingIgnoreCase("bolsa").ifPresent(bolsa -> {
+                java.math.BigDecimal totalUnits = order.getLines().stream()
+                        .map(SaleLine::getQuantity)
+                        .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+                bolsa.setStock(bolsa.getStock().subtract(totalUnits));
+                itemRepo.save(bolsa);
+
+                StockMovement bagMovement = new StockMovement();
+                bagMovement.setItem(bolsa);
+                bagMovement.setMovementType("OUT");
+                bagMovement.setQuantity(totalUnits);
+                bagMovement.setReason("Bolsa/empaque por Venta #" + order.getId());
+                bagMovement.setReferenceId(order.getId());
+                bagMovement.setReferenceType("SALE");
+                stockMovementRepo.save(bagMovement);
+            });
+        } catch (Exception e) {
+            System.err.println("Could not deduct bolsa: " + e.getMessage());
+        }
+
         order.setStockDeducted(true);
     }
 
@@ -118,6 +141,29 @@ public class StockService {
                     stockMovementRepo.save(subMovement);
                 }
             }
+        }
+
+        // Return 'Bolsa'
+        try {
+            itemRepo.findFirstByNameContainingIgnoreCase("bolsa").ifPresent(bolsa -> {
+                java.math.BigDecimal totalUnits = order.getLines().stream()
+                        .map(SaleLine::getQuantity)
+                        .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+                bolsa.setStock(bolsa.getStock().add(totalUnits));
+                itemRepo.save(bolsa);
+
+                StockMovement bagMovement = new StockMovement();
+                bagMovement.setItem(bolsa);
+                bagMovement.setMovementType("IN");
+                bagMovement.setQuantity(totalUnits);
+                bagMovement.setReason("Devolución bolsa/empaque por Venta cancelada #" + order.getId());
+                bagMovement.setReferenceId(order.getId());
+                bagMovement.setReferenceType("SALE_CANCEL");
+                stockMovementRepo.save(bagMovement);
+            });
+        } catch (Exception e) {
+            System.err.println("Could not return bolsa: " + e.getMessage());
         }
 
         order.setStockDeducted(false);

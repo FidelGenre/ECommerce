@@ -107,10 +107,7 @@ export default function CashPage() {
 
     return (
         <div className="space-y-6">
-            <div className="bg-blue-50 text-blue-800 p-3 rounded-lg flex items-start gap-2 text-sm border border-blue-100">
-                <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
-                <p><strong>Aviso:</strong> La Caja Diaria solo calcula y registra movimientos pagados en <strong>Efectivo</strong> (o "Cash"). Las ventas o compras mediante tarjetas o transferencias no subirán o bajarán el saldo de caja mostrado, lo que te permite tener un control monetario perfecto de tus billetes físicos al cierre.</p>
-            </div>
+
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-espresso">Caja</h1>

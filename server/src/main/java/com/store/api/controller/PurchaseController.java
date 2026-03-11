@@ -140,10 +140,10 @@ public class PurchaseController {
                         || "Aprobado".equals(saved.getStatus().getName()))
                 &&
                 saved.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
-                saved.getPaymentMethod() != null &&
-                (saved.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
-                        saved.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
-            cashService.record("EXPENSE", saved.getTotal(), "Compra #" + saved.getId());
+                saved.getPaymentMethod() != null) {
+
+            String method = saved.getPaymentMethod().getName();
+            cashService.record("EXPENSE", saved.getTotal(), "[" + method + "] Compra #" + saved.getId());
             saved.setCashRegistered(true);
             saved = purchaseRepo.save(saved);
         }
@@ -162,10 +162,10 @@ public class PurchaseController {
                     &&
                     !Boolean.TRUE.equals(order.getCashRegistered()) &&
                     order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
-                    order.getPaymentMethod() != null &&
-                    (order.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
-                            order.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
-                cashService.record("EXPENSE", order.getTotal(), "Compra #" + order.getId());
+                    order.getPaymentMethod() != null) {
+
+                String method = order.getPaymentMethod().getName();
+                cashService.record("EXPENSE", order.getTotal(), "[" + method + "] Compra #" + order.getId());
                 order.setCashRegistered(true);
             }
             return ResponseEntity.ok(purchaseRepo.save(order));
@@ -188,10 +188,10 @@ public class PurchaseController {
                     &&
                     !Boolean.TRUE.equals(order.getCashRegistered()) &&
                     order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
-                    order.getPaymentMethod() != null &&
-                    (order.getPaymentMethod().getName().toLowerCase().contains("efectivo") ||
-                            order.getPaymentMethod().getName().toLowerCase().contains("cash"))) {
-                cashService.record("EXPENSE", order.getTotal(), "Compra #" + order.getId());
+                    order.getPaymentMethod() != null) {
+
+                String method = order.getPaymentMethod().getName();
+                cashService.record("EXPENSE", order.getTotal(), "[" + method + "] Compra #" + order.getId());
                 order.setCashRegistered(true);
             }
             return ResponseEntity.ok(purchaseRepo.save(order));
