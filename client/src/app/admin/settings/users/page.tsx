@@ -14,6 +14,8 @@ interface UserRow {
     firstName?: string;
     lastName?: string;
     phone?: string;
+    address?: string;
+    taxId?: string;
     accountBalance?: number;
     loyaltyPoints?: number;
 }
@@ -24,7 +26,10 @@ export default function UsersSettingsPage() {
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [editing, setEditing] = useState<UserRow | null>(null)
-    const [form, setForm] = useState({ username: '', email: '', password: '', role: 'CLIENTE' })
+    const [form, setForm] = useState({
+        username: '', email: '', password: '', role: 'CLIENTE',
+        firstName: '', lastName: '', phone: '', address: '', taxId: ''
+    })
     const [saving, setSaving] = useState(false)
     // Selection
     const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -64,8 +69,8 @@ export default function UsersSettingsPage() {
         return () => clearTimeout(timeout)
     }, [search, roleFilter, activeFilter])
 
-    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE' }); setShowModal(true) }
-    const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role }); setShowModal(true) }
+    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE', firstName: '', lastName: '', phone: '', address: '', taxId: '' }); setShowModal(true) }
+    const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role, firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', address: u.address || '', taxId: u.taxId || '' }); setShowModal(true) }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
         try {
@@ -215,8 +220,8 @@ export default function UsersSettingsPage() {
 
             {/* Modal de Usuario */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl my-auto">
                         <div className="flex items-center justify-between p-5 border-b border-muted">
                             <h2 className="text-lg font-bold text-espresso">{editing ? 'Editar Login' : 'Nuevo Usuario'}</h2>
                             <button onClick={() => setShowModal(false)} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500"><X className="w-5 h-5" /></button>
@@ -252,7 +257,40 @@ export default function UsersSettingsPage() {
                                     <option value="ADMIN">Administrador</option>
                                 </select>
                             </div>
-                            <div className="flex gap-2 pt-2">
+
+                            {form.role === 'CLIENTE' && (
+                                <>
+                                    <hr className="border-t border-muted my-4" />
+                                    <h3 className="text-sm font-bold text-espresso mb-2">Datos Personales (CRM)</h3>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-primary-700 mb-1">Nombre</label>
+                                            <input className="input" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-primary-700 mb-1">Apellido</label>
+                                            <input className="input" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-primary-700 mb-1">Teléfono</label>
+                                            <input className="input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-primary-700 mb-1">DNI / CUIT</label>
+                                            <input className="input" value={form.taxId} onChange={e => setForm({ ...form, taxId: e.target.value })} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-primary-700 mb-1">Dirección</label>
+                                        <input className="input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+                                    </div>
+                                </>
+                            )}
+
+                            <div className="flex gap-2 pt-4">
                                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1 py-2 text-sm shadow-sm">Cancelar</button>
                                 <button type="submit" className="btn-primary flex-1 py-2 text-sm shadow-sm" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
                             </div>

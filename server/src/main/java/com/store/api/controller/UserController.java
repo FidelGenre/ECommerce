@@ -94,7 +94,12 @@ public class UserController {
             com.store.api.entity.Customer c = new com.store.api.entity.Customer();
             c.setUser(user);
             c.setEmail(user.getEmail());
-            c.setFirstName(user.getUsername());
+            c.setFirstName(req.getFirstName() != null && !req.getFirstName().isBlank() ? req.getFirstName()
+                    : user.getUsername());
+            c.setLastName(req.getLastName());
+            c.setPhone(req.getPhone());
+            c.setAddress(req.getAddress());
+            c.setTaxId(req.getTaxId());
             customerRepo.save(c);
         }
 
@@ -116,7 +121,31 @@ public class UserController {
             }
             if (req.getRole() != null)
                 u.setRole(req.getRole());
-            return ResponseEntity.ok(userRepo.save(u));
+
+            User savedUser = userRepo.save(u);
+
+            // Sync Customer profile if applicable
+            if ("CLIENTE".equals(savedUser.getRole())) {
+                com.store.api.entity.Customer c = savedUser.getCustomer();
+                if (c == null) {
+                    c = new com.store.api.entity.Customer();
+                    c.setUser(savedUser);
+                }
+                c.setEmail(savedUser.getEmail());
+                if (req.getFirstName() != null)
+                    c.setFirstName(req.getFirstName());
+                if (req.getLastName() != null)
+                    c.setLastName(req.getLastName());
+                if (req.getPhone() != null)
+                    c.setPhone(req.getPhone());
+                if (req.getAddress() != null)
+                    c.setAddress(req.getAddress());
+                if (req.getTaxId() != null)
+                    c.setTaxId(req.getTaxId());
+                customerRepo.save(c);
+            }
+
+            return ResponseEntity.ok(savedUser);
         }).orElse(ResponseEntity.notFound().build());
     }
 
@@ -198,6 +227,11 @@ public class UserController {
         private String email;
         private String password;
         private String role;
+        private String firstName;
+        private String lastName;
+        private String phone;
+        private String address;
+        private String taxId;
     }
 
     @Data
@@ -213,5 +247,7 @@ public class UserController {
         private String firstName;
         private String lastName;
         private String phone;
+        private String address;
+        private String taxId;
     }
 }
