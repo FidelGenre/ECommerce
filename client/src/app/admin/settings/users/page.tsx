@@ -136,6 +136,7 @@ export default function UsersSettingsPage() {
                         <option value="ALL">Todos los roles</option>
                         <option value="CLIENTE">Cliente</option>
                         <option value="ADMIN">Admin</option>
+                        <option value="NONE">Sin rol</option>
                     </select>
                 </div>
                 <select className="input py-2 text-sm w-auto cursor-pointer font-medium" value={activeFilter} onChange={e => setActiveFilter(e.target.value)}>
