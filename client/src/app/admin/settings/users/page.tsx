@@ -178,7 +178,7 @@ export default function UsersSettingsPage() {
                                             )}
                                         </td>
                                         <td className="text-primary-600 text-sm font-medium">{u.email}</td>
-                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : 'badge-brown'}>{u.role === 'ADMIN' ? 'Admin' : u.role === 'CLIENTE' ? 'Cliente' : u.role}</span></td>
+                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : 'badge-brown'}>{{ ADMIN: 'Admin', CLIENTE: 'Cliente', CUSTOMER: 'Cliente', SUPPLIER: 'Proveedor', CASHIER: 'Cajero' }[u.role] ?? u.role}</span></td>
                                         <td className="text-sm text-primary-500 font-medium">{formatDate(u.createdAt)}</td>
                                         <td className="text-right font-semibold text-espresso">{u.accountBalance !== undefined ? formatCurrency(u.accountBalance) : '—'}</td>
                                         <td className="text-right font-medium text-amber-600">{u.loyaltyPoints ? u.loyaltyPoints + ' pts' : <span className="text-primary-300 font-normal">Sin puntos</span>}</td>

@@ -147,7 +147,7 @@ export default function CashPage() {
                                 <p className="text-2xl font-bold text-red-700">{FMT(summary.expense)}</p>
                             </div>
                             <div className="card text-center bg-blue-50">
-                                <p className="text-xs text-blue-600 uppercase font-semibold mb-1">Total Teórico</p>
+                                <p className="text-xs text-blue-600 uppercase font-semibold mb-1">Total</p>
                                 <p className="text-2xl font-bold text-blue-700">{FMT(register.openingAmount + summary.income - summary.expense)}</p>
                             </div>
                         </div>
