@@ -350,7 +350,18 @@ export default function PurchasesPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-primary-700 mb-1">Proveedor</label>
-                                                <select className="select" value={form.supplierId} onChange={e => setForm({ ...form, supplierId: e.target.value })} required>
+                                                <select className="select" value={form.supplierId} onChange={e => {
+                                                    const newSupId = e.target.value;
+                                                    setForm({ ...form, supplierId: newSupId });
+                                                    // Clear items in lines that don't belong to the new supplier
+                                                    if (newSupId) {
+                                                        setLines(prev => prev.map(line => {
+                                                            const it = items.find(x => x.id === Number(line.itemId));
+                                                            if (it && it.supplier?.id !== Number(newSupId)) return { ...line, itemId: '' };
+                                                            return line;
+                                                        }));
+                                                    }
+                                                }} required>
                                                     <option value="">Seleccionar proveedor</option>
                                                     {suppliers.filter(s => !supplierCategoryFilterModal || (s as any).category?.name === supplierCategoryFilterModal).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                                 </select>
@@ -387,7 +398,11 @@ export default function PurchasesPage() {
                                         <div key={i} className="flex gap-2 items-center mb-2">
                                             <select className="select flex-1" value={line.itemId} onChange={e => updateLine(i, 'itemId', e.target.value)} required>
                                                 <option value="">Seleccionar producto</option>
-                                                {items.filter(it => !categoryFilter || (it as any).category?.name === categoryFilter).map(it => <option key={it.id} value={it.id}>{it.name}</option>)}
+                                                {items.filter(it => {
+                                                    const matchCat = !categoryFilter || (it as any).category?.name === categoryFilter;
+                                                    const matchSup = !form.supplierId || it.supplier?.id === Number(form.supplierId);
+                                                    return matchCat && matchSup;
+                                                }).map(it => <option key={it.id} value={it.id}>{it.name}</option>)}
                                             </select>
                                             <input type="number" step="any" min="0.001" placeholder={items.find(x => x.id === Number(line.itemId))?.purchaseUnit ? `Cant. en ${items.find(x => x.id === Number(line.itemId))?.purchaseUnit}` : "Cant."} className="input w-32 text-center" value={line.quantity} onChange={e => updateLine(i, 'quantity', e.target.value)} title={items.find(x => x.id === Number(line.itemId))?.purchaseUnit ? `Cantidad en ${items.find(x => x.id === Number(line.itemId))?.purchaseUnit}` : "Cantidad"} required />
                                             <input type="number" min="0" placeholder="Costo total" className="input w-28" value={line.unitCost} onChange={e => updateLine(i, 'unitCost', e.target.value)} required />
