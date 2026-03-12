@@ -187,7 +187,7 @@ export default function UsersSettingsPage() {
                                         <td><span className={u.role === 'ADMIN' ? 'badge-blue' : u.role === 'NONE' ? 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500' : 'badge-brown'}>{{ ADMIN: 'Admin', CLIENTE: 'Cliente', CUSTOMER: 'Cliente', SUPPLIER: 'Proveedor', CASHIER: 'Cajero', NONE: 'Sin rol' }[u.role] ?? u.role}</span></td>
                                         <td className="text-sm text-primary-500 font-medium">{formatDate(u.createdAt)}</td>
                                         <td className="text-right font-semibold text-espresso">{u.accountBalance !== undefined ? formatCurrency(u.accountBalance) : '—'}</td>
-                                        <td className="text-right font-medium text-amber-600">{u.loyaltyPoints ? u.loyaltyPoints + ' pts' : <span className="text-primary-300 font-normal">Sin puntos</span>}</td>
+                                        <td className="text-right font-medium text-amber-600">{typeof u.loyaltyPoints === 'number' ? u.loyaltyPoints + ' pts' : <span className="text-primary-300 font-normal">Sin puntos</span>}</td>
                                         <td>
                                             <button onClick={() => toggle(u.id)} className="text-primary-500 hover:text-primary-700 transition-colors">
                                                 {u.active ? <ToggleRight className="w-6 h-6 text-emerald-600" /> : <ToggleLeft className="w-6 h-6 text-red-400" />}
