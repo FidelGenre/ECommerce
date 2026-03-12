@@ -217,21 +217,17 @@
         .uc-block img {
             max-width: 100%;
             border: 1px solid #ddd;
-            border-radius: 6px;
-            margin: 12px 0;
+            height: auto;
+            border-radius: 8px;
+            margin: 15px 0;
             display: block;
-        }
-
-        .uc-block h4 {
-            text-decoration: underline;
-            font-size: 1.2em;
-            margin-bottom: 8px;
-            margin-top: 24px;
-            color: #2c3e50;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         }
 
         .uc-block p {
-            margin: 6px 0;
+            margin: 10px 0;
+            line-height: 1.5;
         }
 
         .video-container {
@@ -245,37 +241,84 @@
     <!-- CU01: Gestión de Venta Manual -->
     <div class="uc-block">
         <h4>CU01: Gestión de Venta Manual (Administrador)</h4>
-        <p><strong>Actor:</strong> Administrador</p>
-        <p><strong>Descripción:</strong> Registro de ventas físicas en el local con validación de stock en tiempo real,
-            filtro de clientes activos y cierre de caja.</p>
         <img src="./screenshots/nueva_venta.png" alt="Nueva Venta Manual">
+        <p><strong>Actor:</strong> Administrador</p>
+        <p><strong>Descripción:</strong> Registro de ventas físicas en el local con validación de stock en tiempo real y
+            filtro de clientes activos.</p>
+        <p><strong>Flujo principal:</strong></p>
+        <ol>
+            <li>El administrador abre el modal de "Nueva Venta".</li>
+            <li>Selecciona los productos y ajusta las cantidades (el sistema valida stock inmediatamente).</li>
+            <li>Selecciona un cliente de la lista de usuarios activos.</li>
+            <li>Confirma la venta y se genera el recibo, descontando el stock.</li>
+        </ol>
+        <p><strong>Alternativo:</strong></p>
+        <ul>
+            <li><strong>Stock insuficiente:</strong> El sistema impide superar la cantidad disponible y muestra un aviso
+                visual.</li>
+            <li><strong>Cliente inactivo:</strong> Los usuarios desactivados no aparecen en la lista de selección para
+                evitar errores administrativos.</li>
+        </ul>
     </div>
 
     <!-- CU02: Administración de Catálogo y Recetas -->
     <div class="uc-block">
         <h4>CU02: Administración de Catálogo y Recetas (BOM)</h4>
+        <img src="./screenshots/productos_filtros.png" alt="Gestión de Catálogo">
         <p><strong>Actor:</strong> Administrador</p>
-        <p><strong>Descripción:</strong> Gestión de productos finales e insumos, permitiendo la reducción en cascada de
-            stock según recetas configuradas. Incluye filtros guardados para eficiencia operativa.</p>
-        <img src="./screenshots/productos_filtros.png" alt="Gestión de Productos y Filtros">
+        <p><strong>Descripción:</strong> Gestión centralizada de productos e insumos con filtros avanzados.</p>
+        <p><strong>Flujo principal:</strong></p>
+        <ol>
+            <li>El administrador accede al listado de productos.</li>
+            <li>Aplica filtros (ej. por Categoría o Proveedor) para localizar ítems.</li>
+            <li>Edita el producto: modifica nombre, imagen, precio o visibilidad.</li>
+            <li>Guarda los cambios para actualizar el catálogo público.</li>
+        </ol>
+        <p><strong>Alternativo:</strong></p>
+        <ul>
+            <li><strong>Campos vacíos:</strong> El sistema resalta los campos obligatorios y bloquea el guardado.</li>
+            <li><strong>Ocultar producto:</strong> Permite retirar un producto de la tienda sin eliminar sus datos
+                históricos.</li>
+        </ul>
     </div>
 
     <!-- CU03: Control de Inventario Auditado -->
     <div class="uc-block">
         <h4>CU03: Control de Inventario Auditado</h4>
+        <img src="./screenshots/inventario_tabla.png" alt="Control de Inventario">
         <p><strong>Actor:</strong> Administrador</p>
-        <p><strong>Descripción:</strong> Monitoreo y ajuste de existencias con registro obligatorio de motivos y usuario
-            responsable para auditoría.</p>
-        <img src="./screenshots/inventario_tabla.png" alt="Tabla de Inventario Auditado">
+        <p><strong>Descripción:</strong> Monitoreo de niveles de stock y ajustes manuales obligatorios.</p>
+        <p><strong>Flujo principal:</strong></p>
+        <ol>
+            <li>El administrador visualiza la tabla de inventario con alertas de stock mínimo.</li>
+            <li>Selecciona un producto para realizar un ajuste (entrada o salida).</li>
+            <li>Ingresa la cantidad y el motivo del movimiento.</li>
+            <li>El sistema registra el movimiento con marca de tiempo y usuario responsable.</li>
+        </ol>
+        <p><strong>Alternativo:</strong></p>
+        <ul>
+            <li><strong>Stock Crítico:</strong> Los productos por debajo del límite se resaltan en rojo para acción
+                inmediata de compra.</li>
+        </ul>
     </div>
 
     <!-- CU04: CRM y Gestión de Usuarios -->
     <div class="uc-block">
         <h4>CU04: CRM y Gestión de Usuarios</h4>
+        <img src="./screenshots/usuarios.png" alt="Gestión de Usuarios">
         <p><strong>Actor:</strong> Administrador</p>
-        <p><strong>Descripción:</strong> Administración de perfiles de clientes con datos extendidos (DNI, Teléfono) y
-            control de acceso basado en estados (Activo/Inactivo).</p>
-        <img src="./screenshots/usuario_formulario.png" alt="Formulario CRM de Usuario">
+        <p><strong>Descripción:</strong> Administración de perfiles de usuarios con control de acceso basado en roles y
+            estados.</p>
+        <p><strong>Flujo principal:</strong></p>
+        <ol>
+            <li>El administrador accede al listado de usuarios.</li>
+            <li>Visualiza datos de fidelización (puntos) y balance.</li>
+            <li>Cambia el estado (Desactivar/Activar) o el rol del usuario.</li>
+        </ol>
+        <p><strong>Alternativo:</strong></p>
+        <ul>
+            <li><strong>Saldo pendiente:</strong> No se permite desactivar usuarios con deudas en cuenta corriente.</li>
+        </ul>
     </div>
 
     <!-- CU05: Venta Online y Checkout -->
@@ -285,21 +328,29 @@
         <p><strong>Descripción:</strong> Flujo de compra completo en el Storefront, desde la selección en catálogo hasta
             la transacción segura a través de la pasarela de MercadoPago.</p>
         <div style="display: flex; gap: 10px;">
-            <img src="./screenshots/login_v2.png" alt="Login" style="flex: 1; max-width: 49%;">
-            <img src="./screenshots/register_v2.png" alt="Registro" style="flex: 1; max-width: 49%;">
+            <img src="./screenshots/login.png" alt="Login" style="flex: 1; max-width: 49%;">
+            <img src="./screenshots/registro.png" alt="Registro" style="flex: 1; max-width: 49%;">
         </div>
     </div>
 
-    <!-- Sección de Videos de Verificación -->
+    <!-- CU06: Gestión de Compras e Insumos -->
     <div class="uc-block">
-        <h4>Flujos Dinámicos y Verificación</h4>
-        <p>Demostración visual de los flujos de trabajo y correcciones implementadas:</p>
-        <div class="video-container">
-            <img src="./screenshots/video_stock_filtros.webp" alt="Video: Flujo de Venta y Filtros">
-        </div>
-        <div class="video-container">
-            <img src="./screenshots/video_verificacion_final.webp" alt="Video: Verificación Final de Feedback">
-        </div>
+        <h4>CU06: Gestión de Compras e Insumos (Administrador)</h4>
+        <img src="./screenshots/compras.png" alt="Gestión de Compras">
+        <p><strong>Actor:</strong> Administrador</p>
+        <p><strong>Descripción:</strong> Registro y seguimiento de órdenes de compra a proveedores de café verde e
+            insumos.</p>
+        <p><strong>Flujo principal:</strong></p>
+        <ol>
+            <li>El administrador inicia una "Nueva Compra" seleccionando el proveedor.</li>
+            <li>Ingresa los ítems adquiridos, sus costos y cantidades.</li>
+            <li>Confirma la recepción, lo cual actualiza automáticamente el stock del almacén.</li>
+        </ol>
+        <p><strong>Alternativo:</strong></p>
+        <ul>
+            <li><strong>Orden Pendiente:</strong> Las compras pueden guardarse como "Pendiente" hasta que se confirme la
+                recepción física del producto.</li>
+        </ul>
     </div>
 
     <h3>2.3. Diagrama de Clases (Arquitectura Backend Central)</h3>

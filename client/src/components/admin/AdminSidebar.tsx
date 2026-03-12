@@ -18,6 +18,7 @@ const NAV = [
     { href: '/admin/reports', icon: BarChart3, label: 'Informes' },
     { separator: true, label: 'Gestión' },
     { href: '/admin/productos', icon: Package, label: 'Productos' },
+    { href: '/admin/clientes', icon: Users, label: 'Clientes' },
     { href: '/admin/costs', icon: ClipboardList, label: 'Costos Internos' },
     { href: '/admin/suppliers', icon: Truck, label: 'Proveedores' },
     { href: '/admin/notifications', icon: Bell, label: 'Notificaciones' },
@@ -27,6 +28,7 @@ const NAV = [
     { href: '/admin/settings/supplier-categories', icon: Truck, label: 'Categorías de Proveedores' },
     { href: '/admin/settings/users', icon: Users, label: 'Usuarios' },
     { href: '/admin/settings/payments', icon: Banknote, label: 'Formas de Pago' },
+    { href: '/admin/settings/statuses', icon: Settings, label: 'Estados de Operación' },
 ]
 
 function SidebarInner({ onNav }: { onNav?: () => void }) {

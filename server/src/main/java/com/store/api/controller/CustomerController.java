@@ -16,6 +16,7 @@ import com.store.api.repository.SaleOrderRepository;
 @RequestMapping("/api/admin/customers")
 @RequiredArgsConstructor
 public class CustomerController {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomerController.class);
 
     private final CustomerRepository customerRepository;
     private final AccountMovementRepository movementRepo;
@@ -38,11 +39,22 @@ public class CustomerController {
                         cb.like(cb.lower(root.get("email")), pattern)));
             }
             if (active != null) {
-                predicates.add(cb.equal(root.get("user").get("active"), active));
+                // If filtering by active, we check the user state if it exists.
+                predicates.add(cb.or(
+                        cb.isNull(root.get("user")),
+                        cb.equal(root.get("user").get("active"), active)));
             }
+
+            // Always exclude ADMINs from the Customer listing
+            predicates.add(cb.or(
+                    cb.isNull(root.get("user")),
+                    cb.notEqual(root.get("user").get("role"), "ADMIN")));
+
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
-        return ResponseEntity.ok(customerRepository.findAll(spec, pageable));
+        var result = customerRepository.findAll(spec, pageable);
+        log.info("Customer list requested: q={}, active={}, found={}", q, active, result.getTotalElements());
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
@@ -139,5 +151,11 @@ public class CustomerController {
             result.put("loyaltyPoints", c.getLoyaltyPoints());
             return ResponseEntity.ok(result);
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // Sale history
+    @GetMapping("/{id}/sales")
+    public ResponseEntity<java.util.List<com.store.api.entity.SaleOrder>> getSales(@PathVariable Long id) {
+        return ResponseEntity.ok(saleRepo.findByCustomerId(id));
     }
 }

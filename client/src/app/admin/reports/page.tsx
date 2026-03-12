@@ -23,6 +23,7 @@ export default function ReportsPage() {
     const [marginEvolution, setMarginEvolution] = useState<any[]>([])
     const [topCustomers, setTopCustomers] = useState<any[]>([])
     const [salesByClient, setSalesByClient] = useState<any[]>([])
+    const [salesByUsuario, setSalesByUsuario] = useState<any[]>([])
     const [nonRotating, setNonRotating] = useState<any[]>([])
     const [profitability, setProfitability] = useState<ProfitRow[]>([])
     const today = new Date().toISOString().slice(0, 10)
@@ -55,7 +56,7 @@ export default function ReportsPage() {
             ])
             setSales(s.data); setBySupplier(sup.data); setByCategory(cat.data)
             setByHour(hour.data); setMarginEvolution(margin.data); setTopCustomers(top.data)
-            setSalesByClient(byClient.data); setNonRotating(nonRot.data); setProfitability(profit.data)
+            setSalesByUsuario(byClient.data); setNonRotating(nonRot.data); setProfitability(profit.data)
         } catch (e) { console.error(e) }
         setLoading(false)
     }
@@ -103,10 +104,10 @@ export default function ReportsPage() {
             if (y > 220) { doc.addPage(); y = 14 }
             doc.setFontSize(13)
             doc.setTextColor(75, 46, 5)
-            doc.text('Top Clientes', 14, y)
+            doc.text('Top Compradores', 14, y)
             autoTable(doc, {
                 startY: y + 4,
-                head: [['Cliente', 'Órdenes', 'Total']],
+                head: [['Comprador', 'Órdenes', 'Total']],
                 body: topCustomers.map((r: any) => [r.name, r.orders, FMT(r.total)]),
                 headStyles: { fillColor: [92, 61, 32] },
                 alternateRowStyles: { fillColor: [245, 230, 204] },
@@ -135,7 +136,7 @@ export default function ReportsPage() {
 
     const tabs = [
         { key: 'overview', label: 'Visión General', icon: <Layers className="w-4 h-4" /> },
-        { key: 'clients', label: 'Clientes', icon: <Users className="w-4 h-4" /> },
+        { key: 'clients', label: 'Compradores', icon: <Users className="w-4 h-4" /> },
         { key: 'products', label: 'Productos', icon: <TrendingUp className="w-4 h-4" /> },
     ] as const
 
@@ -278,9 +279,9 @@ export default function ReportsPage() {
                             <div className="card">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="font-semibold text-espresso">
-                                        <Users className="w-4 h-4 inline mr-1.5" />Clientes Más Importantes
+                                        <Users className="w-4 h-4 inline mr-1.5" />Compradores Más Importantes
                                     </h2>
-                                    <button onClick={() => exportExcel(topCustomers, 'Top Clientes', 'top_clientes')}
+                                    <button onClick={() => exportExcel(topCustomers, 'Top Compradores', 'top_compradores')}
                                         className="btn-secondary flex items-center gap-1.5 text-xs py-1 px-2.5">
                                         <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
                                     </button>
@@ -289,7 +290,7 @@ export default function ReportsPage() {
                                     <div className="overflow-x-auto">
                                         <table className="data-table">
                                             <thead><tr>
-                                                <th>#</th><th>Cliente</th><th>Email</th><th className="text-right">Pedidos</th><th className="text-right">Total</th>
+                                                <th>#</th><th>Comprador</th><th>Email</th><th className="text-right">Pedidos</th><th className="text-right">Total</th>
                                             </tr></thead>
                                             <tbody>
                                                 {topCustomers.map((c: any, i: number) => (
@@ -310,8 +311,8 @@ export default function ReportsPage() {
                             {/* Sales by client */}
                             <div className="card">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h2 className="font-semibold text-espresso">Ventas por Cliente</h2>
-                                    <button onClick={() => exportExcel(salesByClient, 'Ventas por Cliente', 'ventas_por_cliente')}
+                                    <h2 className="font-semibold text-espresso">Ventas por Comprador</h2>
+                                    <button onClick={() => exportExcel(salesByUsuario, 'Ventas por Comprador', 'ventas_por_comprador')}
                                         className="btn-secondary flex items-center gap-1.5 text-xs py-1 px-2.5">
                                         <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
                                     </button>
@@ -320,10 +321,10 @@ export default function ReportsPage() {
                                     <div className="overflow-x-auto">
                                         <table className="data-table">
                                             <thead><tr>
-                                                <th>Cliente</th><th className="text-right">Pedidos</th><th className="text-right">Total</th><th className="text-right">Ticket Promedio</th>
+                                                <th>Comprador</th><th className="text-right">Pedidos</th><th className="text-right">Total</th><th className="text-right">Ticket Promedio</th>
                                             </tr></thead>
                                             <tbody>
-                                                {salesByClient.map((c: any, i: number) => (
+                                                {salesByUsuario.map((c: any, i: number) => (
                                                     <tr key={i}>
                                                         <td className="font-medium">{c.client}</td>
                                                         <td className="text-right">{c.orders}</td>

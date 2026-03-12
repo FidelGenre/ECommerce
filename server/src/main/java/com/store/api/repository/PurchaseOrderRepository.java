@@ -24,4 +24,6 @@ public interface PurchaseOrderRepository
         List<PurchaseOrder> findBySupplierId(Long supplierId);
 
         List<PurchaseOrder> findByCreatedById(Long userId);
+
+        List<PurchaseOrder> findByStatusId(Long statusId);
 }

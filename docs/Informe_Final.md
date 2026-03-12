@@ -92,37 +92,78 @@ Este apartado detalla los procesos críticos del negocio vinculándolos con su i
 
 #### CU01: Gestión de Venta Manual (Administrador)
 *   **Actor:** Administrador
-*   **Descripción:** Registro de ventas físicas en el local con validación de stock en tiempo real, filtro de clientes activos y cierre de caja.
+*   **Descripción:** Registro de ventas físicas en el local con validación de stock en tiempo real y filtro de clientes activos.
+*   **Flujo principal:**
+    1. El administrador abre el modal de "Nueva Venta".
+    2. Selecciona los productos y ajusta las cantidades (el sistema valida stock inmediatamente).
+    3. Selecciona un cliente de la lista de usuarios activos.
+    4. Confirma la venta y se genera el recibo, descontando el stock.
+*   **Alternativo:**
+    - **Stock insuficiente:** El sistema impide superar la cantidad disponible y muestra un aviso visual.
+    - **Cliente inactivo:** Los usuarios desactivados no aparecen en la lista de selección.
 *   **Interfaz:**
 ![Nueva Venta Manual](./screenshots/nueva_venta.png)
 
 #### CU02: Administración de Catálogo y Recetas (BOM)
 *   **Actor:** Administrador
-*   **Descripción:** Gestión de productos finales e insumos, permitiendo la reducción en cascada de stock según recetas configuradas. Incluye filtros guardados para eficiencia operativa.
+*   **Descripción:** Gestión centralizada de productos e insumos con filtros avanzados.
+*   **Flujo principal:**
+    1. El administrador accede al listado de productos.
+    2. Aplica filtros (ej. por Categoría o Proveedor) para localizar ítems.
+    3. Edita el producto: modifica nombre, imagen, precio o visibilidad.
+    4. Guarda los cambios para actualizar el catálogo público.
+*   **Alternativo:**
+    - **Campos vacíos:** El sistema resalta los campos obligatorios y bloquea el guardado.
+    - **Ocultar producto:** Permite retirar un producto de la tienda sin eliminar sus datos.
 *   **Interfaz:**
 ![Gestión de Productos](./screenshots/productos_filtros.png)
 
 #### CU03: Control de Inventario Auditado
 *   **Actor:** Administrador
-*   **Descripción:** Monitoreo y ajuste de existencias con registro obligatorio de motivos y usuario responsable para auditoría.
+*   **Descripción:** Monitoreo de niveles de stock y ajustes manuales obligatorios.
+*   **Flujo principal:**
+    1. El administrador visualiza la tabla de inventario con alertas de stock mínimo.
+    2. Selecciona un producto para realizar un ajuste (entrada o salida).
+    3. Ingresa la cantidad y el motivo del movimiento.
+    4. El sistema registra el movimiento con marca de tiempo y usuario responsable.
+*   **Alternativo:**
+    - **Stock Crítico:** Los productos por debajo del límite se resaltan en rojo.
 *   **Interfaz:**
 ![Tabla de Inventario](./screenshots/inventario_tabla.png)
 
 #### CU04: CRM y Gestión de Usuarios
 *   **Actor:** Administrador
-*   **Descripción:** Administración de perfiles de clientes con datos extendidos (DNI, Teléfono) y control de acceso basado en estados (Activo/Inactivo).
+*   **Descripción:** Administración de perfiles de usuarios con control de acceso basado en roles y estados.
+*   **Flujo principal:**
+    1. El administrador accede al listado de usuarios.
+    2. Visualiza datos de fidelización (puntos) y balance.
+    3. Cambia el estado (Desactivar/Activar) o el rol del usuario.
+*   **Alternativo:**
+    - **Saldo pendiente:** No se permite desactivar usuarios con deudas en cuenta corriente.
 *   **Interfaz:**
-![Formulario de Usuario](./screenshots/usuario_formulario.png)
+![Gestión de Usuarios](./screenshots/usuarios.png)
 
 #### CU05: Venta Online y Checkout (MercadoPago)
 *   **Actor:** Cliente
 *   **Descripción:** Flujo de compra completo en el Storefront, desde la selección en catálogo hasta la transacción segura a través de la pasarela de MercadoPago.
 *   **Interfaces:**
 ````carousel
-![Login](./screenshots/login_v2.png)
+![Login](./screenshots/login.png)
 <!-- slide -->
-![Registro](./screenshots/register_v2.png)
+![Registro](./screenshots/registro.png)
 ````
+
+#### CU06: Gestión de Compras e Insumos (Administrador)
+*   **Actor:** Administrador
+*   **Descripción:** Registro y seguimiento de órdenes de compra a proveedores de café verde e insumos.
+*   **Flujo principal:**
+    1. El administrador inicia una "Nueva Compra" seleccionando el proveedor.
+    2. Ingresa los ítems adquiridos, sus costos y cantidades.
+    3. Confirma la recepción, lo cual actualiza automáticamente el stock del almacén.
+*   **Alternativo:**
+    - **Orden Pendiente:** Las compras pueden guardarse como "Pendiente" hasta que se confirme la recepción física del producto.
+*   **Interfaz:**
+![Gestión de Compras](./screenshots/compras.png)
 
 ### 2.3. Diagrama de Clases (Arquitectura Backend Central)
 
@@ -275,7 +316,7 @@ erDiagram
     }
 ```
 
-### 2.5. Documentación de Pruebas y Validación
+### 2.5. Documentación de Pruebas y Validación (Checklist PDF)
 
 El sistema requirió a lo largo de su integración y estabilización, los siguientes escenarios de control de calidad documentados:
 
@@ -285,6 +326,13 @@ El sistema requirió a lo largo de su integración y estabilización, los siguie
    - **Estado Actual**: **Aprobado**. Las capas de filtros lógicos de Spring Security aprueban el token únicamente si fue firmado con el secreto local.
 
 2. **Caso: Integridad del Carrito - Limitantes de Stock / Tipos de Unidad**
+   - **Acción del QA**: Intento de compra de producto con stock 2 agregando 10 unidades al carrito.
+   - **Resultado Esperado**: El sistema debe impedir el checkout y notificar el límite disponible según la unidad (ej. "Solo quedan 2 cajas").
+   - **Estado Actual**: **Aprobado**. El servicio de stock valida en backend antes de procesar el pago.
+
+---
+
+---
    - **Historia**: Requeríamos impedir a usuarios malintencionados o al mismo UI, generar carritos superiores al inventario limitante (ej. solicitar 50 bolsas cuando solo quedan 2), como a su vez lidiar correctamente con transacciones sin alterar el *monto real* de manera exponencial según los gramos.
    - **Modificación**: Se limitó por estricta directriz de pasos intermedios (step) la modificación manual a "cantidades enteras" en el Frontend.
    - **Resultado Esperado**: Ventas exclusivas de bolsas finalizadas sin decimales ambiguos de compra para el consumidor, previniendo sobrefacturaciones erróneas.

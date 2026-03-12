@@ -4,6 +4,8 @@ import org.springframework.security.core.Authentication;
 import com.store.api.repository.UserRepository;
 import com.store.api.entity.PaymentMethod;
 import com.store.api.entity.OperationStatus;
+import com.store.api.entity.SaleOrder;
+import com.store.api.entity.PurchaseOrder;
 import com.store.api.repository.PaymentMethodRepository;
 import com.store.api.repository.OperationStatusRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,8 @@ public class SettingsController {
 
     private final PaymentMethodRepository paymentRepo;
     private final OperationStatusRepository statusRepo;
+    private final SaleOrderRepository saleRepo;
+    private final PurchaseOrderRepository purchaseRepo;
     private final UserRepository userRepo;
 
     // --- Payment Methods ---
@@ -79,5 +83,18 @@ public class SettingsController {
     public ResponseEntity<Void> deleteStatus(@PathVariable Long id) {
         statusRepo.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/statuses/{id}/usage")
+    public ResponseEntity<?> getStatusUsage(@PathVariable Long id) {
+        return statusRepo.findById(id).map(s -> {
+            if ("SALE".equals(s.getType())) {
+                List<Long> ids = saleRepo.findByStatusId(id).stream().map(SaleOrder::getId).toList();
+                return ResponseEntity.ok(java.util.Map.of("type", "SALE", "ids", ids));
+            } else {
+                List<Long> ids = purchaseRepo.findByStatusId(id).stream().map(PurchaseOrder::getId).toList();
+                return ResponseEntity.ok(java.util.Map.of("type", "PURCHASE", "ids", ids));
+            }
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

@@ -2,7 +2,8 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import api from '@/lib/api'
 import { PurchaseOrder, OperationStatus, Supplier, PaymentMethod, Item } from '@/types'
-import { Plus, Search, ChevronLeft, ChevronRight, X, Trash2, Download, FileSpreadsheet, ChevronUp, ChevronDown, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Search, ChevronLeft, ChevronRight, X, Trash2, Download, FileSpreadsheet, ChevronUp, ChevronDown, CheckCircle, XCircle, Printer } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import * as XLSX from 'xlsx'
 import { SavedFilters } from '@/components/SavedFilters'
 
@@ -17,6 +18,7 @@ export default function PurchasesPage() {
     const [page, setPage] = useState(0)
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
+    const [ticketModal, setTicketModal] = useState<PurchaseOrder | null>(null)
 
     // Filters
     const [fromDate, setFromDate] = useState('')
@@ -287,6 +289,9 @@ export default function PurchasesPage() {
                                             <td className="font-semibold">{FMT(o.total)}</td>
                                             <td className="text-primary-400 text-xs">{new Date(o.createdAt).toLocaleDateString('es-AR')}</td>
                                             <td>
+                                                <button onClick={() => setTicketModal(o)} className="btn-ghost py-1 px-2 text-xs flex items-center gap-1" title="Ver / Imprimir">
+                                                    <Printer className="w-3.5 h-3.5" /> Ticket
+                                                </button>
                                             </td>
                                         </tr>
                                         {isExpanded && (
@@ -419,6 +424,96 @@ export default function PurchasesPage() {
                     </div>
                 )
             }
-        </div >
+
+            {
+                ticketModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 print:bg-white print:p-0">
+                        <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl print:shadow-none print:w-auto print:mx-auto max-h-[90vh] flex flex-col">
+                            <div className="flex items-center justify-between p-6 border-b border-muted print:hidden">
+                                <h2 className="text-lg font-bold text-espresso">Detalle de Compra</h2>
+                                <button onClick={() => setTicketModal(null)} className="btn-ghost p-1.5"><X className="w-5 h-5" /></button>
+                            </div>
+                            <div className="p-6 flex-1 overflow-y-auto">
+                                <div className="font-mono text-sm space-y-4 max-w-xs mx-auto text-black">
+                                    <div className="text-center pb-4 border-b border-dashed border-gray-400">
+                                        <h2 className="font-bold text-xl uppercase tracking-widest">COFFEE BEANS</h2>
+                                        <p className="text-xs mt-1">ORDEN DE COMPRA</p>
+                                        <div className="mt-3 text-left space-y-0.5 text-xs">
+                                            <div className="flex justify-between"><span>Orden No:</span><span>{String(ticketModal.id).padStart(8, '0')}</span></div>
+                                            <div className="flex justify-between"><span>Fecha:</span><span>{new Date(ticketModal.createdAt).toLocaleString('es-AR')}</span></div>
+                                            <div className="flex justify-between">
+                                                <span>Proveedor:</span>
+                                                <span className="truncate max-w-[150px] text-right">
+                                                    {ticketModal.supplier?.name ?? '—'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="border-b border-dashed border-gray-400 pb-4">
+                                        <table className="w-full text-xs">
+                                            <thead>
+                                                <tr className="border-b border-dashed border-gray-300">
+                                                    <th className="text-left font-normal py-1">CANT DESCRIPCION</th>
+                                                    <th className="text-right font-normal py-1">IMPORTE</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {ticketModal.lines.map((l: any, i: number) => (
+                                                    <tr key={i}>
+                                                        <td className="py-1">
+                                                            {l.quantity}x {l.item?.name}
+                                                            <br />
+                                                            <span className="text-[10px] text-gray-500">${Number(l.unitCost).toLocaleString('es-AR')} c/u</span>
+                                                        </td>
+                                                        <td className="text-right py-1 align-bottom">
+                                                            ${(Number(l.quantity) * Number(l.unitCost)).toLocaleString('es-AR')}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div className="space-y-1 pb-4 border-b border-dashed border-gray-400">
+                                        <div className="flex justify-between items-center text-lg font-bold">
+                                            <span>TOTAL</span>
+                                            <span>${Number(ticketModal.total).toLocaleString('es-AR')}</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                            <span>Pago:</span>
+                                            <span>{ticketModal.paymentMethod?.name ?? '—'}</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                            <span>Estado:</span>
+                                            <span>{(ticketModal.status?.name && STATUS_LABELS[ticketModal.status.name]) || ticketModal.status?.name || '—'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="text-center pt-2 text-xs flex flex-col items-center gap-3">
+                                        <p>Registro de Entrada de Mercadería</p>
+                                        <QRCodeSVG value={`https://coffeebeans.com/purchases/${ticketModal.id}`} size={80} level="L" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-6 border-t border-muted flex gap-3 print:hidden shrink-0 bg-white rounded-b-2xl">
+                                <button onClick={() => setTicketModal(null)} className="btn-secondary flex-1">Cerrar</button>
+                                <button onClick={() => window.print()} className="btn-primary flex-1 flex justify-center items-center gap-2">
+                                    <Printer className="w-4 h-4" /> Imprimir
+                                </button>
+                            </div>
+                            <style dangerouslySetInnerHTML={{
+                                __html: `
+                                @media print {
+                                    body * { visibility: hidden; }
+                                    .fixed.inset-0.bg-black\\/50, .fixed.inset-0.bg-black\\/50 * { visibility: visible; }
+                                    .fixed.inset-0.bg-black\\/50 { position: absolute; left: 0; top: 0; background: white; width: 100%; }
+                                    .fixed.inset-0.bg-black\\/50 { padding: 0 !important; }
+                                }
+                            `}} />
+                        </div>
+                    </div>
+                )}
+        </div>
     )
 }

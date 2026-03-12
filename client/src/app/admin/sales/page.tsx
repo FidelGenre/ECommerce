@@ -85,10 +85,16 @@ export default function SalesPage() {
             api.get('/api/admin/items?size=200'),
             api.get('/api/admin/categories?type=PRODUCT'),
         ]).then(([s, c, pm, it, cats]) => {
-            setStatuses(s.data); setCustomers(c.data.content.filter((cust: any) => cust.firstName?.toLowerCase() !== 'admin'))
-            setPayments(pm.data); setItems(it.data.content)
+            setStatuses(s.data);
+            // Only filter out the literal "admin" user
+            const filteredCustomers = (c.data?.content || []).filter((cust: any) =>
+                cust.firstName?.toLowerCase() !== 'admin' && cust.user?.username?.toLowerCase() !== 'admin'
+            );
+            setCustomers(filteredCustomers);
+            setPayments(pm.data);
+            setItems(it.data.content)
             setCategories(cats.data)
-        })
+        }).catch(err => console.error('Error loading sales reference data:', err))
     }, [])
 
     const resetFilters = () => {
@@ -112,7 +118,7 @@ export default function SalesPage() {
     const exportCSV = () => {
         const rows = sortedData.map(o => ({
             ID: o.id,
-            Cliente: o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? 'Sin usuario'),
+            Comprador: o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? 'Sin usuario'),
             Estado: o.status?.name ?? '',
             Pago: o.paymentMethod?.name ?? '',
             Total: o.total,
@@ -126,7 +132,7 @@ export default function SalesPage() {
     const exportExcel = () => {
         const rows = sortedData.map(o => ({
             ID: o.id,
-            Cliente: o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? 'Sin usuario'),
+            Comprador: o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? 'Sin usuario'),
             Estado: o.status?.name ?? '',
             'Forma de Pago': o.paymentMethod?.name ?? '',
             Total: Number(o.total),
@@ -277,7 +283,7 @@ export default function SalesPage() {
                             <thead><tr>
                                 <th className="w-6"></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('id')}># <SortIcon field="id" /></th>
-                                <th>Cliente</th>
+                                <th>Comprador</th>
                                 <th>Vendedor</th>
                                 <th>Estado</th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('paymentMethod')}>Pago <SortIcon field="paymentMethod" /></th>
@@ -383,9 +389,9 @@ export default function SalesPage() {
                                     <>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-primary-700 mb-1">Cliente</label>
+                                                <label className="block text-sm font-medium text-primary-700 mb-1">Comprador</label>
                                                 <select className="select" value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value, pointsUsed: '0' })}>
-                                                    <option value="">Sin usuario</option>
+                                                    <option value="">Consumidor Final / Sin usuario</option>
                                                     {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
                                                 </select>
                                             </div>
@@ -423,7 +429,7 @@ export default function SalesPage() {
                                                     ) : (
                                                         <p className="text-sm text-primary-400 p-2 bg-warm-50 rounded border border-muted">No hay suficientes puntos (Mínimo 100pts)</p>
                                                     )
-                                                ) : <p className="text-sm text-primary-400 p-2 bg-warm-50 rounded border border-muted">Seleccione un cliente primero</p>}
+                                                ) : <p className="text-sm text-primary-400 p-2 bg-warm-50 rounded border border-muted">Seleccione un Comprador primero</p>}
                                             </div>
                                         </div>
                                         <div>
@@ -491,7 +497,7 @@ export default function SalesPage() {
                                         <div className="flex justify-between"><span>Ticket No:</span><span>{String(ticketModal.id).padStart(8, '0')}</span></div>
                                         <div className="flex justify-between"><span>Fecha:</span><span>{new Date(ticketModal.createdAt).toLocaleString('es-AR')}</span></div>
                                         <div className="flex justify-between">
-                                            <span>Cliente:</span>
+                                            <span>Comprador:</span>
                                             <span className="truncate max-w-[150px] text-right">
                                                 {ticketModal.customer ? `${ticketModal.customer.firstName} ${ticketModal.customer.lastName ?? ''}` : 'Consumidor Final'}
                                             </span>

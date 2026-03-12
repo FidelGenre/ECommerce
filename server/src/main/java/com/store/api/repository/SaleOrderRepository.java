@@ -23,4 +23,6 @@ public interface SaleOrderRepository extends JpaRepository<SaleOrder, Long>, Jpa
         List<SaleOrder> findByCreatedById(Long userId);
 
         java.util.Optional<SaleOrder> findByMpPreferenceId(String mpPreferenceId);
+
+        List<SaleOrder> findByStatusId(Long statusId);
 }

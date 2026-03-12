@@ -24,9 +24,8 @@ export default function CategoriesPage() {
     const toggleAll = () => setSelected(prev => prev.size === filteredData.length ? new Set() : new Set(filteredData.map(c => c.id)))
 
     const [search, setSearch] = useState('')
-    const [typeFilter, setTypeFilter] = useState('ALL')
 
-    const load = async () => { setLoading(true); const r = await api.get('/api/admin/categories'); setData(r.data); setLoading(false) }
+    const load = async () => { setLoading(true); const r = await api.get('/api/admin/categories?type=PRODUCT'); setData(r.data); setLoading(false) }
     useEffect(() => { load() }, [])
 
     const openNew = () => { setEditing(null); setForm({ name: '', description: '', type: 'PRODUCT' }); setShowModal(true) }
@@ -58,16 +57,15 @@ export default function CategoriesPage() {
 
     const filteredData = useMemo(() => {
         return data.filter(c => {
-            const matchesType = typeFilter === 'ALL' || c.type === typeFilter;
             const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) || (c.description || '').toLowerCase().includes(search.toLowerCase());
-            return matchesType && matchesSearch;
+            return matchesSearch;
         });
-    }, [data, search, typeFilter])
+    }, [data, search])
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-espresso">Categorías</h1>
+                <h1 className="text-2xl font-bold text-espresso">Categorías de Productos</h1>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
                         <button onClick={() => handleDelete([...selected])} disabled={deleting}
@@ -89,23 +87,15 @@ export default function CategoriesPage() {
                         value={search} onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-primary-400" />
-                    <select className="input py-2 text-sm w-auto cursor-pointer font-medium" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-                        <option value="ALL">Todos los tipos</option>
-                        <option value="PRODUCT">PRODUCTO</option>
-                        <option value="SUPPLIER">PROVEEDOR</option>
-                    </select>
-                </div>
             </div>
 
             <div className="card p-0 overflow-hidden shadow-sm border border-muted">
                 {loading ? <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div> : (
-                    <table className="data-table"><thead><tr><th className="w-8 pl-4"><input type="checkbox" checked={selected.size === filteredData.length && filteredData.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th><th>Nombre</th><th>Tipo</th><th>Descripción</th><th></th></tr></thead>
+                    <table className="data-table"><thead><tr><th className="w-8 pl-4"><input type="checkbox" checked={selected.size === filteredData.length && filteredData.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th><th>Nombre</th><th>Descripción</th><th></th></tr></thead>
                         <tbody>{filteredData.map(c => (
                             <tr key={c.id} className={selected.has(c.id) ? 'bg-red-50' : ''}>
                                 <td className="pl-4"><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
-                                <td className="font-medium text-espresso">{c.name}</td><td><span className={c.type === 'PRODUCT' ? 'badge-blue' : 'badge-yellow'}>{c.type === 'PRODUCT' ? 'PRODUCTO' : 'PROVEEDOR'}</span></td><td className="text-primary-500">{c.description ?? '—'}</td>
+                                <td className="font-medium text-espresso">{c.name}</td><td className="text-primary-500">{c.description ?? '—'}</td>
                                 <td>
                                     <div className="flex justify-end gap-1">
                                         <button onClick={() => openEdit(c)} className="btn-ghost p-1.5 hover:text-primary-700 hover:bg-primary-50 text-primary-400"><Edit className="w-4 h-4" /></button>
@@ -131,7 +121,6 @@ export default function CategoriesPage() {
                         </div>
                         <form onSubmit={handleSave} className="p-5 space-y-4">
                             <div><label className="block text-xs font-semibold text-primary-700 mb-1">Nombre</label><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></div>
-                            <div><label className="block text-xs font-semibold text-primary-700 mb-1">Tipo</label><select className="select" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}><option value="PRODUCT">Producto</option><option value="SUPPLIER">Proveedor</option></select></div>
                             <div><label className="block text-xs font-semibold text-primary-700 mb-1">Descripción</label><input className="input" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
                             <div className="flex gap-2 pt-2"><button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1 py-2 text-sm">Cancelar</button><button type="submit" className="btn-primary flex-1 py-2 text-sm" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button></div>
                         </form>

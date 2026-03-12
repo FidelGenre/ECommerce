@@ -263,11 +263,11 @@ export default function AdminDashboard() {
                     <div className="card">
                         <div className="flex items-center gap-2 mb-4">
                             <Users className="w-5 h-5 text-primary-600" />
-                            <h2 className="text-base font-semibold text-espresso">Top 5 Clientes</h2>
+                            <h2 className="text-base font-semibold text-espresso">Top 5 Compradores</h2>
                         </div>
                         <div className="table-wrapper">
                             <table className="data-table">
-                                <thead><tr><th>#</th><th>Cliente</th><th className="text-right">Total</th></tr></thead>
+                                <thead><tr><th>#</th><th>Comprador</th><th className="text-right">Total</th></tr></thead>
                                 <tbody>
                                     {topCustomers.map((c: any, i: number) => (
                                         <tr key={c.id}>
