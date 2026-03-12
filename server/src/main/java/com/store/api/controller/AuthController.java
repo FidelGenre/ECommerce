@@ -57,7 +57,16 @@ public class AuthController {
                 : req.getUsername() + "@placeholder.com");
         user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         user.setRole("CLIENTE");
-        userRepository.save(user);
+        user = userRepository.save(user);
+
+        // Auto-create customer profile for new registrations
+        com.store.api.entity.Customer c = new com.store.api.entity.Customer();
+        c.setUser(user);
+        c.setEmail(user.getEmail());
+        String[] parts = user.getUsername().split(" ", 2);
+        c.setFirstName(parts[0]);
+        c.setLastName(parts.length > 1 ? parts[1] : "");
+        customerRepo.save(c);
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
         return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId()));
@@ -104,6 +113,10 @@ public class AuthController {
         if (user == null)
             return ResponseEntity.notFound().build();
         com.store.api.entity.Customer c = customerRepo.findByEmail(user.getEmail()).orElseGet(() -> {
+            // Only auto-create for CLIENTE/CUSTOMER roles
+            if (!"CLIENTE".equals(user.getRole()) && !"CUSTOMER".equals(user.getRole())) {
+                return null;
+            }
             com.store.api.entity.Customer nc = new com.store.api.entity.Customer();
             nc.setEmail(user.getEmail());
             String[] parts = user.getUsername().split(" ", 2);
@@ -111,6 +124,8 @@ public class AuthController {
             nc.setLastName(parts.length > 1 ? parts[1] : "");
             return customerRepo.save(nc);
         });
+        if (c == null)
+            return ResponseEntity.notFound().build();
         return ResponseEntity.ok(c);
     }
 
@@ -127,10 +142,16 @@ public class AuthController {
         if (user == null)
             return ResponseEntity.notFound().build();
         com.store.api.entity.Customer c = customerRepo.findByEmail(user.getEmail()).orElseGet(() -> {
+            // Only auto-create for CLIENTE/CUSTOMER roles
+            if (!"CLIENTE".equals(user.getRole()) && !"CUSTOMER".equals(user.getRole())) {
+                return null;
+            }
             com.store.api.entity.Customer nc = new com.store.api.entity.Customer();
             nc.setEmail(user.getEmail());
             return customerRepo.save(nc);
         });
+        if (c == null)
+            return ResponseEntity.notFound().build();
         if (body.containsKey("firstName") && !body.get("firstName").isBlank())
             c.setFirstName(body.get("firstName"));
         if (body.containsKey("lastName"))
