@@ -8,6 +8,8 @@ import com.store.api.entity.SaleOrder;
 import com.store.api.entity.PurchaseOrder;
 import com.store.api.repository.PaymentMethodRepository;
 import com.store.api.repository.OperationStatusRepository;
+import com.store.api.repository.SaleOrderRepository;
+import com.store.api.repository.PurchaseOrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
