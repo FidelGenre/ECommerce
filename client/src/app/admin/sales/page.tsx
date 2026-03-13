@@ -261,12 +261,11 @@ export default function SalesPage() {
                         <option value="">Todos los compradores</option>
                         <option value="-1">Sin asignar (-)</option>
                         {customers.map(c => <option key={`c-${c.id}`} value={c.id}>{c.firstName} {c.lastName ?? ''}</option>)}
-                        {users.map(u => <option key={`u-${u.id}`} value={u.id}>{u.username} ({u.role})</option>)}
                     </select>
                     <select className="select text-sm" value={vendedorFilter} onChange={e => { setVendedorFilter(e.target.value); setPage(0) }}>
                         <option value="">Todos los vendedores</option>
                         <option value="-1">Sin asignar (-)</option>
-                        {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
+                        {users.filter(u => u.role === 'ADMIN').map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
                     </select>
                     <select className="select text-sm" value={orderCategoryFilter} onChange={e => { setOrderCategoryFilter(e.target.value); setPage(0) }}>
                         <option value="">Todas las categorías</option>

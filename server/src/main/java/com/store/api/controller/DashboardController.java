@@ -120,7 +120,7 @@ public class DashboardController {
                                 .collect(Collectors.groupingBy(
                                                 s -> s.getCreatedAt().toLocalDate().toString(),
                                                 TreeMap::new,
-                                                Collectors.reducing(BigDecimal.ZERO, s -> s.getTotal(),
+                                                Collectors.reducing(BigDecimal.ZERO, SaleOrder::getTotal,
                                                                 BigDecimal::add)))
                                 .forEach((date, total) -> data.add(Map.of("date", date, "total", total)));
 
@@ -131,21 +131,16 @@ public class DashboardController {
         public ResponseEntity<List<Map<String, Object>>> purchasesBySupplier(
                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-                List<Map<String, Object>> data = new ArrayList<>();
-                var stream = purchaseRepo.findAll().stream()
-                                .filter(p -> p.getSupplier() != null);
-                if (from != null) {
-                        LocalDateTime f = from.atStartOfDay();
-                        stream = stream.filter(p -> !p.getCreatedAt().isBefore(f));
-                }
-                if (to != null) {
-                        LocalDateTime t = to.plusDays(1).atStartOfDay();
-                        stream = stream.filter(p -> p.getCreatedAt().isBefore(t));
-                }
-                stream.collect(Collectors.groupingBy(
-                                p -> p.getSupplier().getName(),
-                                Collectors.reducing(BigDecimal.ZERO, p -> p.getTotal(),
-                                                BigDecimal::add)))
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
+                                : LocalDate.now().minusDays(30).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
+
+                purchaseRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
+                                .filter(p -> p.getSupplier() != null)
+                                .collect(Collectors.groupingBy(
+                                                p -> p.getSupplier().getName(),
+                                                Collectors.reducing(BigDecimal.ZERO, PurchaseOrder::getTotal,
+                                                                BigDecimal::add)))
                                 .forEach((name, total) -> data.add(Map.of("supplier", name, "total", total)));
                 return ResponseEntity.ok(data);
         }
@@ -160,17 +155,12 @@ public class DashboardController {
         public ResponseEntity<List<Map<String, Object>>> salesByCategory(
                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-                List<Map<String, Object>> data = new ArrayList<>();
-                var salesStream = saleRepo.findAll().stream();
-                if (from != null) {
-                        LocalDateTime f = from.atStartOfDay();
-                        salesStream = salesStream.filter(s -> !s.getCreatedAt().isBefore(f));
-                }
-                if (to != null) {
-                        LocalDateTime t = to.plusDays(1).atStartOfDay();
-                        salesStream = salesStream.filter(s -> s.getCreatedAt().isBefore(t));
-                }
-                salesStream.flatMap(o -> o.getLines().stream())
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
+                                : LocalDate.now().minusDays(30).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
+
+                saleRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
+                                .flatMap(o -> o.getLines().stream())
                                 .filter(l -> l.getItem() != null && l.getItem().getCategory() != null)
                                 .collect(Collectors.groupingBy(
                                                 l -> l.getItem().getCategory().getName(),
@@ -244,8 +234,37 @@ public class DashboardController {
                 saleRepo.findAll().stream()
                                 .filter(s -> s.getCustomer() != null)
                                 .collect(Collectors.groupingBy(
-                                                s -> s.getCustomer(),
-                                                Collectors.reducing(BigDecimal.ZERO, s -> s.getTotal(),
+                                                SaleOrder::getCustomer,
+                                                Collectors.reducing(BigDecimal.ZERO, SaleOrder::getTotal,
+                                                                BigDecimal::add)))
+                                .entrySet().stream()
+                                .sorted(Map.Entry.<Customer, BigDecimal>comparingByValue().reversed())
+                                .limit(limit)
+                                .forEach(e -> {
+                                        Customer c = e.getKey();
+                                        Map<String, Object> row = new LinkedHashMap<>();
+                                        row.put("id", c.getId());
+                                        row.put("name", (c.getFirstName() != null ? c.getFirstName() : "") + " " +
+                                                        (c.getLastName() != null ? c.getLastName() : ""));
+                                        row.put("email", c.getEmail());
+                                        row.put("totalPurchases", e.getValue());
+                                        row.put("orderCount", saleRepo.findByCustomerId(c.getId()).size());
+                                        data.add(row);
+                                });
+                return ResponseEntity.ok(data);
+        }
+
+        @GetMapping("/top-customers-clients")
+        public ResponseEntity<List<Map<String, Object>>> topCustomersClients(
+                        @RequestParam(defaultValue = "10") int limit) {
+                List<Map<String, Object>> data = new ArrayList<>();
+                saleRepo.findAll().stream()
+                                .filter(s -> s.getCustomer() != null)
+                                .filter(s -> s.getCustomer().getUser() != null
+                                                && "CLIENTE".equals(s.getCustomer().getUser().getRole()))
+                                .collect(Collectors.groupingBy(
+                                                SaleOrder::getCustomer,
+                                                Collectors.reducing(BigDecimal.ZERO, SaleOrder::getTotal,
                                                                 BigDecimal::add)))
                                 .entrySet().stream()
                                 .sorted(Map.Entry.<Customer, BigDecimal>comparingByValue().reversed())

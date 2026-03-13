@@ -22,8 +22,9 @@ export default function ReportsPage() {
     const [byHour, setByHour] = useState<any[]>([])
     const [marginEvolution, setMarginEvolution] = useState<any[]>([])
     const [topCustomers, setTopCustomers] = useState<any[]>([])
-    const [salesByClient, setSalesByClient] = useState<any[]>([])
+    const [topCustomersClients, setTopCustomersClients] = useState<any[]>([])
     const [salesByUsuario, setSalesByUsuario] = useState<any[]>([])
+    const [salesByUsuarioClients, setSalesByUsuarioClients] = useState<any[]>([])
     const [nonRotating, setNonRotating] = useState<any[]>([])
     const [profitability, setProfitability] = useState<ProfitRow[]>([])
     const today = new Date().toISOString().slice(0, 10)
@@ -43,20 +44,24 @@ export default function ReportsPage() {
             const daysDiff = fromDate && toDate
                 ? Math.max(1, Math.ceil((new Date(toDate).getTime() - new Date(fromDate).getTime()) / 86400000))
                 : 30
-            const [s, sup, cat, hour, margin, top, byClient, nonRot, profit] = await Promise.all([
+            const [s, sup, cat, hour, margin, top, topC, byClient, byClientC, nonRot, profit] = await Promise.all([
                 api.get(`/api/admin/dashboard/sales-by-period?${dateParam}`),
                 api.get(`/api/admin/dashboard/purchases-by-supplier?${dateParam}`),
                 api.get(`/api/admin/dashboard/sales-by-category?${dateParam}`),
                 api.get(`/api/admin/dashboard/sales-by-hour?days=${daysDiff}`),
                 api.get('/api/admin/dashboard/margin-evolution?months=6'),
                 api.get('/api/admin/dashboard/top-customers?limit=10'),
+                api.get('/api/admin/dashboard/top-customers-clients?limit=10'),
                 api.get('/api/admin/dashboard/sales-by-client'),
+                api.get('/api/admin/dashboard/sales-by-client-only'),
                 api.get(`/api/admin/dashboard/non-rotating?days=${daysDiff}`),
                 api.get('/api/admin/dashboard/profitability'),
             ])
             setSales(s.data); setBySupplier(sup.data); setByCategory(cat.data)
-            setByHour(hour.data); setMarginEvolution(margin.data); setTopCustomers(top.data)
-            setSalesByUsuario(byClient.data); setNonRotating(nonRot.data); setProfitability(profit.data)
+            setByHour(hour.data); setMarginEvolution(margin.data)
+            setTopCustomers(top.data); setTopCustomersClients(topC.data)
+            setSalesByUsuario(byClient.data); setSalesByUsuarioClients(byClientC.data)
+            setNonRotating(nonRot.data); setProfitability(profit.data)
         } catch (e) { console.error(e) }
         setLoading(false)
     }
@@ -275,7 +280,7 @@ export default function ReportsPage() {
                     {/* CLIENTS TAB */}
                     {activeTab === 'clients' && (
                         <div className="space-y-6">
-                            {/* Top customers */}
+                            {/* Top customers (General) */}
                             <div className="card">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="font-semibold text-espresso">
@@ -308,7 +313,7 @@ export default function ReportsPage() {
                                 )}
                             </div>
 
-                            {/* Sales by client */}
+                            {/* Sales by client (General) */}
                             <div className="card">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="font-semibold text-espresso">Ventas por Comprador</h2>
@@ -325,6 +330,69 @@ export default function ReportsPage() {
                                             </tr></thead>
                                             <tbody>
                                                 {salesByUsuario.map((c: any, i: number) => (
+                                                    <tr key={i}>
+                                                        <td className="font-medium">{c.client}</td>
+                                                        <td className="text-right">{c.orders}</td>
+                                                        <td className="text-right font-bold text-espresso">{FMT(c.total)}</td>
+                                                        <td className="text-right text-primary-500">{FMT(c.avgTicket)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Top clients (Solo Clientes) */}
+                            <div className="card border-t-4 border-t-primary-600">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="font-semibold text-espresso">
+                                        <Users className="w-4 h-4 inline mr-1.5" />Compradores Más Importantes (Solo Clientes)
+                                    </h2>
+                                    <button onClick={() => exportExcel(topCustomersClients, 'Top Clientes', 'top_clientes_rol')}
+                                        className="btn-secondary flex items-center gap-1.5 text-xs py-1 px-2.5">
+                                        <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
+                                    </button>
+                                </div>
+                                {topCustomersClients.length === 0 ? <p className="text-primary-400 text-sm text-center py-10">Sin datos de clientes con rol CLIENTE</p> : (
+                                    <div className="overflow-x-auto">
+                                        <table className="data-table">
+                                            <thead><tr>
+                                                <th>#</th><th>Cliente</th><th>Email</th><th className="text-right">Pedidos</th><th className="text-right">Total</th>
+                                            </tr></thead>
+                                            <tbody>
+                                                {topCustomersClients.map((c: any, i: number) => (
+                                                    <tr key={c.id}>
+                                                        <td className="font-bold text-primary-400">{i + 1}</td>
+                                                        <td className="font-medium">{c.name}</td>
+                                                        <td className="text-primary-500">{c.email || '—'}</td>
+                                                        <td className="text-right">{c.orderCount}</td>
+                                                        <td className="text-right font-bold text-espresso">{FMT(c.totalPurchases)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Sales by client (Solo Clientes) */}
+                            <div className="card border-t-4 border-t-primary-600">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="font-semibold text-espresso">Ventas por Comprador (Solo Clientes)</h2>
+                                    <button onClick={() => exportExcel(salesByUsuarioClients, 'Ventas por Cliente', 'ventas_por_cliente_rol')}
+                                        className="btn-secondary flex items-center gap-1.5 text-xs py-1 px-2.5">
+                                        <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
+                                    </button>
+                                </div>
+                                {salesByUsuarioClients.length === 0 ? <p className="text-primary-400 text-sm text-center py-10">Sin datos de clientes con rol CLIENTE</p> : (
+                                    <div className="overflow-x-auto">
+                                        <table className="data-table">
+                                            <thead><tr>
+                                                <th>Cliente</th><th className="text-right">Pedidos</th><th className="text-right">Total</th><th className="text-right">Ticket Promedio</th>
+                                            </tr></thead>
+                                            <tbody>
+                                                {salesByUsuarioClients.map((c: any, i: number) => (
                                                     <tr key={i}>
                                                         <td className="font-medium">{c.client}</td>
                                                         <td className="text-right">{c.orders}</td>

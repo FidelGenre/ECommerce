@@ -41,8 +41,8 @@ public class CustomerController {
                         cb.like(cb.lower(root.get("email")), pattern)));
             }
             if (active != null) {
-                predicates.add(cb.or(
-                        cb.isNull(root.get("user")),
+                predicates.add(cb.and(
+                        cb.isNotNull(root.get("user")),
                         cb.equal(root.get("user").get("active"), active)));
             }
 
