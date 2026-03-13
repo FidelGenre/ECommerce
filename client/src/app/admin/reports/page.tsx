@@ -44,7 +44,7 @@ export default function ReportsPage() {
             const daysDiff = fromDate && toDate
                 ? Math.max(1, Math.ceil((new Date(toDate).getTime() - new Date(fromDate).getTime()) / 86400000))
                 : 30
-            const [s, sup, cat, hour, margin, top, topC, byClient, byClientC, nonRot, profit] = await Promise.all([
+            const results = await Promise.allSettled([
                 api.get(`/api/admin/dashboard/sales-by-period?${dateParam}`),
                 api.get(`/api/admin/dashboard/purchases-by-supplier?${dateParam}`),
                 api.get(`/api/admin/dashboard/sales-by-category?${dateParam}`),
@@ -57,11 +57,20 @@ export default function ReportsPage() {
                 api.get(`/api/admin/dashboard/non-rotating?days=${daysDiff}`),
                 api.get('/api/admin/dashboard/profitability'),
             ])
-            setSales(s.data); setBySupplier(sup.data); setByCategory(cat.data)
-            setByHour(hour.data); setMarginEvolution(margin.data)
-            setTopCustomers(top.data); setTopCustomersClients(topC.data)
-            setSalesByUsuario(byClient.data); setSalesByUsuarioClients(byClientC.data)
-            setNonRotating(nonRot.data); setProfitability(profit.data)
+
+            const getData = (res: PromiseSettledResult<any>) => res.status === 'fulfilled' ? res.value.data : []
+
+            setSales(getData(results[0]))
+            setBySupplier(getData(results[1]))
+            setByCategory(getData(results[2]))
+            setByHour(getData(results[3]))
+            setMarginEvolution(getData(results[4]))
+            setTopCustomers(getData(results[5]))
+            setTopCustomersClients(getData(results[6]))
+            setSalesByUsuario(getData(results[7]))
+            setSalesByUsuarioClients(getData(results[8]))
+            setNonRotating(getData(results[9]))
+            setProfitability(getData(results[10]))
         } catch (e) { console.error(e) }
         setLoading(false)
     }
