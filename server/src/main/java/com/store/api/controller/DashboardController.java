@@ -134,6 +134,7 @@ public class DashboardController {
                 LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
                                 : LocalDate.now().minusDays(30).atStartOfDay();
                 LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
+                List<Map<String, Object>> data = new ArrayList<>();
 
                 purchaseRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
                                 .filter(p -> p.getSupplier() != null)
@@ -158,6 +159,7 @@ public class DashboardController {
                 LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
                                 : LocalDate.now().minusDays(30).atStartOfDay();
                 LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
+                List<Map<String, Object>> data = new ArrayList<>();
 
                 saleRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
                                 .flatMap(o -> o.getLines().stream())
