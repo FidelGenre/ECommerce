@@ -319,20 +319,25 @@ export default function SalesPage() {
                                             <td>{o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? <span className="text-primary-300">Sin usuario</span>)}</td>
                                             <td>{o.createdBy ? <span className="text-primary-600">{o.createdBy.username ?? o.createdBy.email}</span> : <span className="text-primary-300">Web</span>}</td>
                                             <td>
-                                                <select
-                                                    className={`input py-1 px-2 text-xs font-semibold w-auto ${o.status?.name === 'Completado' || o.status?.name === 'Cancelado' ? 'bg-primary-50 text-primary-500 border-transparent cursor-not-allowed appearance-none' : 'cursor-pointer'}`}
-                                                    value={o.status?.id || ''}
-                                                    onChange={(e) => updateStatus(o.id, e.target.value)}
-                                                    disabled={o.status?.name === 'Completado' || o.status?.name === 'Cancelado'}
-                                                >
-                                                    {o.status && !uniqueStatuses.find(s => s.id === o.status.id) && (
-                                                        <option value={o.status.id}>{STATUS_LABELS[o.status.name] || o.status.name}</option>
-                                                    )}
-                                                    <option value="" disabled>—</option>
-                                                    {uniqueStatuses.map(s => (
-                                                        <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>
-                                                    ))}
-                                                </select>
+                                                {(() => {
+                                                    const s_ = o.status;
+                                                    return (
+                                                        <select
+                                                            className={`input py-1 px-2 text-xs font-semibold w-auto ${s_?.name === 'Completado' || s_?.name === 'Cancelado' ? 'bg-primary-50 text-primary-500 border-transparent cursor-not-allowed appearance-none' : 'cursor-pointer'}`}
+                                                            value={s_?.id || ''}
+                                                            onChange={(e) => updateStatus(o.id, e.target.value)}
+                                                            disabled={s_?.name === 'Completado' || s_?.name === 'Cancelado'}
+                                                        >
+                                                            {s_ && !uniqueStatuses.find(us => us.id === s_.id) && (
+                                                                <option value={s_.id}>{STATUS_LABELS[s_.name] || s_.name}</option>
+                                                            )}
+                                                            <option value="" disabled>—</option>
+                                                            {uniqueStatuses.map(s => (
+                                                                <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    );
+                                                })()}
                                             </td>
                                             <td className="text-primary-500">{o.paymentMethod?.name ?? '—'}</td>
                                             <td className="font-semibold">{FMT(o.total)}</td>
