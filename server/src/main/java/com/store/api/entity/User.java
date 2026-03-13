@@ -32,5 +32,7 @@ public class User {
 
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     @com.fasterxml.jackson.annotation.JsonIgnore
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Customer customer;
 }
