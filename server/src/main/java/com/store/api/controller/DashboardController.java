@@ -261,8 +261,7 @@ public class DashboardController {
                         @RequestParam(defaultValue = "10") int limit) {
                 List<Map<String, Object>> data = new ArrayList<>();
                 saleRepo.findAll().stream()
-                                .filter(s -> s.getCustomer() != null)
-                                .filter(s -> s.getCustomer().getUser() != null
+                                .filter(s -> s.getCustomer() != null && s.getCustomer().getUser() != null
                                                 && "CLIENTE".equals(s.getCustomer().getUser().getRole()))
                                 .collect(Collectors.groupingBy(
                                                 SaleOrder::getCustomer,
@@ -312,6 +311,46 @@ public class DashboardController {
                                                                         return s.getCreatedBy().getEmail();
                                                         }
                                                         return "Walk-in";
+                                                },
+                                                Collectors.toList()))
+                                .forEach((name, orders) -> {
+                                        BigDecimal total = orders.stream()
+                                                        .map(SaleOrder::getTotal)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        Map<String, Object> row = new LinkedHashMap<>();
+                                        row.put("client", name.trim());
+                                        row.put("orders", orders.size());
+                                        row.put("total", total);
+                                        row.put("avgTicket", orders.isEmpty() ? BigDecimal.ZERO
+                                                        : total.divide(BigDecimal.valueOf(orders.size()), 2,
+                                                                        RoundingMode.HALF_UP));
+                                        data.add(row);
+                                });
+                data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
+                return ResponseEntity.ok(data);
+        }
+
+        @GetMapping("/sales-by-client-only")
+        public ResponseEntity<List<Map<String, Object>>> salesByClientOnly() {
+                List<Map<String, Object>> data = new ArrayList<>();
+                saleRepo.findAll().stream()
+                                .filter(s -> s.getCustomer() != null
+                                                && s.getCustomer().getUser() != null
+                                                && "CLIENTE".equals(s.getCustomer().getUser().getRole()))
+                                .collect(Collectors.groupingBy(
+                                                s -> {
+                                                        String fn = s.getCustomer().getFirstName() != null
+                                                                        ? s.getCustomer().getFirstName()
+                                                                        : "";
+                                                        String ln = s.getCustomer().getLastName() != null
+                                                                        ? s.getCustomer().getLastName()
+                                                                        : "";
+                                                        String full = (fn + " " + ln).trim();
+                                                        if (!full.isEmpty())
+                                                                return full;
+                                                        return s.getCustomer().getEmail() != null
+                                                                        ? s.getCustomer().getEmail()
+                                                                        : "Unknown";
                                                 },
                                                 Collectors.toList()))
                                 .forEach((name, orders) -> {
