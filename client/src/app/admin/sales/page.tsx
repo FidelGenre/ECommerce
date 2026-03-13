@@ -199,7 +199,8 @@ export default function SalesPage() {
         Completed: 'badge-green', Pending: 'badge-yellow', Cancelled: 'badge-red', Reserved: 'badge-blue'
     }
     const STATUS_LABELS: Record<string, string> = {
-        Completed: 'Completado', Pending: 'Pendiente', Cancelled: 'Cancelado', Reserved: 'Reservado'
+        Completed: 'Completado', Pending: 'Pendiente', Cancelled: 'Cancelado', Reserved: 'Reservado',
+        PENDING: 'Pendiente', COMPLETED: 'Completado', CANCELLED: 'Cancelado', RESERVED: 'Reservado'
     }
 
     const HIDDEN_STATUSES = ['Aprobado', 'Approved', 'Reserved', 'Reservado']
@@ -324,6 +325,9 @@ export default function SalesPage() {
                                                     onChange={(e) => updateStatus(o.id, e.target.value)}
                                                     disabled={o.status?.name === 'Completado' || o.status?.name === 'Cancelado'}
                                                 >
+                                                    {o.status && !uniqueStatuses.find(s => s.id === o.status.id) && (
+                                                        <option value={o.status.id}>{STATUS_LABELS[o.status.name] || o.status.name}</option>
+                                                    )}
                                                     <option value="" disabled>—</option>
                                                     {uniqueStatuses.map(s => (
                                                         <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>

@@ -133,7 +133,7 @@ export default function StatusesSettingsPage() {
                                         </td>
                                         <td className="pr-6">
                                             <div className="flex justify-end gap-1">
-                                                {isSale && item.status.name.toLowerCase().includes('pendiente') ? (
+                                                {!(item.status.name === 'Completado' || item.status.name === 'Cancelado') ? (
                                                     <button onClick={() => openEdit(item.status)} title="Configurar etiqueta" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400 transition-colors">
                                                         <Edit className="w-4 h-4" />
                                                     </button>
@@ -166,6 +166,9 @@ export default function StatusesSettingsPage() {
                     <h1 className="text-2xl font-bold text-espresso">Estados de Operación</h1>
                     <p className="text-sm text-primary-400 font-medium">Configuración de etiquetas para el seguimiento de transacciones.</p>
                 </div>
+                <button onClick={openNew} className="btn-primary flex items-center gap-2 py-2 px-4 shadow-sm active:scale-95 transition-transform">
+                    <Plus className="w-4 h-4" /> Nueva etiqueta
+                </button>
             </div>
 
             {loading ? (
