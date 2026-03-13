@@ -37,73 +37,128 @@ public class DashboardController {
                                 : LocalDate.now().withDayOfMonth(1).atStartOfDay();
                 LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : now;
 
-                BigDecimal salesPeriod = saleRepo.sumTotalBetween(rangeFrom, rangeTo);
-                BigDecimal purchasesPeriod = purchaseRepo.sumTotalBetween(rangeFrom, rangeTo);
+                List<SaleOrder> rangeSales = saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom)
+                                                && !s.getCreatedAt().isAfter(rangeTo))
+                                .collect(Collectors.toList());
 
-                List<com.store.api.entity.SaleOrder> periodSales = saleRepo.findByCreatedAtBetween(rangeFrom, rangeTo);
-                List<com.store.api.entity.PurchaseOrder> periodPurchases = purchaseRepo
-                                .findByCreatedAtBetween(rangeFrom, rangeTo);
+                BigDecimal totalSales = rangeSales.stream()
+                                .map(SaleOrder::getTotal)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal salesMercadoPago = periodSales.stream()
+                List<PurchaseOrder> rangePurchases = purchaseRepo.findAll().stream()
+                                .filter(p -> !p.getCreatedAt().isBefore(rangeFrom)
+                                                && !p.getCreatedAt().isAfter(rangeTo))
+                                .collect(Collectors.toList());
+
+                BigDecimal totalPurchases = rangePurchases.stream()
+                                .map(PurchaseOrder::getTotal)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal salesMercadoPago = rangeSales.stream()
                                 .filter(s -> s.getPaymentMethod() != null
                                                 && "MercadoPago".equalsIgnoreCase(s.getPaymentMethod().getName()))
                                 .map(com.store.api.entity.SaleOrder::getTotal)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal salesOther = periodSales.stream()
+                BigDecimal salesOther = rangeSales.stream()
                                 .filter(s -> s.getPaymentMethod() == null
                                                 || !"MercadoPago".equalsIgnoreCase(s.getPaymentMethod().getName()))
                                 .map(com.store.api.entity.SaleOrder::getTotal)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal purchasesMercadoPago = periodPurchases.stream()
+                BigDecimal purchasesMercadoPago = rangePurchases.stream()
                                 .filter(p -> p.getPaymentMethod() != null
                                                 && "MercadoPago".equalsIgnoreCase(p.getPaymentMethod().getName()))
                                 .map(com.store.api.entity.PurchaseOrder::getTotal)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal purchasesOther = periodPurchases.stream()
+                BigDecimal purchasesOther = rangePurchases.stream()
                                 .filter(p -> p.getPaymentMethod() == null
                                                 || !"MercadoPago".equalsIgnoreCase(p.getPaymentMethod().getName()))
                                 .map(com.store.api.entity.PurchaseOrder::getTotal)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal grossMargin = (salesPeriod != null ? salesPeriod : BigDecimal.ZERO)
-                                .subtract(purchasesPeriod != null ? purchasesPeriod : BigDecimal.ZERO);
+                BigDecimal grossMargin = totalSales.subtract(totalPurchases);
 
                 // Always compute today/week for quick reference
                 LocalDateTime todayStart = LocalDate.now().atStartOfDay();
                 LocalDateTime weekStart = LocalDate.now().minusWeeks(1).atStartOfDay();
-                BigDecimal salesToday = saleRepo.sumTotalBetween(todayStart, now);
-                BigDecimal salesWeek = saleRepo.sumTotalBetween(weekStart, now);
+                BigDecimal salesToday = saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(todayStart) && !s.getCreatedAt().isAfter(now))
+                                .map(SaleOrder::getTotal)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal salesWeek = saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(weekStart) && !s.getCreatedAt().isAfter(now))
+                                .map(SaleOrder::getTotal)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                 long criticalStock = itemRepo.findByStockLessThanEqualAndVisibleTrue(5).size();
                 long unreadAlerts = notificationRepo.countByIsReadFalse();
 
-                long orderCount = periodSales.size();
-                BigDecimal avgTicket = orderCount > 0
-                                ? (salesPeriod != null ? salesPeriod : BigDecimal.ZERO)
-                                                .divide(BigDecimal.valueOf(orderCount), 2, RoundingMode.HALF_UP)
+                long ordersCount = rangeSales.size();
+                BigDecimal avgTicket = ordersCount > 0
+                                ? totalSales.divide(BigDecimal.valueOf(ordersCount), 2, RoundingMode.HALF_UP)
                                 : BigDecimal.ZERO;
-                long activeProducts = itemRepo.findAll().stream().filter(i -> i.getVisible()).count();
+                long activeProducts = itemRepo.findAll().stream().filter(Item::getVisible).count();
 
                 Map<String, Object> result = new LinkedHashMap<>();
                 result.put("salesToday", salesToday);
                 result.put("salesWeek", salesWeek);
-                result.put("salesPeriod", salesPeriod);
+                result.put("salesPeriod", totalSales);
                 result.put("salesMercadoPago", salesMercadoPago);
                 result.put("salesOther", salesOther);
-                result.put("purchasesPeriod", purchasesPeriod);
+                result.put("purchasesPeriod", totalPurchases);
                 result.put("purchasesMercadoPago", purchasesMercadoPago);
                 result.put("purchasesOther", purchasesOther);
                 result.put("grossMargin", grossMargin);
                 result.put("criticalStock", criticalStock);
                 result.put("unreadAlerts", unreadAlerts);
-                result.put("orderCount", orderCount);
+                result.put("orderCount", ordersCount);
                 result.put("avgTicket", avgTicket);
                 result.put("activeProducts", activeProducts);
 
                 return ResponseEntity.ok(result);
+        }
+
+        @GetMapping("/sales-by-payment")
+        public ResponseEntity<List<Map<String, Object>>> salesByPayment(
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
+                                : LocalDate.now().minusDays(30).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
+                List<Map<String, Object>> data = new ArrayList<>();
+                saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom)
+                                                && !s.getCreatedAt().isAfter(rangeTo))
+                                .filter(s -> s.getPaymentMethod() != null)
+                                .collect(Collectors.groupingBy(
+                                                s -> s.getPaymentMethod().getName(),
+                                                Collectors.reducing(BigDecimal.ZERO, SaleOrder::getTotal,
+                                                                BigDecimal::add)))
+                                .forEach((name, total) -> data.add(Map.of("name", name, "value", total)));
+                return ResponseEntity.ok(data);
+        }
+
+        @GetMapping("/purchases-by-payment")
+        public ResponseEntity<List<Map<String, Object>>> purchasesByPayment(
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
+                                : LocalDate.now().minusDays(30).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
+                List<Map<String, Object>> data = new ArrayList<>();
+                purchaseRepo.findAll().stream()
+                                .filter(p -> !p.getCreatedAt().isBefore(rangeFrom)
+                                                && !p.getCreatedAt().isAfter(rangeTo))
+                                .filter(p -> p.getPaymentMethod() != null)
+                                .collect(Collectors.groupingBy(
+                                                p -> p.getPaymentMethod().getName(),
+                                                Collectors.reducing(BigDecimal.ZERO, PurchaseOrder::getTotal,
+                                                                BigDecimal::add)))
+                                .forEach((name, total) -> data.add(Map.of("name", name, "value", total)));
+                return ResponseEntity.ok(data);
         }
 
         @GetMapping("/sales-by-period")
@@ -116,7 +171,9 @@ public class DashboardController {
                 LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
 
                 List<Map<String, Object>> data = new ArrayList<>();
-                saleRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
+                saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom)
+                                                && !s.getCreatedAt().isAfter(rangeTo))
                                 .collect(Collectors.groupingBy(
                                                 s -> s.getCreatedAt().toLocalDate().toString(),
                                                 TreeMap::new,
@@ -135,8 +192,9 @@ public class DashboardController {
                                 : LocalDate.now().minusDays(30).atStartOfDay();
                 LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
                 List<Map<String, Object>> data = new ArrayList<>();
-
-                purchaseRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
+                purchaseRepo.findAll().stream()
+                                .filter(p -> !p.getCreatedAt().isBefore(rangeFrom)
+                                                && !p.getCreatedAt().isAfter(rangeTo))
                                 .filter(p -> p.getSupplier() != null)
                                 .collect(Collectors.groupingBy(
                                                 p -> p.getSupplier().getName(),
@@ -161,7 +219,9 @@ public class DashboardController {
                 LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
                 List<Map<String, Object>> data = new ArrayList<>();
 
-                saleRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
+                saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom)
+                                                && !s.getCreatedAt().isAfter(rangeTo))
                                 .flatMap(o -> o.getLines().stream())
                                 .filter(l -> l.getItem() != null && l.getItem().getCategory() != null)
                                 .collect(Collectors.groupingBy(
@@ -178,25 +238,17 @@ public class DashboardController {
         @GetMapping("/sales-by-hour")
         public ResponseEntity<List<Map<String, Object>>> salesByHour(
                         @RequestParam(defaultValue = "30") int days) {
-                LocalDateTime from = LocalDate.now().minusDays(days).atStartOfDay();
-                LocalDateTime to = LocalDateTime.now();
-
-                Map<Integer, BigDecimal> hourMap = new TreeMap<>();
-                for (int h = 0; h < 24; h++)
-                        hourMap.put(h, BigDecimal.ZERO);
-
-                saleRepo.findByCreatedAtBetween(from, to).forEach(s -> {
-                        int hour = s.getCreatedAt().getHour();
-                        hourMap.merge(hour, s.getTotal(), BigDecimal::add);
-                });
-
                 List<Map<String, Object>> data = new ArrayList<>();
-                hourMap.forEach((hour, total) -> {
-                        Map<String, Object> row = new LinkedHashMap<>();
-                        row.put("hour", String.format("%02d:00", hour));
-                        row.put("total", total);
-                        data.add(row);
-                });
+                saleRepo.findAll().stream()
+                                .filter(s -> s.getCreatedAt().isAfter(LocalDateTime.now().minusDays(days)))
+                                .collect(Collectors.groupingBy(
+                                                s -> s.getCreatedAt().getHour(),
+                                                TreeMap::new,
+                                                Collectors.reducing(BigDecimal.ZERO, SaleOrder::getTotal,
+                                                                BigDecimal::add)))
+                                .forEach((hour, total) -> {
+                                        data.add(Map.of("hour", String.format("%02d:00", hour), "total", total));
+                                });
                 return ResponseEntity.ok(data);
         }
 
@@ -207,16 +259,25 @@ public class DashboardController {
                 List<Map<String, Object>> data = new ArrayList<>();
                 LocalDate now = LocalDate.now();
 
-                for (int i = months - 1; i >= 0; i--) {
-                        LocalDate monthStart = now.minusMonths(i).withDayOfMonth(1);
-                        LocalDate monthEnd = monthStart.plusMonths(1);
-                        LocalDateTime from = monthStart.atStartOfDay();
-                        LocalDateTime to = monthEnd.atStartOfDay();
+                List<SaleOrder> allSales = saleRepo.findAll();
+                List<PurchaseOrder> allPurchases = purchaseRepo.findAll();
 
-                        BigDecimal sales = saleRepo.sumTotalBetween(from, to);
-                        BigDecimal purchases = purchaseRepo.sumTotalBetween(from, to);
-                        BigDecimal margin = (sales != null ? sales : BigDecimal.ZERO)
-                                        .subtract(purchases != null ? purchases : BigDecimal.ZERO);
+                for (int i = months - 1; i >= 0; i--) {
+                        LocalDate monthStart = LocalDate.now().withDayOfMonth(1).minusMonths(i);
+                        LocalDateTime from = monthStart.atStartOfDay();
+                        LocalDateTime to = monthStart.plusMonths(1).atStartOfDay();
+
+                        BigDecimal sales = allSales.stream()
+                                        .filter(s -> !s.getCreatedAt().isBefore(from) && s.getCreatedAt().isBefore(to))
+                                        .map(SaleOrder::getTotal)
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                        BigDecimal purchases = allPurchases.stream()
+                                        .filter(p -> !p.getCreatedAt().isBefore(from) && p.getCreatedAt().isBefore(to))
+                                        .map(PurchaseOrder::getTotal)
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                        BigDecimal margin = sales.subtract(purchases);
 
                         Map<String, Object> row = new LinkedHashMap<>();
                         row.put("month", monthStart.toString().substring(0, 7));
@@ -236,14 +297,16 @@ public class DashboardController {
                 saleRepo.findAll().stream()
                                 .filter(s -> s.getCustomer() != null)
                                 .collect(Collectors.groupingBy(
-                                                SaleOrder::getCustomer,
+                                                s -> s.getCustomer().getId(),
                                                 Collectors.reducing(BigDecimal.ZERO, SaleOrder::getTotal,
                                                                 BigDecimal::add)))
                                 .entrySet().stream()
-                                .sorted(Map.Entry.<Customer, BigDecimal>comparingByValue().reversed())
+                                .sorted(Map.Entry.<Long, BigDecimal>comparingByValue().reversed())
                                 .limit(limit)
                                 .forEach(e -> {
-                                        Customer c = e.getKey();
+                                        Customer c = customerRepo.findById(e.getKey()).orElse(null);
+                                        if (c == null)
+                                                return;
                                         Map<String, Object> row = new LinkedHashMap<>();
                                         row.put("id", c.getId());
                                         row.put("name", (c.getFirstName() != null ? c.getFirstName() : "") + " " +
@@ -264,14 +327,16 @@ public class DashboardController {
                                 .filter(s -> s.getCustomer() != null && s.getCustomer().getUser() != null
                                                 && "CLIENTE".equals(s.getCustomer().getUser().getRole()))
                                 .collect(Collectors.groupingBy(
-                                                SaleOrder::getCustomer,
+                                                s -> s.getCustomer().getId(),
                                                 Collectors.reducing(BigDecimal.ZERO, SaleOrder::getTotal,
                                                                 BigDecimal::add)))
                                 .entrySet().stream()
-                                .sorted(Map.Entry.<Customer, BigDecimal>comparingByValue().reversed())
+                                .sorted(Map.Entry.<Long, BigDecimal>comparingByValue().reversed())
                                 .limit(limit)
                                 .forEach(e -> {
-                                        Customer c = e.getKey();
+                                        Customer c = customerRepo.findById(e.getKey()).orElse(null);
+                                        if (c == null)
+                                                return;
                                         Map<String, Object> row = new LinkedHashMap<>();
                                         row.put("id", c.getId());
                                         row.put("name", (c.getFirstName() != null ? c.getFirstName() : "") + " " +
@@ -303,12 +368,6 @@ public class DashboardController {
                                                                         return full;
                                                                 if (s.getCustomer().getEmail() != null)
                                                                         return s.getCustomer().getEmail();
-                                                        }
-                                                        if (s.getCreatedBy() != null) {
-                                                                if (s.getCreatedBy().getUsername() != null)
-                                                                        return s.getCreatedBy().getUsername();
-                                                                if (s.getCreatedBy().getEmail() != null)
-                                                                        return s.getCreatedBy().getEmail();
                                                         }
                                                         return "Walk-in";
                                                 },
@@ -370,15 +429,15 @@ public class DashboardController {
                 return ResponseEntity.ok(data);
         }
 
-        // Non-rotating products (no sales in last N days)
         @GetMapping("/non-rotating")
         public ResponseEntity<List<Map<String, Object>>> nonRotatingProducts(
                         @RequestParam(defaultValue = "30") int days) {
-                LocalDateTime from = LocalDate.now().minusDays(days).atStartOfDay();
-                LocalDateTime to = LocalDateTime.now();
+                LocalDateTime threshold = LocalDateTime.now().minusDays(days);
 
-                Set<Long> soldItemIds = saleRepo.findByCreatedAtBetween(from, to).stream()
+                Set<Long> soldItemIds = saleRepo.findAll().stream()
+                                .filter(s -> s.getCreatedAt().isAfter(threshold))
                                 .flatMap(o -> o.getLines().stream())
+                                .filter(l -> l.getItem() != null)
                                 .map(l -> l.getItem().getId())
                                 .collect(Collectors.toSet());
 
@@ -444,59 +503,4 @@ public class DashboardController {
                 return ResponseEntity.ok(data);
         }
 
-        // Sales breakdown by payment method
-        @GetMapping("/sales-by-payment")
-        public ResponseEntity<List<Map<String, Object>>> salesByPayment(
-                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-                LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
-                                : LocalDate.now().withDayOfMonth(1).atStartOfDay();
-                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
-
-                List<Map<String, Object>> data = new ArrayList<>();
-                saleRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
-                                .collect(Collectors.groupingBy(
-                                                s -> s.getPaymentMethod() != null ? s.getPaymentMethod().getName()
-                                                                : "Sin método",
-                                                Collectors.toList()))
-                                .forEach((method, orders) -> {
-                                        BigDecimal total = orders.stream().map(SaleOrder::getTotal)
-                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-                                        Map<String, Object> row = new LinkedHashMap<>();
-                                        row.put("method", method);
-                                        row.put("total", total);
-                                        row.put("orders", orders.size());
-                                        data.add(row);
-                                });
-                data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
-                return ResponseEntity.ok(data);
-        }
-
-        // Purchases breakdown by payment method
-        @GetMapping("/purchases-by-payment")
-        public ResponseEntity<List<Map<String, Object>>> purchasesByPayment(
-                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-                LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
-                                : LocalDate.now().withDayOfMonth(1).atStartOfDay();
-                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
-
-                List<Map<String, Object>> data = new ArrayList<>();
-                purchaseRepo.findByCreatedAtBetween(rangeFrom, rangeTo).stream()
-                                .collect(Collectors.groupingBy(
-                                                p -> p.getPaymentMethod() != null ? p.getPaymentMethod().getName()
-                                                                : "Sin método",
-                                                Collectors.toList()))
-                                .forEach((method, orders) -> {
-                                        BigDecimal total = orders.stream().map(PurchaseOrder::getTotal)
-                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-                                        Map<String, Object> row = new LinkedHashMap<>();
-                                        row.put("method", method);
-                                        row.put("total", total);
-                                        row.put("orders", orders.size());
-                                        data.add(row);
-                                });
-                data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
-                return ResponseEntity.ok(data);
-        }
 }
