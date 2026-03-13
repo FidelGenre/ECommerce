@@ -28,7 +28,8 @@ public class CustomerController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) String role) {
+            @RequestParam(required = false) String role,
+            @RequestParam(defaultValue = "false") boolean all) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("firstName"));
         Specification<Customer> spec = (root, query, cb) -> {
             var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
@@ -45,20 +46,22 @@ public class CustomerController {
                         cb.equal(root.get("user").get("active"), active)));
             }
 
-            if (role != null && !role.isBlank()) {
-                predicates.add(cb.or(
-                        cb.isNull(root.get("user")),
-                        cb.equal(root.get("user").get("role"), role)));
-            } else {
-                predicates.add(cb.or(
-                        cb.isNull(root.get("user")),
-                        cb.notEqual(root.get("user").get("role"), "ADMIN")));
+            if (!all) {
+                if (role != null && !role.isBlank()) {
+                    predicates.add(cb.or(
+                            cb.isNull(root.get("user")),
+                            cb.equal(root.get("user").get("role"), role)));
+                } else {
+                    predicates.add(cb.or(
+                            cb.isNull(root.get("user")),
+                            cb.notEqual(root.get("user").get("role"), "ADMIN")));
+                }
             }
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
         var result = customerRepository.findAll(spec, pageable);
-        log.info("Customer list: page={}, size={}, q={}, active={}, role={}, found={}", page, size, q, active, role,
-                result.getTotalElements());
+        log.info("Customer list: page={}, size={}, q={}, active={}, role={}, all={}, found={}", page, size, q, active,
+                role, all, result.getTotalElements());
         return ResponseEntity.ok(result);
     }
 

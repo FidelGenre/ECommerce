@@ -69,12 +69,18 @@ public class UserController {
             dto.setRole(u.getRole());
             dto.setActive(u.getActive());
             dto.setCreatedAt(u.getCreatedAt());
-            if (u.getCustomer() != null) {
-                dto.setFirstName(u.getCustomer().getFirstName());
-                dto.setLastName(u.getCustomer().getLastName());
-                dto.setPhone(u.getCustomer().getPhone());
-                dto.setAccountBalance(u.getCustomer().getAccountBalance());
-                dto.setLoyaltyPoints(u.getCustomer().getLoyaltyPoints());
+            com.store.api.entity.Customer c = u.getCustomer();
+            if (c == null) {
+                c = customerRepo.findByUserId(u.getId())
+                        .orElseGet(() -> customerRepo.findByEmail(u.getEmail()).orElse(null));
+            }
+
+            if (c != null) {
+                dto.setFirstName(c.getFirstName());
+                dto.setLastName(c.getLastName());
+                dto.setPhone(c.getPhone());
+                dto.setAccountBalance(c.getAccountBalance());
+                dto.setLoyaltyPoints(c.getLoyaltyPoints());
             }
             return dto;
         }));

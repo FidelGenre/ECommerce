@@ -317,7 +317,7 @@ export default function ReportsPage() {
                                         <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
                                     </button>
                                 </div>
-                                {salesByClient.length === 0 ? <p className="text-primary-400 text-sm text-center py-10">Sin datos</p> : (
+                                {salesByUsuario.length === 0 ? <p className="text-primary-400 text-sm text-center py-10">Sin datos</p> : (
                                     <div className="overflow-x-auto">
                                         <table className="data-table">
                                             <thead><tr>

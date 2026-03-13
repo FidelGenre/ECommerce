@@ -83,7 +83,7 @@ export default function SalesPage() {
     useEffect(() => {
         Promise.all([
             api.get('/api/admin/settings/statuses?type=SALE'),
-            api.get('/api/admin/customers?size=500'),
+            api.get('/api/admin/customers?size=500&all=true'),
             api.get('/api/admin/settings/payment-methods'),
             api.get('/api/admin/items?size=200'),
             api.get('/api/admin/categories?type=PRODUCT'),
