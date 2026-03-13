@@ -125,7 +125,9 @@ export default function StorefrontPage() {
       }
     } catch (e: any) {
       console.error('Checkout error', e)
-      alert(e.response?.data || 'Error al procesar el pago. Por favor intenta de nuevo.')
+      const msg = e.response?.data;
+      const errorText = typeof msg === 'string' ? msg : (msg?.message || msg?.error || 'Error al procesar el pago. Por favor intenta de nuevo.');
+      alert(errorText);
       setCheckoutLoading(false)
     }
   }

@@ -49,11 +49,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [user?.userId])
 
     const login = async (username: string, password: string) => {
-        const { data } = await api.post('/api/auth/login', { username, password })
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data))
-        setUser(data)
-        router.push(data.role === 'ADMIN' ? '/admin' : '/')
+        try {
+            const { data } = await api.post('/api/auth/login', { username, password })
+            localStorage.setItem('token', data.token)
+            localStorage.setItem('user', JSON.stringify(data))
+            setUser(data)
+            router.push(data.role === 'ADMIN' ? '/admin' : '/')
+        } catch (e: any) {
+            const msg = e.response?.data || 'Error al iniciar sesión'
+            throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg))
+        }
     }
 
     const logout = () => {

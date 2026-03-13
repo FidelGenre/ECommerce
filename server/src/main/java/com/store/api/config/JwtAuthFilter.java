@@ -20,6 +20,7 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final com.store.api.repository.UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -31,11 +32,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (jwtUtil.isTokenValid(token)) {
                 String username = jwtUtil.extractUsername(token);
                 String role = jwtUtil.extractRole(token);
-                // System.out.println("JWT AUTH: user=" + username + " role=" + role);
-                var auth = new UsernamePasswordAuthenticationToken(
-                        username, null,
-                        List.of(new SimpleGrantedAuthority(role)));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+
+                // Verify user is still active in database
+                var userOpt = userRepository.findByUsername(username);
+                if (userOpt.isPresent() && userOpt.get().getActive()) {
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            username, null,
+                            List.of(new SimpleGrantedAuthority(role)));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             }
         }
         chain.doFilter(request, response);

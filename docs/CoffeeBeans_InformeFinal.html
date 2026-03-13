@@ -3,615 +3,1228 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Coffee Beans - Informe Final</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Beans - Informe Final de Práctica Profesional</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#F0F7FB',
+                primaryTextColor: '#2C3E50',
+                primaryBorderColor: '#3498DB',
+                lineColor: '#2C3E50',
+                secondaryColor: '#FFFFFF',
+                tertiaryColor: '#ECF0F1',
+                fontSize: '20px'
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            class: {
+                useMaxWidth: true
+            },
+            er: {
+                useMaxWidth: false
+            }
+        });
+    </script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            max-width: 1050px;
-            margin: 0 auto;
-            padding: 40px 30px;
-            color: #333;
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --text: #333;
+            --bg: #fff;
+            --light-bg: #f8f9fa;
+            --border: #e9ecef;
         }
 
-        h1,
-        h2,
-        h3,
-        h4 {
-            color: #2c3e50;
-            margin-top: 1.5em;
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: var(--bg);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 20px;
         }
 
         h1 {
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            text-align: center;
-            font-size: 2em;
+            color: var(--primary);
+            font-size: 2.8rem;
+            margin-bottom: 10px;
         }
 
         h2 {
-            border-bottom: 1px solid #bdc3c7;
-            padding-bottom: 5px;
-            margin-top: 40px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 60px;
+            color: var(--primary);
+            font-size: 2rem;
         }
 
         h3 {
-            color: #34495e;
+            margin-top: 40px;
+            color: var(--accent);
+            font-size: 1.6rem;
         }
 
-        code {
-            background-color: #f8f9fa;
-            padding: 2px 4px;
-            border-radius: 4px;
-            font-family: Consolas, monospace;
-            font-size: 0.9em;
+        h4 {
+            color: var(--primary);
+            margin-top: 30px;
+            font-size: 1.3rem;
+            border-left: 5px solid var(--accent);
+            padding-left: 20px;
         }
 
-        pre {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-            font-family: Consolas, monospace;
-            font-size: 0.9em;
+        .uc-block {
+            background: var(--light-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .flow-section {
+            margin: 15px 0;
+        }
+
+        .flow-section strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 5px;
         }
 
         .mermaid {
-            text-align: center;
-            margin: 30px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin: 30px 0;
             display: flex;
             justify-content: center;
-            width: 100%;
+            overflow-x: auto;
+        }
+
+        .class-diagram,
+        .usecase-diagram {
+            max-width: 1300px !important;
+            margin: 0 auto;
+        }
+
+        .er-diagram {
+            max-width: 100% !important;
+            margin: 0 auto;
+        }
+
+        .mermaid svg {
+            max-width: 100% !important;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .img-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .img-container img {
+            max-width: 80%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
+        }
+
+        .img-container p {
+            font-style: italic;
+            color: #777;
+            margin-top: 10px;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .tech-item {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .tech-item h4 {
+            margin-top: 0;
+            border-left: none;
+            padding-left: 0;
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .tech-item p {
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        .img-caption {
+            font-size: 1rem;
+            color: #777;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        .note {
+            background-color: #f0f7fb;
+            border-left: 5px solid #3498db;
+            padding: 25px;
+            margin: 40px 0;
+            border-radius: 8px;
+            font-size: 1.1rem;
+        }
+
+        hr {
+            border: 0;
+            border-top: 3px solid var(--border);
+            margin: 80px 0;
         }
 
         ul,
         ol {
-            margin-bottom: 20px;
+            padding-left: 25px;
         }
 
         li {
-            margin-bottom: 5px;
+            margin-bottom: 12px;
         }
 
-        @media print {
-            body {
-                padding: 0;
-                max-width: 100%;
-                font-size: 11pt;
-            }
+        .uc-meta p {
+            margin: 5px 0;
+        }
 
-            .mermaid {
-                page-break-inside: avoid;
-                margin-top: 20px;
-                margin-bottom: 20px;
-            }
+        .test-case {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
 
-            h2,
-            h3 {
-                page-break-after: avoid;
-            }
-
-            p,
-            ul,
-            ol {
-                page-break-inside: avoid;
-            }
+        .status-pass {
+            color: #27ae60;
+            font-weight: bold;
+            text-transform: uppercase;
         }
     </style>
-    <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: true, theme: 'default' });
-    </script>
 </head>
 
 <body>
-    <h1>Coffee Beans - Proyecto de Desarrollo Web</h1>
-    <p><strong>Fecha de presentación:</strong> 09/03/2026
-        <strong>Integrantes:</strong> Fidel Genrebert – Francisco Guerin
-    </p>
-    <h2>1. Informe Preliminar del Proyecto</h2>
+
+    <header>
+        <h1>Coffee Beans</h1>
+        <p><strong>Informe Final de Práctica Profesional</strong></p>
+        <p>Software de Gestión De Cafetería</p>
+        <p><small>Integrantes: Fidel Genrebert – Francisco Guerin</small></p>
+    </header>
+
+    <h2>1. Informe Preliminar del Proyecto de Desarrollo Web</h2>
+    <p><strong>Empresa Simulada – Producción y Comercialización de Café</strong></p>
+
     <h3>Situación Actual</h3>
     <p>Actualmente, la empresa simulada carece de presencia digital. Toda la información corporativa y la gestión de
         pedidos se realizan a través de procesos tradicionales, como órdenes en papel en el local físico y llamadas
-        telefónicas para coordinar ventas o servicios de delivery. Este modelo limita la visibilidad de la marca, reduce
-        el alcance a nuevos clientes y dificulta la interacción eficiente con los consumidores. Asimismo, la falta de
-        una plataforma en línea impide que los usuarios puedan consultar productos, conocer la identidad corporativa o
-        realizar compras de manera remota.</p>
+        telefónicas para coordinar ventas o servicios de delivery.</p>
+
+    <p>Este modelo limita la visibilidad de la marca, reduce el alcance a nuevos clientes y dificulta la interacción
+        eficiente con los consumidores. Asimismo, la falta de una plataforma en línea impide que los usuarios puedan
+        consultar productos, conocer la identidad corporativa o realizar compras de manera remota.</p>
+
     <h3>Objetivo General</h3>
-    <p>Desarrollar una aplicación web funcional, moderna y atractiva para la empresa simulada de producción y
-        comercialización de café, &quot;Coffee Beans&quot;, con el fin de mejorar su presencia en línea, reflejar su
-        identidad corporativa y ofrecer una experiencia de usuario que simule un entorno de comercio electrónico
-        completo.</p>
+    <p>Desarrollar una página web funcional, moderna y atractiva a la mayoría del público para la empresa simulada de
+        producción y comercialización de café, con el fin de mejorar su presencia en línea, reflejar su identidad
+        corporativa y ofrecer una experiencia de usuario que simule un entorno de comercio electrónico completo.</p>
+
     <h3>Objetivos Específicos</h3>
     <ul>
         <li>Diseñar una interfaz intuitiva y estéticamente coherente con la temática del café y la identidad de la
             empresa.</li>
         <li>Implementar un catálogo de productos y un carrito de compras funcional para los usuarios.</li>
-        <li>Desarrollar un sistema de registro e inicio de sesión de clientes y administradores.</li>
-        <li>Proveer una sección “Quiénes Somos” con información institucional.</li>
+        <li>Desarrollar un sistema de registro e inicio de sesión de clientes y una sección “Quiénes Somos” con
+            información institucional.</li>
         <li>Implementar un sistema de contacto que permita a los usuarios enviar consultas, sugerencias o reclamos.</li>
-        <li>Permitir a los usuarios seleccionar métodos de entrega y registrar la información en el sistema.</li>
-        <li>Integrar un sistema de pagos online seguro (MercadoPago) para procesar transacciones.</li>
-        <li>Implementar un sistema de gestión interna (Panel de Administración) para control de inventario, recetas de
-            productos (BOM), compras a proveedores y flujos de caja.</li>
+        <li>Permitir a los usuarios seleccionar el método de entrega (envío a domicilio o retiro en local) y registrar
+            la información correspondiente en el sistema.</li>
+        <li>Integrar un sistema de pagos online a través de una API externa (MercadoPago) para procesar las
+            transacciones de forma segura.</li>
+        <li>Implementar un sistema de gestión interna (Panel de Administración) para el control de inventario, recetas
+            de productos (BOM), compras a proveedores y flujos de caja.</li>
+        <li>Desplegar el sistema en un entorno de pruebas y posteriormente en un hosting accesible al público.</li>
     </ul>
-    <h3>Alcance</h3>
-    <p>El desarrollo de la página web estará orientado en primera instancia a fortalecer la presencia digital de la
-        empresa a nivel nacional, abarcando desde la cara visible para el cliente (Storefront) hasta la gestión interna
-        del negocio (Backoffice). El sistema posee arquitectura escalable, permitiendo su adaptación y expansión futura.
-    </p>
+
+    <h3>Alcance y Visión</h3>
+    <p>El desarrollo de la página web está orientado a fortalecer la presencia digital de la empresa, evolucionando
+        hacia
+        un enfoque de <strong>CRM/ERP liviano</strong>. El sistema permite no solo la venta online, sino la gestión
+        profesional de suministros, clientes y analítica de negocio. El proyecto abarca desde el Storefront para el
+        cliente final hasta el Backoffice para la administración centralizada.</p>
+
     <h3>Requerimientos Funcionales</h3>
     <ul>
-        <li><strong>Autenticación</strong>: Registro e inicio de sesión de usuarios con roles definidos (Cliente,
-            Administrador).</li>
-        <li><strong>Catálogo y Carrito</strong>: Visualización detallada de productos, manejo de carrito protegido y
-            cálculos exactos del total de la compra.</li>
-        <li><strong>Gestión de Pedidos y Pagos</strong>: Checkout integrado con MercadoPago, registro de ventas (Sale
-            Orders) y trazabilidad completa del ciclo de compra.</li>
-        <li><strong>Panel de Administración</strong>: <ul>
-                <li>Gestión de inventario avanzado (múltiples unidades de medida, stock mínimo).</li>
-                <li>Gestión de Recetas (BOM): Deducción en cascada de insumos según componentes configurados en los
-                    productos finales (ej. descontar bolsas, gramos de café).</li>
-                <li>Registro de compras a proveedores y control de caja centralizado (Cash Register).</li>
+        <li><strong>ABM de Usuarios y Seguridad</strong>:
+            <ul>
+                <li>Gestión completa con filtros por rol (Administrador, Cliente, Sin Rol).</li>
+                <li><strong>Automatización</strong>: El registro vía web asigna automáticamente el rol "Cliente".</li>
+                <li><strong>Flexibilidad</strong>: Edición manual de roles y permisos desde el panel administrativo.
+                </li>
             </ul>
         </li>
-        <li><strong>Módulo de Contacto</strong>: Formulario para consultas y reclamos integrado en el ecosistema.</li>
-        <li><strong>Diseño Responsivo</strong>: Adaptación total a dispositivos móviles y de escritorio.</li>
+        <li><strong>Lógica de Estados Blindada</strong>:
+            <ul>
+                <li><strong>Ventas</strong>: Una vez marcadas como "Completada" o "Cancelada", el estado queda bloqueado
+                    para evitar alteraciones.</li>
+                <li><strong>Compras</strong>: Registro automático como "Completado" sin opción a modificación posterior
+                    para asegurar integridad.</li>
+            </ul>
+        </li>
+        <li><strong>Módulo de Caja y Finanzas</strong>:
+            <ul>
+                <li>Reporte detallado de ingresos desglosado por <strong>Método de Pago</strong> (Efectivo, MercadoPago,
+                    etc.).</li>
+                <li>Registro de movimientos y arqueo diario.</li>
+            </ul>
+        </li>
+        <li><strong>Optimización Visual (Responsive)</strong>: Ajustes específicos de resolución para garantizar una
+            experiencia fluida en computadoras portátiles y notebooks de pantalla reducida.</li>
+        <li><strong>Dashboard Analítico</strong>: Visualización de KPIs clave (Ventas del mes, productos más vendidos,
+            margen bruto) y gráficos evolutivos.</li>
+        <li><strong>Información y Contacto</strong>: Sección institucional "Quiénes Somos" y formulario de contacto
+            directo.</li>
+        <li><strong>Pagos Seguros</strong>: Integración con MercadoPago para transacciones online protegidas.</li>
+        <li><strong>Auditoría</strong>: Historial de cambios y ajustes de stock con registro de motivos y responsable.
+        </li>
     </ul>
+
     <h3>Requerimientos No Funcionales</h3>
     <ul>
-        <li><strong>Usabilidad</strong>: Interfaz accesible y moderna adaptada al sector gastronómico especializado.
-        </li>
-        <li><strong>Rendimiento y Tolerancia a Fallos</strong>: Carga rápida del catálogo y transacciones atómicas en la
-            base de datos para prevenir cualquier inconsistencia de stock.</li>
-        <li><strong>Seguridad</strong>: Contraseñas encriptadas mediante algoritmo BCrypt, uso de JWT (Json Web Tokens)
-            para validar el estado de las sesiones, protección de rutas y endpoints exclusivos de administrador.</li>
-        <li><strong>Tecnologías Empleadas</strong>:<ul>
-                <li><strong>Frontend</strong>: Next.js (React), TypeScript, Tailwind CSS, Lucide Icons.</li>
-                <li><strong>Backend</strong>: Java 17, Spring Boot, Spring Security, Hibernate (JPA API).</li>
-                <li><strong>Base de Datos</strong>: PostgreSQL para un robusto almacenamiento de datos relacional.</li>
+        <li><strong>Usabilidad</strong>: Ofrecer una interfaz accesible, clara y adecuada para distintos tipos de
+            usuarios y edades, enfocada en la estética del sector cafetero.</li>
+        <li><strong>Compatibilidad</strong>: Garantizar funcionamiento en navegadores modernos (Google Chrome, Mozilla
+            Firefox, Microsoft Edge, Safari).</li>
+        <li><strong>Diseño Responsivo</strong>: El sitio web debe adaptarse a computadoras, tablets y smartphones,
+            garantizando una experiencia óptima en cualquier dispositivo.</li>
+        <li><strong>Coherencia Estética</strong>: Mantener identidad corporativa mediante una paleta de colores
+            café/tierra, tipografías modernas y estilo visual premium.</li>
+        <li><strong>Seguridad</strong>: Cifrado de contraseñas (BCrypt), autenticación mediante tokens (JWT) y
+            protección de rutas críticas.</li>
+        <li><strong>Tecnologías del Proyecto</strong>:
+            <ul>
+                <li><strong>Frontend</strong>: Next.js (arquitectura React modular), TypeScript para robustez de código
+                    y Tailwind CSS para estilos modernos y responsivos.</li>
+                <li><strong>Backend</strong>: Java 17 con Spring Boot para la lógica de negocio escalable, Spring
+                    Security para protección de datos y Hibernate/JPA para persistencia.</li>
+                <li><strong>Base de Datos</strong>: PostgreSQL como motor relacional, encargado del manejo de usuarios,
+                    productos, stock, pedidos y auditoría.</li>
+                <li><strong>Hosting y Despliegue</strong>: Preparado para entornos de nube con el fin de garantizar
+                    disponibilidad y escalabilidad.</li>
             </ul>
         </li>
     </ul>
-    <hr>
-    <h2>2. Documentación de Diseño y Soporte</h2>
-    <h3>2.1. Diagrama de Casos de Uso</h3>
-    <div class="mermaid">flowchart LR
-        Cliente(["🧍 Cliente"])
-        Administrador(["🧍 Administrador"])
 
-        subgraph Sistema
-        direction TB
-        UC1(["Añadir/Eliminar\nproductos en el carrito"])
-        UC2(["Registrarse en la web /\nIniciar sesión"])
-        UC3(["Completar pago"])
-        UC4(["Gestionar\ninventario/stock"])
+    <hr>
+
+    <h2>2. Documentación de Diseño y Soporte</h2>
+
+    <h3>2.1. Diagrama de Casos de Uso</h3>
+    <div class="mermaid usecase-diagram">
+        graph LR
+        C((Cliente))
+        A((Administrador))
+
+        subgraph Sistema ["Portal Coffee Beans"]
+        UC1(["Añadir/Eliminar del Carrito"])
+        UC2(["Registro / Login"])
+        UC3(["Completar Pago"])
+        UC4(["Gestionar Inventario / Stock"])
         UC5(["Modificar Productos"])
-        UC6(["Iniciar sesión en el\npanel de administración"])
-        UC7(["Gestionar usuarios"])
-        UC8(["Gestionar pedidos"])
+        UC6(["Login Panel Admin"])
+        UC7(["Gestionar Usuarios"])
+        UC8(["Gestionar Pedidos"])
         end
 
-        Cliente --> UC1
-        Cliente --> UC2
-        UC2 -. "&lt;&lt;extend&gt;&gt;" .-> UC3
+        C --- UC1
+        C --- UC2
+        UC2 -. extend .-> UC3
 
-        Administrador --> UC4
-        Administrador --> UC5
-        Administrador --> UC6
-        Administrador --> UC7
-        Administrador --> UC8
+        UC1 --- A
+        UC2 --- A
+        UC4 --- A
+        UC5 --- A
+        UC6 --- A
+        UC7 --- A
+        UC8 --- A
     </div>
-    <p><em>Nota: El administrador posee acceso exclusivo al panel de administración. El cliente puede registrarse,
-            iniciar sesión y gestionar su carrito; el pago es una extensión del flujo de sesión.</em></p>
-    <h3>2.2. Especificación de Casos de Uso Principales e Interfaces</h3>
-    <p>Este apartado detalla los procesos críticos del negocio vinculándolos con su implementación visual y lógica
-        desarrollada.</p>
 
-    <style>
-        .uc-block {
-            margin-bottom: 40px;
-            page-break-inside: avoid;
-        }
+    <h3>2.2. Especificación de Casos de Uso e Interfaces</h3>
 
-        .uc-block img {
-            max-width: 100%;
-            border: 1px solid #ddd;
-            height: auto;
-            border-radius: 8px;
-            margin: 15px 0;
-            display: block;
-            border: 1px solid #ddd;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .uc-block p {
-            margin: 10px 0;
-            line-height: 1.5;
-        }
-
-        .video-container {
-            margin: 20px 0;
-            border: 2px solid #3498db;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-    </style>
-
-    <!-- CU01: Gestión de Venta Manual -->
     <div class="uc-block">
         <h4>CU01: Gestión de Venta Manual (Administrador)</h4>
-        <img src="./screenshots/nueva_venta.png" alt="Nueva Venta Manual">
-        <p><strong>Actor:</strong> Administrador</p>
-        <p><strong>Descripción:</strong> Registro de ventas físicas en el local con validación de stock en tiempo real y
-            filtro de clientes activos.</p>
-        <p><strong>Flujo principal:</strong></p>
-        <ol>
-            <li>El administrador abre el modal de "Nueva Venta".</li>
-            <li>Selecciona los productos y ajusta las cantidades (el sistema valida stock inmediatamente).</li>
-            <li>Selecciona un cliente de la lista de usuarios activos.</li>
-            <li>Confirma la venta y se genera el recibo, descontando el stock.</li>
-        </ol>
-        <p><strong>Alternativo:</strong></p>
-        <ul>
-            <li><strong>Stock insuficiente:</strong> El sistema impide superar la cantidad disponible y muestra un aviso
-                visual.</li>
-            <li><strong>Cliente inactivo:</strong> Los usuarios desactivados no aparecen en la lista de selección para
-                evitar errores administrativos.</li>
-        </ul>
-    </div>
-
-    <!-- CU02: Administración de Catálogo y Recetas -->
-    <div class="uc-block">
-        <h4>CU02: Administración de Catálogo y Recetas (BOM)</h4>
-        <img src="./screenshots/productos_filtros.png" alt="Gestión de Catálogo">
-        <p><strong>Actor:</strong> Administrador</p>
-        <p><strong>Descripción:</strong> Gestión centralizada de productos e insumos con filtros avanzados.</p>
-        <p><strong>Flujo principal:</strong></p>
-        <ol>
-            <li>El administrador accede al listado de productos.</li>
-            <li>Aplica filtros (ej. por Categoría o Proveedor) para localizar ítems.</li>
-            <li>Edita el producto: modifica nombre, imagen, precio o visibilidad.</li>
-            <li>Guarda los cambios para actualizar el catálogo público.</li>
-        </ol>
-        <p><strong>Alternativo:</strong></p>
-        <ul>
-            <li><strong>Campos vacíos:</strong> El sistema resalta los campos obligatorios y bloquea el guardado.</li>
-            <li><strong>Ocultar producto:</strong> Permite retirar un producto de la tienda sin eliminar sus datos
-                históricos.</li>
-        </ul>
-    </div>
-
-    <!-- CU03: Control de Inventario Auditado -->
-    <div class="uc-block">
-        <h4>CU03: Control de Inventario Auditado</h4>
-        <img src="./screenshots/inventario_tabla.png" alt="Control de Inventario">
-        <p><strong>Actor:</strong> Administrador</p>
-        <p><strong>Descripción:</strong> Monitoreo de niveles de stock y ajustes manuales obligatorios.</p>
-        <p><strong>Flujo principal:</strong></p>
-        <ol>
-            <li>El administrador visualiza la tabla de inventario con alertas de stock mínimo.</li>
-            <li>Selecciona un producto para realizar un ajuste (entrada o salida).</li>
-            <li>Ingresa la cantidad y el motivo del movimiento.</li>
-            <li>El sistema registra el movimiento con marca de tiempo y usuario responsable.</li>
-        </ol>
-        <p><strong>Alternativo:</strong></p>
-        <ul>
-            <li><strong>Stock Crítico:</strong> Los productos por debajo del límite se resaltan en rojo para acción
-                inmediata de compra.</li>
-        </ul>
-    </div>
-
-    <!-- CU04: CRM y Gestión de Usuarios -->
-    <div class="uc-block">
-        <h4>CU04: CRM y Gestión de Usuarios</h4>
-        <img src="./screenshots/usuarios.png" alt="Gestión de Usuarios">
-        <p><strong>Actor:</strong> Administrador</p>
-        <p><strong>Descripción:</strong> Administración de perfiles de usuarios con control de acceso basado en roles y
-            estados.</p>
-        <p><strong>Flujo principal:</strong></p>
-        <ol>
-            <li>El administrador accede al listado de usuarios.</li>
-            <li>Visualiza datos de fidelización (puntos) y balance.</li>
-            <li>Cambia el estado (Desactivar/Activar) o el rol del usuario.</li>
-        </ol>
-        <p><strong>Alternativo:</strong></p>
-        <ul>
-            <li><strong>Saldo pendiente:</strong> No se permite desactivar usuarios con deudas en cuenta corriente.</li>
-        </ul>
-    </div>
-
-    <!-- CU05: Venta Online y Checkout -->
-    <div class="uc-block">
-        <h4>CU05: Venta Online y Checkout (MercadoPago)</h4>
-        <p><strong>Actor:</strong> Cliente</p>
-        <p><strong>Descripción:</strong> Flujo de compra completo en el Storefront, desde la selección en catálogo hasta
-            la transacción segura a través de la pasarela de MercadoPago.</p>
-        <div style="display: flex; gap: 10px;">
-            <img src="./screenshots/login.png" alt="Login" style="flex: 1; max-width: 49%;">
-            <img src="./screenshots/registro.png" alt="Registro" style="flex: 1; max-width: 49%;">
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Administrador</p>
+            <p><strong>Descripción:</strong> Registro de ventas físicas con validación de stock en tiempo real.</p>
+            <p><strong>Precondición:</strong> Administrador autenticado en el backoffice.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Selección de Productos:</strong> El administrador abre el modal de "Nueva Venta" y elige los
+                    productos.</li>
+                <li><strong>Validación de Stock:</strong> El sistema valida que la cantidad solicitada no supere el
+                    stock actual.</li>
+                <li><strong>Selección de Cliente:</strong> Se elige un usuario registrado de la lista desplegable.</li>
+                <li><strong>Confirmación:</strong> Se confirma la operación, se descuenta el stock y se registra la
+                    venta.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Selección de Productos (Stock insuficiente):</strong> El sistema detecta la falta de stock y
+                    muestra el mensaje: "Cantidad supera el stock disponible".</li>
+                <li><strong>Confirmación (Cliente No Seleccionado):</strong> El sistema resalta el campo en rojo e
+                    informa: "Debe seleccionar un cliente antes de confirmar".</li>
+                <li><strong>Proceso de Venta (Error de Conexión):</strong> Muestra un aviso de error: "No se pudo
+                    procesar la venta, intente de nuevo".</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Venta registrada y stock actualizado.</p>
+        <p><strong>Interfaz:</strong> Modal "Nueva Venta", buscadores de productos y clientes.</p>
+        <div class="img-container">
+            <img src="./screenshots/manual_sale_hq.png" alt="Nueva Venta Manual">
         </div>
     </div>
 
-    <!-- CU06: Gestión de Compras e Insumos -->
     <div class="uc-block">
-        <h4>CU06: Gestión de Compras e Insumos (Administrador)</h4>
-        <img src="./screenshots/compras.png" alt="Gestión de Compras">
-        <p><strong>Actor:</strong> Administrador</p>
-        <p><strong>Descripción:</strong> Registro y seguimiento de órdenes de compra a proveedores de café verde e
-            insumos.</p>
-        <p><strong>Flujo principal:</strong></p>
-        <ol>
-            <li>El administrador inicia una "Nueva Compra" seleccionando el proveedor.</li>
-            <li>Ingresa los ítems adquiridos, sus costos y cantidades.</li>
-            <li>Confirma la recepción, lo cual actualiza automáticamente el stock del almacén.</li>
-        </ol>
-        <p><strong>Alternativo:</strong></p>
-        <ul>
-            <li><strong>Orden Pendiente:</strong> Las compras pueden guardarse como "Pendiente" hasta que se confirme la
-                recepción física del producto.</li>
-        </ul>
+        <h4>CU02: Administración de Catálogo y Recetas (BOM)</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Administrador</p>
+            <p><strong>Descripción:</strong> Gestión centralizada de productos e insumos con filtros avanzados.</p>
+            <p><strong>Precondición:</strong> Acceso al panel de administración.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Acceso al Listado:</strong> El administrador navega a la sección de productos.</li>
+                <li><strong>Filtrado y Búsqueda:</strong> Aplica filtros por categoría o proveedor para localizar ítems.
+                </li>
+                <li><strong>Edición:</strong> Modifica precios, imágenes o visibilidad del producto.</li>
+                <li><strong>Guardado:</strong> El sistema actualiza la base de datos y refleja los cambios en la web
+                    pública.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Datos Inválidos (Precio):</strong> Si se ingresa 0 o negativo, el sistema muestra: "El
+                    precio debe ser mayor a cero".</li>
+                <li><strong>Subida de Archivo (Imagen Pesada):</strong> Si supera los 2MB, indica: "La imagen es
+                    demasiado grande".</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Catálogo actualizado para el cliente final.</p>
+        <p><strong>Interfaz:</strong> Tabla de productos, formularios de edición.</p>
+        <div class="img-container">
+            <img src="./screenshots/products_hq.png" alt="Gestión de Productos">
+        </div>
+    </div>
+
+    <div class="uc-block">
+        <h4>CU03: Control de Inventario Auditado</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Administrador</p>
+            <p><strong>Descripción:</strong> Monitoreo de niveles de stock y ajustes manuales obligatorios.</p>
+            <p><strong>Precondición:</strong> Producto existente en el sistema.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Visualización de Niveles:</strong> El admin revisa la tabla de inventario y alertas de stock
+                    mínimo.</li>
+                <li><strong>Selección de Ajuste:</strong> Elige un producto para realizar entrada o salida manual.</li>
+                <li><strong>Registro de Motivo:</strong> Ingresa cantidad y justificación del ajuste.</li>
+                <li><strong>Actualización:</strong> El sistema impacta el stock y guarda el log de auditoría.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Ingreso de Cantidad (Valor nulo):</strong> Si no se ingresa un número, el sistema muestra:
+                    "Debe ingresar una cantidad válida".</li>
+                <li><strong>Confirmación de Ajuste (Sin motivo):</strong> Si se intenta guardar sin justificación, el
+                    sistema bloquea la acción e informa: "Debe indicar el motivo del ajuste".</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Stock corregido y auditado.</p>
+        <p><strong>Interfaz:</strong> Tabla de Auditoría/Inventario.</p>
+        <div class="img-container">
+            <img src="./screenshots/inventory_hq.png" alt="Tabla de Inventario">
+        </div>
+    </div>
+
+    <div class="uc-block">
+        <h4>CU04: CRM y Gestión de Usuarios</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Administrador</p>
+            <p><strong>Descripción:</strong> Administración de perfiles, puntos de fidelización y estados.</p>
+            <p><strong>Precondición:</strong> Administrador en sección "Clientes".</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Consulta de Perfil:</strong> Busca un usuario para ver su historial y puntos.</li>
+                <li><strong>Modificación de Estado:</strong> Cambia el estado a "Inactivo" o "Activo".</li>
+                <li><strong>Gestión de Roles:</strong> Asigna o quita privilegios de administrador.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Cambio de Estado (Auto-Desactivación):</strong> El sistema impide deshabilitar al admin en
+                    uso: "No puede cambiar su propio estado".</li>
+                <li><strong>Gestión de Roles (Sin Administrador):</strong> El sistema bloquea el cambio si se intenta
+                    dejar el negocio sin admins: "Debe haber al menos un administrador activo".</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Perfil de usuario actualizado.</p>
+        <p><strong>Interfaz:</strong> Tabla de Usuarios con toggle de estados.</p>
+        <div class="img-container">
+            <img src="./screenshots/users_hq.png" alt="Gestión de Usuarios">
+        </div>
+    </div>
+
+    <div class="uc-block">
+        <h4>CU05: Venta Online y Checkout (MercadoPago)</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Cliente</p>
+            <p><strong>Descripción:</strong> Flujo de compra completo en la web pública.</p>
+            <p><strong>Precondición:</strong> Usuario logueado y carrito con ítems.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Acceso a Checkout:</strong> El cliente presiona "Pagar".</li>
+                <li><strong>Generación de Cobro:</strong> El sistema crea la preferencia en MercadoPago.</li>
+                <li><strong>Proceso de Pago:</strong> El usuario ingresa sus datos en la pasarela segura.</li>
+                <li><strong>Confirmación y Retiro:</strong> El sistema confirma la orden, vacía el carrito y notifica
+                    que el pedido está listo para ser retirado en el local de forma inmediata.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Proceso de Cobro (Pago Rechazado):</strong> Si la pasarela falla, el sistema muestra:
+                    "Tarjeta rechazada" y permite intentar con otro medio.</li>
+                <li><strong>Checkout (Sesión Expirada):</strong> Si el token JWT venció, redirige al login indicando:
+                    "Su sesión ha expirado".</li>
+                <li><strong>Confirmación (Stock Agotado):</strong> Si el stock cambia durante el pago, informa: "Ítem ya
+                    no disponible" y cancela la orden.</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Orden de venta generada.</p>
+        <p><strong>Interfaz:</strong> Carrito de compras, pasarela MercadoPago.</p>
+        <div class="img-container">
+            <img src="./screenshots/checkout_mp.png" alt="Checkout MercadoPago">
+            <p class="img-caption">Proceso de pago integrado con MercadoPago (Sandbox)</p>
+        </div>
+    </div>
+
+    <div class="uc-block">
+        <h4>CU06: Gestión de Compras e Insumos</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Administrador</p>
+            <p><strong>Descripción:</strong> Registro de órdenes de compra a proveedores externos.</p>
+            <p><strong>Precondición:</strong> Proveedor registrado.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Inicio de Orden:</strong> Selecciona proveedor y fecha de compra.</li>
+                <li><strong>Carga de Ítems:</strong> Ingresa costos y cantidades de los suministros recibidos.</li>
+                <li><strong>Confirmación:</strong> Al finalizar, el sistema aumenta el stock de los productos/insumos
+                    automáticamente.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Selección de Proveedor (Inactivo):</strong> El sistema oculta o bloquea proveedores
+                    deshabilitados: "Proveedor no habilitado para compras".</li>
+                <li><strong>Carga de Costos (Cero/Nulo):</strong> El sistema exige el valor de compra: "El costo
+                    unitario es obligatorio".</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Stock de insumos incrementado.</p>
+        <p><strong>Interfaz:</strong> Formulario de "Compras".</p>
+        <div class="img-container">
+            <img src="./screenshots/purchases_hq.png" alt="Gestión de Compras">
+        </div>
+    </div>
+
+    <div class="uc-block">
+        <h4>CU07: Navegación y Carrito</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Cliente</p>
+            <p><strong>Descripción:</strong> Interfaz pública de consulta y compra.</p>
+            <p><strong>Precondición:</strong> Acceso a la URL del sitio.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Exploración:</strong> Navega el catálogo con scroll infinito o paginación.</li>
+                <li><strong>Filtrado:</strong> Usa la barra lateral para buscar cafés específicos.</li>
+                <li><strong>Adición:</strong> Agrega productos al carrito flotante.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Consulta de Catálogo (Sin Stock):</strong> El botón de compra se deshabilita y muestra la
+                    etiqueta: "Sin Stock" en rojo.</li>
+                <li><strong>Filtros (Sin Resultados):</strong> El sistema informa al usuario: "No encontramos productos
+                    para esta categoría".</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Productos listos para checkout.</p>
+        <p><strong>Interfaz:</strong> Catálogo público y Carrito.</p>
+        <div class="img-container">
+            <img src="./screenshots/storefront_hq.png" alt="Storefront">
+        </div>
+    </div>
+
+    <div class="uc-block">
+        <h4>CU08: Dashboard y Análisis de Reportes</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Administrador</p>
+            <p><strong>Descripción:</strong> Visualización de métricas y KPIs.</p>
+            <p><strong>Precondición:</strong> Ventas registradas en el sistema.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Consulta de Dashboard:</strong> El admin entra a la sección de analítica.</li>
+                <li><strong>Filtrado de Fechas:</strong> Selecciona el rango (hoy, semana, mes).</li>
+                <li><strong>Análisis:</strong> Revisa el ticket promedio y el total de ingresos.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Filtro de Calendario (Rango Inválido):</strong> Si la fecha final es previa a la inicial, el
+                    sistema bloquea la búsqueda y muestra la advertencia.</li>
+                <li><strong>Gráficos (Sin Operaciones):</strong> Si no hay ventas registradas, muestra un marcador de
+                    posición: "Sin datos para el periodo seleccionado".</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Información estratégica visualizada.</p>
+        <p><strong>Interfaz:</strong> Gráficos y tarjetas de KPI.</p>
+        <div class="img-container">
+            <img src="./screenshots/dashboard_kpi.png" alt="Dashboard">
+        </div>
+    </div>
+
+    <div class="uc-block">
+        <h4>CU09: Sección Institucional y Contacto</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Cliente / Administrador</p>
+            <p><strong>Descripción:</strong> Página informativa "Quiénes Somos" y formulario de contacto.</p>
+            <p><strong>Precondición:</strong> Sitio web visible públicamente.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Navegación:</strong> El usuario accede a "Nosotros" para conocer la historia de la marca.
+                </li>
+                <li><strong>Contacto:</strong> Dirige al formulario de contacto, ingresa datos y mensaje.</li>
+                <li><strong>Envío:</strong> El sistema valida los campos y confirma la recepción de la consulta.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Formulario incompleto:</strong> El usuario intenta enviar sin completar campos obligatorios,
+                    el sistema resalta los errores.</li>
+                <li><strong>Error de red:</strong> El envío falla por problemas de conectividad, se notifica al usuario
+                    con un mensaje de error.</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Mensaje de contacto enviado al administrador.</p>
+        <p><strong>Interfaz:</strong> Página institucional y Formulario de Contacto.</p>
+        <div class="img-container">
+            <img src="./screenshots/nosotros_about.png" alt="Quiénes Somos">
+            <img src="./screenshots/contact.png" alt="Formulario de Contacto">
+        </div>
+    </div>
+
+    <div class="uc-block">
+        <h4>CU10: CRM - Historial de Compras de Clientes</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Administrador</p>
+            <p><strong>Descripción:</strong> Consulta detallada de la actividad histórica de un cliente específico.</p>
+            <p><strong>Precondición:</strong> Cliente con operaciones registradas.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Selección de Cliente:</strong> El admin busca un cliente en el panel CRM.</li>
+                <li><strong>Acceso a Historial:</strong> Abre la pestaña de "Historial de Compras".</li>
+                <li><strong>Detalle:</strong> Visualiza todas las órdenes pasadas, montos y estados de cada transacción.
+                </li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Sin historial:</strong> Si el cliente no tiene órdenes, se muestra: "Este cliente todavía no
+                    realizó compras".</li>
+                <li><strong>Error de carga:</strong> El sistema no puede recuperar el historial, muestra: "Error al
+                    cargar la actividad del cliente".</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Auditoría de comportamiento de compra visualizada.</p>
+        <p><strong>Interfaz:</strong> Modal de Detalle de Cliente (Tab Historial).</p>
+        <div class="img-container">
+            <img src="./screenshots/customer_history.png" alt="Historial de Cliente">
+        </div>
+    </div>
+
+    <div class="uc-block">
+        <h4>CU11: Registro de Usuarios</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Cliente</p>
+            <p><strong>Descripción:</strong> Creación de una cuenta nueva para acceder a compras online.</p>
+            <p><strong>Precondición:</strong> Cliente no autenticado.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Acceso:</strong> El usuario selecciona "Registrarse" en el navbar.</li>
+                <li><strong>Datos:</strong> Completa formulario con nombre, email y contraseña.</li>
+                <li><strong>Procesamiento:</strong> El sistema cifra la clave y crea el perfil de cliente asociado.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Email duplicado:</strong> Si el correo ya existe, muestra: "El correo electrónico ya se
+                    encuentra registrado".</li>
+                <li><strong>Claves no coinciden:</strong> El sistema valida la segunda clave e informa la discrepancia
+                    al usuario.</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Usuario registrado con rol "CLIENTE".</p>
+        <p><strong>Interfaz:</strong> Formulario de Registro.</p>
+        <div class="img-container">
+            <img src="./screenshots/registro.png" alt="Registro">
+        </div>
+    </div>
+
+    <div class="uc-block">
+        <h4>CU12: Autenticación y Login</h4>
+        <div class="uc-meta">
+            <p><strong>Actor:</strong> Cliente / Administrador</p>
+            <p><strong>Descripción:</strong> Validación de credenciales para acceso al sistema.</p>
+            <p><strong>Precondición:</strong> Cuenta previamente creada.</p>
+        </div>
+        <div class="flow-section">
+            <strong>Flujo principal:</strong>
+            <ol>
+                <li><strong>Ingreso:</strong> El usuario ingresa email y contraseña.</li>
+                <li><strong>Validación:</strong> El backend verifica las credenciales vía Spring Security.</li>
+                <li><strong>JWT:</strong> El servidor emite un token JWT de sesión.</li>
+            </ol>
+        </div>
+        <div class="flow-section">
+            <strong>Alternativo:</strong>
+            <ol>
+                <li><strong>Datos incorrectos:</strong> El sistema informa: "Credenciales de acceso inválidas".</li>
+                <li><strong>Cuenta inactiva:</strong> Si el usuario fue dado de baja, informa: "Su cuenta se encuentra
+                    deshabilitada, contacte al administrador".</li>
+            </ol>
+        </div>
+        <p><strong>Postcondición:</strong> Acceso concedido según el rol.</p>
+        <p><strong>Interfaz:</strong> Formulario de Login.</p>
+        <div class="img-container">
+            <img src="./screenshots/login.png" alt="Login">
+        </div>
     </div>
 
     <h3>2.3. Diagrama de Clases (Arquitectura Backend Central)</h3>
-    <div class="mermaid">classDiagram
-        direction LR
-
-        class usuario {
-        +Long id
-        +String nombre
-        +String email
-        +String contrasena
-        +iniciarSesion()
-        +registrarse()
-        }
-
+    <div class="mermaid class-diagram">
+        classDiagram
+        direction TB
         class rol {
-        +String idRol: cliente, administrador
-        +gestionarUsuarios()
-        +gestionarPedidos()
-        +gestionarInventario()
-        +emitirCompras()
+        idRol: cliente, administrador
+        gestionarUsuarios()
+        gestionarPedidos()
+        gestionarInventario()
+        emitirCompras()
         }
-
+        class usuario {
+        id, nombre, email, contraseña
+        iniciarSesion()
+        registrarse()
+        }
         class venta {
-        +Long id
-        +Decimal total
-        +añadirProducto()
-        +eliminarProducto()
-        +calcularTotal()
+        id, total
+        añadirProducto()
+        eliminarProducto()
+        calcularTotal()
         }
-
         class detalleVenta {
-        +Long id
-        +Integer cantidad
-        +Decimal precio
-        +Decimal subtotal
-        +String producto
-        +calcularSubtotal()
-        +generarNumeroOrden()
+        cantidad, id, precio, producto, subtotal
+        calcularSubtotal()
+        generarNumeroOrden()
         }
-
-        class inventario {
-        +Long id
-        +Integer stockMinimo
-        +Integer stockActual
-        +Integer stockMaximo
-        +actualizarStock()
-        }
-
         class compra {
-        +Long id
-        +Date fecha
-        +Decimal total
-        +String usuario
-        +confirmarCompra()
-        +cancelarCompra()
-        +calcularTotal()
+        fecha, id, total, usuario
+        confirmarCompra()
+        cancelarCompra()
+        calcularTotal()
         }
-
         class detalleCompra {
-        +Long id
-        +Integer cantidad
-        +Decimal precio
-        +String producto
-        +Decimal subtotal
-        +calcularSubtotal()
+        cantidad, id, precio, producto, subtotal
+        calcularSubtotal()
         }
-
-        class producto {
-        +Long id
-        +String nombre
-        +String descripcion
-        +Decimal precio
-        +Integer cantidad
-        +obtenerPrecio()
-        +modificarPrecio()
-        +actualizar()
-        }
-
         class proveedor {
-        +Long id
-        +String nombre
-        +String email
-        +String direccion
-        +añadirProducto()
-        +eliminarProducto()
+        direccion, email, nombre, id
+        añadirProducto()
+        eliminarProducto()
+        }
+        class inventario {
+        id, stockMinimo, stockActual, stockMaximo
+        actualizarStock()
+        }
+        class producto {
+        id, nombre, descripción, precio, cantidad
+        obtener precio()
+        modificar precio()
+        actualizar()
+        }
+        class insumoReceta {
+        Long id
+        BigDecimal descuentoCascada
+        vincularBom()
+        }
+        class movimientoStock {
+        id, cantidad, tipo, motivo
+        registrarMovimiento()
+        obtenerHistorial()
+        }
+        class movimientoCaja {
+        id, monto, tipo, descripcion
+        registrarEntrada()
+        registrarSalida()
+        }
+        class caja {
+        id, monto_actual
+        abrirCaja()
+        cerrarCaja()
+        }
+        class movimientoCuenta {
+        id, monto, tipo
+        registrarMovimiento()
+        obtenerSaldo()
+        }
+        class cliente {
+        email, puntos_fidelidad
+        canjearPuntos()
+        sumarPuntos()
+        }
+        class categoria {
+        id, nombre, tipo
+        asignarCategoria()
+        listarProductos()
+        }
+        class gastoInterno {
+        id, descripcion, monto, fecha
+        registrarGasto()
+        }
+        class notificacion {
+        id, mensaje, leido
+        marcarComoLeida()
+        enviarAlerta()
+        }
+        class metodoPago {
+        id, nombre
+        validarMetodo()
+        }
+        class estadoOperacion {
+        id, nombre, color
+        cambiarEstado()
         }
 
-        usuario "1" -- "1..*" rol
+        rol "1" -- "1..*" usuario
         usuario "1" -- "1..*" venta
+        usuario "1" -- "0..*" compra
+        venta "*" -- "1" metodoPago
+        venta "*" -- "1" estadoOperacion
+        compra "*" -- "1" estadoOperacion
         venta "1" -- "1..*" detalleVenta
-        detalleVenta "1..*" -- "1..*" producto
-        detalleVenta "1..*" -- "1" inventario
-        inventario "1" -- "1" detalleCompra
-        producto "1" -- "1" inventario
-        producto "1..*" -- "1..*" detalleCompra
+        detalleVenta "*" -- "1" producto
+        detalleVenta "*" -- "1" inventario
+        compra "1..*" -- "1" proveedor
         compra "1" -- "1..*" detalleCompra
-        compra "0..*" -- "1" proveedor
-        compra "0..*" -- "1" usuario
+        detalleCompra "*" -- "1" producto
+        detalleCompra "1" -- "1" inventario
+        producto "1" -- "1" inventario
+        producto "1" -- "*" insumoReceta : "receta"
+        insumoReceta "*" -- "1" inventario : "usa_stock"
+        inventario "1" -- "*" movimientoStock
+        caja "1" -- "*" movimientoCaja
+        caja "1" -- "*" gastoInterno
+        usuario "1" -- "*" notificacion
+        producto "1" -- "*" notificacion : "alerta_stock"
+        usuario "1" -- "0..1" cliente
+        usuario "1" -- "*" caja : "gestiona"
+        cliente "1" -- "*" movimientoCuenta
+        categoria "1" -- "*" producto
+        categoria "1" -- "*" proveedor
+        inventario "1" -- "1" caja
     </div>
-    <h3>2.4. Diagrama de Implementación de Tablas (Modelo de Datos Físico/DER)</h3>
-    <div class="mermaid">erDiagram
-        usuario ||--o{ orden_venta : &quot;realiza&quot;
-        rol ||--o{ usuario : &quot;posee&quot;
-        orden_venta ||--o{ linea_venta : &quot;tiene_detalle&quot;
-        linea_venta }|--|| producto : &quot;descarga_stock&quot;
-        producto ||--|| inventario : &quot;acumula&quot;
-        producto ||--o{ receta_insumo : &quot;es_conformado_por&quot;
-        producto ||--|{ orden_compra : &quot;reabastece&quot;
-        usuario ||--o{ orden_compra : &quot;registra_ingreso&quot;
-        proveedor ||--o{ orden_compra : &quot;entrega&quot;
 
-        rol {
-        VARCHAR idRol PK
+    <h3>2.4. Diagrama de Implementación de Tablas (DER)</h3>
+    <div class="mermaid er-diagram">
+        erDiagram
+        USUARIOS ||--o| CLIENTES : "perfil_cliente"
+        USUARIOS ||--o{ VENTAS : "gestion_admin"
+        USUARIOS ||--o{ COMPRAS : "gestion_admin"
+        USUARIOS ||--o{ CAJA : "abierta_por"
+
+        ESTADOS_OPERACION ||--o{ VENTAS : "define_estado"
+        METODOS_PAGO ||--o{ VENTAS : "se_paga_con"
+        ESTADOS_OPERACION ||--o{ COMPRAS : "define_estado"
+
+        CLIENTES ||--o{ VENTAS : "realiza_compra"
+
+        CATEGORIAS ||--o{ PRODUCTOS : "clasifica"
+        PROVEEDORES ||--o{ PRODUCTOS : "provee"
+        PROVEEDORES ||--o{ COMPRAS : "suministra"
+        CATEGORIAS ||--o{ PROVEEDORES : "agrupa"
+
+        PRODUCTOS ||--o{ INSUMOS : "es_producto_final"
+        PRODUCTOS ||--o{ INSUMOS : "usa_insumo"
+        PRODUCTOS ||--o{ MOVIMIENTOS_STOCK : "log_auditoria"
+
+        USUARIOS ||--o{ NOTIFICACIONES : "recibe"
+        PRODUCTOS ||--o{ NOTIFICACIONES : "alerta_de"
+        CAJA ||--o{ GASTOS_INTERNOS : "paga"
+        CAJA ||--o{ MOVIMIENTOS_CAJA : "historial_dinero"
+        CLIENTES ||--o{ MOVIMIENTOS_CUENTA : "historial_de"
+
+        VENTAS ||--o{ DETALLE_VENTAS : "tiene_items"
+        DETALLE_VENTAS }|--|| PRODUCTOS : "producto_vendido"
+
+        COMPRAS ||--o{ DETALLE_COMPRAS : "tiene_items"
+        DETALLE_COMPRAS }|--|| PRODUCTOS : "producto_comprado"
+
+        USUARIOS {
+        Long id PK
+        String nombre_usuario
+        String rol "Admin, Cliente"
+        Boolean activo
         }
-        usuario {
-        BIGSERIAL id PK
-        VARCHAR nombre
-        VARCHAR email
-        VARCHAR contrasena
-        VARCHAR idRol FK
+        CLIENTES {
+        Long id PK
+        String email
+        Decimal puntos_fidelidad
+        Long usuario_id FK
         }
-        orden_venta {
-        BIGSERIAL id PK
-        DECIMAL total
-        VARCHAR payment_id
-        VARCHAR estado_transaccion
-        BIGINT usuario_id FK
+        CATEGORIAS {
+        Long id PK
+        String nombre
+        String tipo "PRODUCTO/PROVEEDOR"
         }
-        linea_venta {
-        BIGSERIAL id PK
-        DECIMAL cantidad
-        DECIMAL precio_unitario
-        DECIMAL subtotal
-        BIGINT venta_id FK
-        BIGINT producto_id FK
+        PRODUCTOS {
+        Long id PK
+        String nombre
+        Decimal precio
+        Decimal stock_actual
+        Decimal stock_minimo
+        Long categoria_id FK
         }
-        producto {
-        BIGSERIAL id PK
-        VARCHAR nombre
-        VARCHAR descripcion
-        DECIMAL precio
-        DECIMAL tamanio_unidad
-        VARCHAR magnitud_peso
+        INSUMOS {
+        Long id PK
+        Decimal cantidad
+        Long id_producto_final FK
+        Long id_insumo FK
         }
-        receta_insumo {
-        BIGSERIAL id PK
-        DECIMAL cantidad_restada
-        BIGINT insumo_asociado_id FK
-        BIGINT producto_padre_id FK
+        MOVIMIENTOS_STOCK {
+        Long id PK
+        Decimal cantidad
+        String tipo "ENTRADA/SALIDA"
+        String motivo "VENTA, COMPRA, MERMA"
+        Long producto_id FK
         }
-        inventario {
-        BIGSERIAL id PK
-        DECIMAL stockActual
-        DECIMAL stockMin_Alerta
-        BIGINT producto_id FK
+        PROVEEDORES {
+        Long id PK
+        String nombre
+        String cuit_taxid
+        Decimal saldo_cuenta
+        Long category_id FK
         }
-        orden_compra {
-        BIGSERIAL id PK
-        VARCHAR fecha_ingreso
-        DECIMAL desembolso
-        BIGINT registrado_por_usuario FK
-        BIGINT proveedor_id FK
+        VENTAS {
+        Long id PK
+        Decimal total
+        Long cliente_id FK
+        Long usuario_id FK
+        Long estado_id FK
+        Long pago_id FK
         }
-        proveedor {
-        BIGSERIAL id PK
-        VARCHAR razon_social
-        VARCHAR email
+        DETALLE_VENTAS {
+        Long id PK
+        Decimal cantidad
+        Decimal precio_unitario
+        Long venta_id FK
+        }
+        COMPRAS {
+        Long id PK
+        Decimal total
+        Long proveedor_id FK
+        Long estado_id FK
+        }
+        ESTADOS_OPERACION {
+        Long id PK
+        String nombre
+        String color
+        }
+        METODOS_PAGO {
+        Long id PK
+        String nombre
+        }
+        DETALLE_COMPRAS {
+        Long id PK
+        Decimal cantidad
+        Decimal costo_unitario
+        Long compra_id FK
+        }
+        CAJA {
+        Long id PK
+        Decimal monto_actual
+        Long usuario_id FK
+        }
+        NOTIFICACIONES {
+        Long id PK
+        String mensaje
+        Boolean leido
+        Long usuario_id FK
+        }
+        GASTOS_INTERNOS {
+        Long id PK
+        String descripcion
+        Decimal monto
+        DateTime fecha
+        }
+        MOVIMIENTOS_CUENTA {
+        Long id PK
+        Decimal monto
+        String tipo "DEBITO/CREDITO"
+        Long cliente_id FK
+        }
+        MOVIMIENTOS_CAJA {
+        Long id PK
+        Decimal monto
+        String tipo "INGRESO/EGRESO"
+        String descripcion
+        Long caja_id FK
         }
     </div>
-    <h3>2.5. Documentación de Pruebas y Validación</h3>
-    <p>El sistema requirió a lo largo de su integración y estabilización, los siguientes escenarios de control de
-        calidad documentados:</p>
-    <ol>
-        <li>
-            <p><strong>Caso: Autenticación con Token (JWT Seguridad)</strong></p>
-            <ul>
-                <li><strong>Acción del QA</strong>: Creación de usuario administrador mediante interceptación manual de
-                    API (POST) y validación de rutas privadas.</li>
-                <li><strong>Resultado Esperado</strong>: Protección persistente de endpoints. Sin el header
-                    &quot;Authorization: Bearer [token]&quot;, cualquier solicitud al ecosistema
-                    <code>api/admin/*</code> debe ser bloqueada con Status 403 Forbidden.
-                </li>
-                <li><strong>Estado Actual</strong>: <strong>Aprobado</strong>. Las capas de filtros lógicos de Spring
-                    Security aprueban el token únicamente si fue firmado con el secreto local.</li>
-            </ul>
-        </li>
-        <li>
-            <p><strong>Caso: Integridad del Carrito - Limitantes de Stock / Tipos de Unidad</strong></p>
-            <ul>
-                <li><strong>Historia</strong>: Requeríamos impedir a usuarios malintencionados o al mismo UI, generar
-                    carritos superiores al inventario limitante (ej. solicitar 50 bolsas cuando solo quedan 2), como a
-                    su vez lidiar correctamente con transacciones sin alterar el <em>monto real</em> de manera
-                    exponencial según los gramos.</li>
-                <li><strong>Modificación</strong>: Se limitó por estricta directriz de pasos intermedios (step) la
-                    modificación manual a &quot;cantidades enteras&quot; en el Frontend.</li>
-                <li><strong>Resultado Esperado</strong>: Ventas exclusivas de bolsas finalizadas sin decimales ambiguos
-                    de compra para el consumidor, previniendo sobrefacturaciones erróneas.</li>
-                <li><strong>Estado Actual</strong>: <strong>Aprobado</strong>. El frontend impide la inserción errática
-                    (ej. 0.1 bolsas) corrigiéndolo al entero base más cercano e inhibiendo sumar items arriba del stock
-                    maestro.</li>
-            </ul>
-        </li>
-        <li>
-            <p><strong>Caso: Transaccionalidad de Componentes Hijos de Receta (BOM)</strong></p>
-            <ul>
-                <li><strong>Historia</strong>: Validar la consistencia íntegra del <code>ItemComponent</code>.</li>
-                <li><strong>Desarrollo</strong>: Interacción comercial ejecutada para un &quot;Item A&quot; conformado
-                    por &quot;Item B y C&quot;.</li>
-                <li><strong>Auditoría</strong>: Se inspeccionó en el panel visualizador de
-                    <em><code>StockMovement</code></em> si ambos Item B e Item C fueron reducidos conforme la suma de la
-                    venta maestra de &quot;Item A&quot; por sus respectivas tasas de deducción multiplicadas por el
-                    <code>unitSize</code> subyacente de control de kilos.
-                </li>
-                <li><strong>Estado Actual</strong>: <strong>Aprobado</strong>.</li>
-            </ul>
-        </li>
-    </ol>
+
     <hr>
+
+    <h2>2.5. Documentación de Pruebas y Validación (QA)</h2>
+    <div class="test-section">
+        <div class="test-case">
+            <h4>Escenario 1: Seguridad y Acceso (JWT)</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Verificación de autenticación con Token.</li>
+                <li><strong>Procedimiento:</strong> Intento de acceso a <code>/api/admin/dashboard/kpi</code> sin
+                    cabeceras.</li>
+                <li><strong>Resultado de Prueba:</strong> El sistema retorna <code>401 Unauthorized</code> o redirige a
+                    login.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+        <div class="test-case">
+            <h4>Escenario 2: Lógica de Negocio - Stock en Tiempo Real</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Integridad de movimientos en cascada (BOM).</li>
+                <li><strong>Procedimiento:</strong> Realizar una venta de un producto compuesto y verificar reducción de
+                    insumos.</li>
+                <li><strong>Resultado de Prueba:</strong> Se valida descuento proporcional basado en la receta
+                    configurada.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+        <div class="test-case">
+            <h4>Escenario 3: Integración de Pagos - MercadoPago Sandbox</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Ciclo completo de pago exitoso.</li>
+                <li><strong>Procedimiento:</strong> Simular compra de 1kg de Café con tarjeta de prueba en Sandbox.</li>
+                <li><strong>Resultado de Prueba:</strong> El sistema recibe el webhook de "approved", registra la venta
+                    y vacía el carrito.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+        <div class="test-case">
+            <h4>Escenario 4: UX/UI - Registro de Clientes</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Validación de duplicados y creación de perfil.</li>
+                <li><strong>Procedimiento:</strong> Intentar registrar un email ya existente y luego uno nuevo.</li>
+                <li><strong>Resultado de Prueba:</strong> Bloqueo del email duplicado y creación exitosa del registro
+                    con vinculación de perfil.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+        <div class="test-case">
+            <h4>Escenario 5: Analítica - Filtros de Dashboard</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Consistencia de datos en reportes temporales.</li>
+                <li><strong>Procedimiento:</strong> Aplicar filtro de fecha "Última Semana" y contrastar contra total de
+                    ventas.</li>
+                <li><strong>Resultado de Prueba:</strong> Los KPI (Ticket promedio, Ingresos) se recalculan
+                    dinámicamente según el rango.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+        <div class="test-case">
+            <h4>Escenario 6: Gestión de Stock Crítico - Alertas</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Activación de banderas de reposición.</li>
+                <li><strong>Procedimiento:</strong> Reducir el stock de un producto por debajo de su "Stock Mínimo"
+                    configurado.</li>
+                <li><strong>Resultado de Prueba:</strong> El sistema resalta el ítem en rojo en la tabla de inventario y
+                    genera una alerta visual.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+        <div class="test-case">
+            <h4>Escenario 7: Seguridad - Control de Estado de Usuario</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Restricción de acceso a cuentas desactivadas (Baja Lógica).</li>
+                <li><strong>Procedimiento:</strong> Cambiar estado a "Inactivo" desde el admin e intentar login con esa
+                    cuenta.</li>
+                <li><strong>Resultado de Prueba:</strong> El sistema rechaza la autenticación informando que la cuenta
+                    está deshabilitada.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+        <div class="test-case">
+            <h4>Escenario 8: Integridad de Reportes - Consolidación de Ventas</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Sumatoria mixta (Manual + Online).</li>
+                <li><strong>Procedimiento:</strong> Registrar una venta física y una por web en el mismo día.</li>
+                <li><strong>Resultado de Prueba:</strong> El reporte diario del Dashboard refleja con exactitud la suma
+                    de ambos canales de venta.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+        <div class="test-case">
+            <h4>Escenario 9: Reglas de Fidelización - Canje de Puntos</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Aplicación de descuentos por puntos acumulados.</li>
+                <li><strong>Procedimiento:</strong> Realizar una compra utilizando los puntos de fidelidad de un cliente
+                    frecuente.</li>
+                <li><strong>Resultado de Prueba:</strong> El sistema descuenta correctamente el monto equivalente y
+                    actualiza el saldo de puntos.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+        <div class="test-case">
+            <h4>Escenario 10: Persistencia de Sesión - Carrito Persistente</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Recuperación de estado tras refresco o logout.</li>
+                <li><strong>Procedimiento:</strong> Añadir ítems al carrito, cerrar sesión y volver a ingresar.</li>
+                <li><strong>Resultado de Prueba:</strong> Los productos permanecen en el carrito gracias a la
+                    persistencia en base de datos vinculada al usuario.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+        <div class="test-case">
+            <h4>Escenario 11: Auditoría - Trazabilidad de Ajustes Manuales</h4>
+            <ul>
+                <li><strong>Caso de Prueba:</strong> Registro detallado de cambios en inventario (Log).</li>
+                <li><strong>Procedimiento:</strong> Realizar un ajuste manual de stock indicando un motivo de "Rotura".
+                </li>
+                <li><strong>Resultado de Prueba:</strong> Se genera una entrada en la tabla de auditoría con fecha,
+                    hora, admin responsable y el motivo especificado.</li>
+                <li><strong>Estado:</strong> <span class="status-pass">Aprobado</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <hr>
+
     <h2>3. Informe Tecnológico</h2>
-    <p>El proyecto experimentó una migración de su pauta de tecnologías teóricas a implementaciones finales
-        empresariales optimizadas a fin de asegurar tanto escalabilidad vertical como horizontal ante demandas reales,
-        resultando en:</p>
-    <ul>
-        <li>
-            <p><strong>Frontend Arquitectura React/Next</strong>:
-                Se empleó <strong>Next.js</strong> impulsando React con el poderoso supra-lenguaje
-                <strong>TypeScript</strong>. Abarcando un sistema altamente reactivo de estado donde variables del
-                carrito, validaciones interactivas, y visualizaciones del catálogo actualizan de manera asíncrona la
-                vista (Virtual-DOM) al instante de las llamadas REST a la API sin recargar la página. Para el estilado
-                de impacto visual limpio, se aplicó íntegramente la utilidad atómica de <strong>Tailwind CSS</strong>.
+
+    <div class="tech-grid">
+        <div class="tech-item">
+            <h4>Frontend: Next.js + TypeScript</h4>
+            <p>Se implementó una arquitectura basada en <strong>Next.js</strong> que permite renderizado híbrido y una
+                navegación fluida. El uso de <strong>TypeScript</strong> garantiza la integridad de los datos mediante
+                tipado estático, reduciendo errores en tiempo de ejecución. Para el diseño, se utilizó <strong>Tailwind
+                    CSS</strong>, lo que permite una interfaz responsiva y altamente personalizada sin sobrecargar el
+                bundle del cliente.</p>
+        </div>
+        <div class="tech-item">
+            <h4>Backend: Spring Boot 3.x</h4>
+            <p>El núcleo del sistema está desarrollado en <strong>Java 17</strong> utilizando <strong>Spring
+                    Boot</strong>. Se adoptó una arquitectura en capas (Controlador, Servicio, Repositorio) para
+                asegurar el desacoplamiento de la lógica de negocio. Se hace uso intensivo de anotaciones como
+                <code>@Transactional</code> para garantizar la atomicidad de las operaciones críticas (ventas y ajustes
+                de stock).
             </p>
-        </li>
-        <li>
-            <p><strong>Backend Enterprise</strong>:
-                En lugar del enfoque inicial propuesto basado en Node.js, para un proyecto que contempla transacciones
-                financieras, control estricto relacional y requerimientos de seguridad bancarios; fue natural inclinar
-                el desarrollo hacia <strong>Java 17</strong> bajo la tutela del Framework <strong>Spring Boot</strong>.
-                Spring sirvió como un núcleo con Inversión de Control. Proveyó rutinas transaccionales fiables (vía
-                <code>@Transactional</code>) esenciales para garantizar que si un movimiento de stock colisiona o la
-                pasarela de pago responde fallos, ningún ítem en la base de datos sea debitado en un estado intermedio
-                (Principio de Aislamiento ACID).
+        </div>
+        <div class="tech-item">
+            <h4>Seguridad: JWT & BCrypt</h4>
+            <p>La protección de la plataforma se basa en <strong>Spring Security</strong>. Se implementó autenticación
+                <strong>JWT (JSON Web Tokens)</strong> para el manejo de sesiones sin estado (Stateless), permitiendo
+                una escalabilidad superior. Las contraseñas se protegen mediante el algoritmo <strong>BCrypt</strong>,
+                garantizando que los datos sensibles nunca se almacenen en texto plano.
             </p>
-        </li>
-        <li>
-            <p><strong>Gestión de Sesiones Seguras y Capacidad a Pruebas de Ciberataque</strong>:
-                Validación mediante cifrado fuerte (<code>BCrypt</code>). Descartamos gestiones de sesión propensas a
-                interceptores vía inyecciones XSS tradicionales, adoptando el estándar global de <strong>Autenticación
-                    sin Estado basado en Json Web Tokens (JWT)</strong> que firman e incluyen los privilegios de los
-                usuarios (<code>Roles</code>) para las aprobaciones de Spring Security MVC en tiempo de procesamiento.
-            </p>
-        </li>
-        <li>
-            <p><strong>Base de Datos Unificada</strong>:
-                Las interacciones fueron integradas nativamente mapeadas con la interfaz de persistencia Java (JPA /
-                Hibernate) directo al motor transaccional de uso libre más poderoso mundialmente:
-                <strong>PostgreSQL</strong>. Permitiendo una arquitectura en la nube escalable para la centralización
-                unívoca de usuarios, recetas de componentes e información financiera.
-            </p>
-        </li>
-    </ul>
+        </div>
+        <div class="tech-item">
+            <h4>Persistencia: PostgreSQL & Hibernate</h4>
+            <p>Como motor de base de datos se eligió <strong>PostgreSQL</strong> por su robustez y soporte para
+                transacciones complejas. La interacción se realiza mediante <strong>Hibernate (JPA)</strong>, lo que
+                permite un mapeo objeto-relacional (ORM) limpio y facilita la portabilidad y el mantenimiento del
+                esquema de datos.</p>
+        </div>
+        <div class="tech-item">
+            <h4>Integraciones: MercadoPago API</h4>
+            <p>Para el módulo de E-commerce, se integró la SDK de <strong>MercadoPago</strong>, permitiendo un flujo de
+                cobro seguro y profesional que incluye notificaciones por Webhooks para la actualización automática del
+                estado de las ventas.</p>
+        </div>
+    </div>
+
+    <hr>
 
 </body>
 

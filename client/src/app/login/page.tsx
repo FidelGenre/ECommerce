@@ -16,8 +16,8 @@ export default function LoginPage() {
         setError(''); setLoading(true)
         try {
             await login(username, password)
-        } catch {
-            setError('Usuario o contraseña incorrectos.')
+        } catch (e: any) {
+            setError(e.message || 'Usuario o contraseña incorrectos.')
         } finally {
             setLoading(false)
         }
