@@ -50,7 +50,6 @@ public class CustomerController {
                         cb.isNull(root.get("user")),
                         cb.equal(root.get("user").get("role"), role)));
             } else {
-                // Default: Exclude ADMINs from the customer management list
                 predicates.add(cb.or(
                         cb.isNull(root.get("user")),
                         cb.notEqual(root.get("user").get("role"), "ADMIN")));

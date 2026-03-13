@@ -113,10 +113,6 @@ public class AuthController {
         if (user == null)
             return ResponseEntity.notFound().build();
         com.store.api.entity.Customer c = customerRepo.findByEmail(user.getEmail()).orElseGet(() -> {
-            // Only auto-create for CLIENTE/CUSTOMER roles
-            if (!"CLIENTE".equals(user.getRole()) && !"CUSTOMER".equals(user.getRole())) {
-                return null;
-            }
             com.store.api.entity.Customer nc = new com.store.api.entity.Customer();
             nc.setEmail(user.getEmail());
             String[] parts = user.getUsername().split(" ", 2);
@@ -142,10 +138,6 @@ public class AuthController {
         if (user == null)
             return ResponseEntity.notFound().build();
         com.store.api.entity.Customer c = customerRepo.findByEmail(user.getEmail()).orElseGet(() -> {
-            // Only auto-create for CLIENTE/CUSTOMER roles
-            if (!"CLIENTE".equals(user.getRole()) && !"CUSTOMER".equals(user.getRole())) {
-                return null;
-            }
             com.store.api.entity.Customer nc = new com.store.api.entity.Customer();
             nc.setEmail(user.getEmail());
             return customerRepo.save(nc);

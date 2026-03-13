@@ -87,53 +87,59 @@ export default function StatusesSettingsPage() {
                     {title}
                 </h2>
                 <div className="card p-0 overflow-hidden shadow-sm border border-muted">
-                    <div className="overflow-x-auto">
+                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th className="w-16 pl-6"># ID</th>
-                                    <th>Uso (IDs {isSale ? 'Ventas' : 'Compras'})</th>
+                                    <th className="pl-6">Operación / Uso</th>
                                     <th>Estado</th>
                                     <th>Tipo</th>
-                                    <th>Creador</th>
                                     <th className="text-right pr-6">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {statuses.map(s => (
-                                    <tr key={s.id}>
-                                        <td className="pl-6 font-mono text-xs text-primary-400">#{s.id}</td>
-                                        <td className="py-3">
-                                            <div className="flex flex-wrap gap-1">
-                                                {usage[s.id]?.length > 0 ? (
-                                                    usage[s.id].map(id => (
-                                                        <span key={id} className="font-mono text-[10px] bg-primary-50 text-primary-600 px-1.5 py-0.5 rounded border border-primary-100">
-                                                            #{id}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span className="text-[10px] text-primary-300 italic">Sin uso</span>
-                                                )}
+                                {statuses.flatMap((s): { status: OperationStatus; opId: number | null }[] => {
+                                    const ids = usage[s.id] || [];
+                                    if (ids.length === 0) {
+                                        return [{ status: s, opId: null }];
+                                    }
+                                    return ids.map(id => ({ status: s, opId: id }));
+                                }).map((item, idx) => (
+                                    <tr key={`${item.status.id}-${item.opId || idx}`}>
+                                        <td className="pl-6 py-4">
+                                            {item.opId ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-mono text-xs bg-espresso text-white px-2 py-1 rounded shadow-sm font-bold">
+                                                        #{item.opId}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-primary-400 uppercase tracking-tighter">
+                                                        ID {isSale ? 'VENTA' : 'COMPRA'}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] text-primary-300 italic font-medium">Sin operaciones vinculadas</span>
+                                            )}
+                                        </td>
+                                        <td className="font-bold text-espresso">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${isSale ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+                                                {item.status.name}
                                             </div>
                                         </td>
-                                        <td className="font-semibold text-espresso">{s.name}</td>
                                         <td>
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${s.type === 'SALE' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                                                {s.type === 'SALE' ? 'Venta' : 'Compra / Comprador'}
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${item.status.type === 'SALE' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                {item.status.type === 'SALE' ? 'Ingreso' : 'Egreso'}
                                             </span>
-                                        </td>
-                                        <td className="text-sm font-medium text-primary-500">
-                                            {s.createdBy ? (s.createdBy.username ?? s.createdBy.email) : <span className="text-primary-300 italic font-normal text-xs">Sistema</span>}
                                         </td>
                                         <td className="pr-6">
                                             <div className="flex justify-end gap-1">
-                                                {isSale && s.name.toLowerCase().includes('pendiente') ? (
-                                                    <button onClick={() => openEdit(s)} title="Editar nombre" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400 transition-colors">
+                                                {isSale && item.status.name.toLowerCase().includes('pendiente') ? (
+                                                    <button onClick={() => openEdit(item.status)} title="Configurar etiqueta" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400 transition-colors">
                                                         <Edit className="w-4 h-4" />
                                                     </button>
                                                 ) : (
-                                                    <span className="text-[10px] font-bold text-primary-300 uppercase px-1.5 py-1" title={!isSale ? "Los estados de compra son de solo lectura" : "Solo se puede editar el estado inicial de venta"}>
-                                                        Solo Lectura
+                                                    <span className="text-[9px] font-black text-primary-200 uppercase px-2 py-1 tracking-widest border border-muted rounded" title="Solo el estado inicial es configurable">
+                                                        Bloqueado
                                                     </span>
                                                 )}
                                             </div>
@@ -142,7 +148,7 @@ export default function StatusesSettingsPage() {
                                 ))}
                                 {statuses.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="text-center py-12 text-primary-400">No hay estados configurados</td>
+                                        <td colSpan={4} className="text-center py-12 text-primary-400">No hay estados configurados</td>
                                     </tr>
                                 )}
                             </tbody>

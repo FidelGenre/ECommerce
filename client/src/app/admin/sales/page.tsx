@@ -27,7 +27,8 @@ export default function SalesPage() {
     const [fromDate, setFromDate] = useState('')
     const [toDate, setToDate] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
-    const [customerFilter, setCustomerFilter] = useState('')
+    const [buyerFilter, setBuyerFilter] = useState('')
+    const [vendedorFilter, setVendedorFilter] = useState('')
     const [orderCategoryFilter, setOrderCategoryFilter] = useState('')
 
     // Sort
@@ -37,6 +38,7 @@ export default function SalesPage() {
     // Reference data
     const [statuses, setStatuses] = useState<OperationStatus[]>([])
     const [customers, setCustomers] = useState<Customer[]>([])
+    const [users, setUsers] = useState<any[]>([])
     const [payments, setPayments] = useState<PaymentMethod[]>([])
     const [items, setItems] = useState<Item[]>([])
     const [categories, setCategories] = useState<any[]>([])
@@ -60,13 +62,14 @@ export default function SalesPage() {
         if (fromDate) params.set('from', fromDate + 'T00:00:00')
         if (toDate) params.set('to', toDate + 'T23:59:59')
         if (statusFilter) params.set('status', statusFilter)
-        if (customerFilter) params.set('customer', customerFilter)
+        if (buyerFilter) params.set('buyer', buyerFilter)
+        if (vendedorFilter) params.set('seller', vendedorFilter)
         if (orderCategoryFilter) params.set('category', orderCategoryFilter)
         if (q) params.set('q', q)
         if (sortField) params.set('sort', sortField)
         if (sortDir) params.set('dir', sortDir.toUpperCase())
         return `/api/admin/sales?${params}`
-    }, [page, fromDate, toDate, statusFilter, customerFilter, orderCategoryFilter, q, sortField, sortDir])
+    }, [page, fromDate, toDate, statusFilter, buyerFilter, vendedorFilter, orderCategoryFilter, q, sortField, sortDir])
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -80,25 +83,23 @@ export default function SalesPage() {
     useEffect(() => {
         Promise.all([
             api.get('/api/admin/settings/statuses?type=SALE'),
-            api.get('/api/admin/customers?size=500&active=true'),
+            api.get('/api/admin/customers?size=500'),
             api.get('/api/admin/settings/payment-methods'),
             api.get('/api/admin/items?size=200'),
             api.get('/api/admin/categories?type=PRODUCT'),
-        ]).then(([s, c, pm, it, cats]) => {
+            api.get('/api/admin/users?size=500&active=true'),
+        ]).then(([s, c, pm, it, cats, u]) => {
             setStatuses(s.data);
-            // Only filter out the literal "admin" user
-            const filteredCustomers = (c.data?.content || []).filter((cust: any) =>
-                cust.firstName?.toLowerCase() !== 'admin' && cust.user?.username?.toLowerCase() !== 'admin'
-            );
-            setCustomers(filteredCustomers);
+            setCustomers(c.data?.content || []);
             setPayments(pm.data);
             setItems(it.data.content)
             setCategories(cats.data)
+            setUsers(u.data?.content || [])
         }).catch(err => console.error('Error loading sales reference data:', err))
     }, [])
 
     const resetFilters = () => {
-        setFromDate(''); setToDate(''); setStatusFilter(''); setCustomerFilter(''); setOrderCategoryFilter(''); setQ(''); setPage(0)
+        setFromDate(''); setToDate(''); setStatusFilter(''); setBuyerFilter(''); setVendedorFilter(''); setOrderCategoryFilter(''); setQ(''); setPage(0)
     }
 
     const toggleSort = (field: SortField) => {
@@ -209,14 +210,15 @@ export default function SalesPage() {
         ))
     ).filter(s => !HIDDEN_STATUSES.includes(s.name));
 
-    const hasFilters = !!fromDate || !!toDate || !!statusFilter || !!customerFilter || !!orderCategoryFilter || !!q
+    const hasFilters = !!fromDate || !!toDate || !!statusFilter || !!buyerFilter || !!vendedorFilter || !!orderCategoryFilter || !!q
 
-    const currentFilters = { fromDate, toDate, statusFilter, customerFilter, orderCategoryFilter, q }
+    const currentFilters = { fromDate, toDate, statusFilter, buyerFilter, vendedorFilter, orderCategoryFilter, q }
     const handleLoadFilters = (f: Record<string, any>) => {
         setFromDate(f.fromDate || '')
         setToDate(f.toDate || '')
         setStatusFilter(f.statusFilter || '')
-        setCustomerFilter(f.customerFilter || '')
+        setBuyerFilter(f.buyerFilter || '')
+        setVendedorFilter(f.vendedorFilter || '')
         setOrderCategoryFilter(f.orderCategoryFilter || '')
         setQ(f.q || '')
         setPage(0)
@@ -244,7 +246,7 @@ export default function SalesPage() {
 
             {/* Filter bar */}
             <div className="card p-4">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                     <div className="relative col-span-2 md:col-span-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
                         <input className="input pl-9 text-sm" placeholder="Buscar…" value={q} onChange={e => setQ(e.target.value)} />
@@ -255,9 +257,16 @@ export default function SalesPage() {
                         <option value="">Todos los estados</option>
                         {uniqueStatuses.map(s => <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>)}
                     </select>
-                    <select className="select text-sm" value={customerFilter} onChange={e => { setCustomerFilter(e.target.value); setPage(0) }}>
-                        <option value="">Todos los clientes</option>
-                        {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+                    <select className="select text-sm" value={buyerFilter} onChange={e => { setBuyerFilter(e.target.value); setPage(0) }}>
+                        <option value="">Todos los compradores</option>
+                        <option value="-1">Sin asignar (-)</option>
+                        {customers.map(c => <option key={`c-${c.id}`} value={c.id}>{c.firstName} {c.lastName ?? ''}</option>)}
+                        {users.map(u => <option key={`u-${u.id}`} value={u.id}>{u.username} ({u.role})</option>)}
+                    </select>
+                    <select className="select text-sm" value={vendedorFilter} onChange={e => { setVendedorFilter(e.target.value); setPage(0) }}>
+                        <option value="">Todos los vendedores</option>
+                        <option value="-1">Sin asignar (-)</option>
+                        {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
                     </select>
                     <select className="select text-sm" value={orderCategoryFilter} onChange={e => { setOrderCategoryFilter(e.target.value); setPage(0) }}>
                         <option value="">Todas las categorías</option>
@@ -307,7 +316,7 @@ export default function SalesPage() {
                                                 {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                                             </button></td>
                                             <td className="font-mono text-primary-400">#{o.id}</td>
-                                            <td>{o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : <span className="text-primary-300">Sin usuario</span>}</td>
+                                            <td>{o.customer ? `${o.customer.firstName} ${o.customer.lastName ?? ''}` : (o.createdBy?.username ?? o.createdBy?.email ?? <span className="text-primary-300">Sin usuario</span>)}</td>
                                             <td>{o.createdBy ? <span className="text-primary-600">{o.createdBy.username ?? o.createdBy.email}</span> : <span className="text-primary-300">Web</span>}</td>
                                             <td>
                                                 <select
@@ -392,7 +401,7 @@ export default function SalesPage() {
                                                 <label className="block text-sm font-medium text-primary-700 mb-1">Comprador</label>
                                                 <select className="select" value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value, pointsUsed: '0' })}>
                                                     <option value="">Consumidor Final / Sin usuario</option>
-                                                    {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+                                                    {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName ?? ''}</option>)}
                                                 </select>
                                             </div>
                                             <div>

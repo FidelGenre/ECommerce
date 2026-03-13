@@ -38,7 +38,8 @@ public class SaleController {
     public ResponseEntity<Page<SaleOrder>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) Long customer,
+            @RequestParam(required = false) Long buyer,
+            @RequestParam(required = false) Long seller,
             @RequestParam(required = false) Long status,
             @RequestParam(required = false) Long category,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
@@ -46,12 +47,31 @@ public class SaleController {
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "createdAt") String sort,
             @RequestParam(defaultValue = "DESC") String dir) {
+        System.err.println("SALES LIST REQUEST: buyer=" + buyer + ", q=" + q + ", seller=" + seller);
         Sort.Direction direction = dir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort));
         Specification<SaleOrder> spec = (root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
-            if (customer != null)
-                predicates.add(cb.equal(root.get("customer").get("id"), customer));
+            if (buyer != null) {
+                if (buyer == -1) {
+                    predicates.add(cb.isNull(root.get("customer")));
+                } else {
+                    // Use a left join to ensure rows with null customers are not excluded by an
+                    // implicit inner join
+                    jakarta.persistence.criteria.Join<SaleOrder, Customer> customerJoin = root.join("customer",
+                            jakarta.persistence.criteria.JoinType.LEFT);
+                    predicates.add(cb.or(
+                            cb.equal(customerJoin.get("id"), buyer),
+                            cb.and(cb.isNull(root.get("customer")), cb.equal(root.get("createdBy").get("id"), buyer))));
+                }
+            }
+            if (seller != null) {
+                if (seller == -1) {
+                    predicates.add(cb.isNull(root.get("createdBy")));
+                } else {
+                    predicates.add(cb.equal(root.get("createdBy").get("id"), seller));
+                }
+            }
             if (status != null)
                 predicates.add(cb.equal(root.get("status").get("id"), status));
             if (category != null) {

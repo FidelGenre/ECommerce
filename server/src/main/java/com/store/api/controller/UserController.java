@@ -87,23 +87,28 @@ public class UserController {
         user.setEmail(req.getEmail());
         user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         user.setRole(req.getRole() != null ? req.getRole() : "CLIENTE");
-        user = userRepo.save(user);
+        final User savedUser = userRepo.save(user);
 
-        // Auto-create customer profile for web users
-        if ("CLIENTE".equals(user.getRole())) {
-            com.store.api.entity.Customer c = new com.store.api.entity.Customer();
-            c.setUser(user);
-            c.setEmail(user.getEmail());
+        // Auto-create customer profile for all users
+        if (true) {
+            com.store.api.entity.Customer c = customerRepo.findByUserId(savedUser.getId())
+                    .orElseGet(() -> customerRepo.findByEmail(savedUser.getEmail())
+                            .orElse(new com.store.api.entity.Customer()));
+
+            c.setUser(savedUser);
+            c.setEmail(savedUser.getEmail());
             c.setFirstName(req.getFirstName() != null && !req.getFirstName().isBlank() ? req.getFirstName()
-                    : user.getUsername());
+                    : savedUser.getUsername());
             c.setLastName(req.getLastName());
             c.setPhone(req.getPhone());
             c.setAddress(req.getAddress());
             c.setTaxId(req.getTaxId());
+            if (req.getLoyaltyPoints() != null)
+                c.setLoyaltyPoints(req.getLoyaltyPoints());
             customerRepo.save(c);
         }
 
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(savedUser);
     }
 
     @PutMapping("/{id}")
@@ -124,11 +129,13 @@ public class UserController {
 
             User savedUser = userRepo.save(u);
 
-            // Sync Customer profile if applicable
-            if ("CLIENTE".equals(savedUser.getRole())) {
-                com.store.api.entity.Customer c = savedUser.getCustomer();
-                if (c == null) {
-                    c = new com.store.api.entity.Customer();
+            // Sync Customer profile for all roles
+            if (true) {
+                com.store.api.entity.Customer c = customerRepo.findByUserId(savedUser.getId())
+                        .orElseGet(() -> customerRepo.findByEmail(savedUser.getEmail())
+                                .orElse(new com.store.api.entity.Customer()));
+
+                if (c.getUser() == null) {
                     c.setUser(savedUser);
                 }
                 c.setEmail(savedUser.getEmail());
@@ -142,7 +149,9 @@ public class UserController {
                     c.setAddress(req.getAddress());
                 if (req.getTaxId() != null)
                     c.setTaxId(req.getTaxId());
-                customerRepo.save(c);
+                if (req.getLoyaltyPoints() != null)
+                    c.setLoyaltyPoints(req.getLoyaltyPoints());
+                customerRepo.saveAndFlush(c);
             }
 
             return ResponseEntity.ok(savedUser);
@@ -232,6 +241,7 @@ public class UserController {
         private String phone;
         private String address;
         private String taxId;
+        private Integer loyaltyPoints;
     }
 
     @Data

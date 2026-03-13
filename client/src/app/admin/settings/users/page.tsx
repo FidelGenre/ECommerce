@@ -258,44 +258,39 @@ export default function UsersSettingsPage() {
                                 </select>
                             </div>
 
-                            {form.role === 'CLIENTE' && (
-                                <>
-                                    <hr className="border-t border-muted my-4" />
-                                    <h3 className="text-sm font-bold text-espresso mb-2">Datos Personales (CRM)</h3>
+                            <hr className="border-t border-muted my-4" />
+                            <h3 className="text-sm font-bold text-espresso mb-2">Datos Personales (CRM)</h3>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-primary-700 mb-1">Nombre</label>
-                                            <input className="input" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-primary-700 mb-1">Apellido</label>
-                                            <input className="input" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-primary-700 mb-1">Teléfono</label>
-                                            <input className="input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-primary-700 mb-1">DNI / CUIT</label>
-                                            <input className="input" value={form.taxId} onChange={e => setForm({ ...form, taxId: e.target.value })} />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-primary-700 mb-1">Dirección</label>
-                                            <input className="input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-primary-700 mb-1">Puntos de Fidelización</label>
-                                            <input type="number" className="input" min="0" value={form.loyaltyPoints} onChange={e => setForm({ ...form, loyaltyPoints: parseInt(e.target.value) || 0 })} />
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-primary-700 mb-1">Nombre</label>
+                                    <input className="input" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-primary-700 mb-1">Apellido</label>
+                                    <input className="input" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-primary-700 mb-1">Teléfono</label>
+                                    <input className="input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-primary-700 mb-1">DNI / CUIT</label>
+                                    <input className="input" value={form.taxId} onChange={e => setForm({ ...form, taxId: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-primary-700 mb-1">Dirección</label>
+                                    <input className="input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-primary-700 mb-1">Puntos de Fidelización</label>
+                                    <input type="number" className="input" min="0" value={form.loyaltyPoints} onChange={e => setForm({ ...form, loyaltyPoints: parseInt(e.target.value) || 0 })} />
+                                </div>
+                            </div>
                             <div className="flex gap-2 pt-4">
                                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1 py-2 text-sm shadow-sm">Cancelar</button>
                                 <button type="submit" className="btn-primary flex-1 py-2 text-sm shadow-sm" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
