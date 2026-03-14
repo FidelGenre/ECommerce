@@ -63,17 +63,18 @@ export default function StatusesSettingsPage() {
         load()
     }
 
-    const salesStatuses = data.filter(s => s.type === 'SALE')
+    const SALE_STATUS_HIDDEN = ['Reservado', 'Reserved']
+    const filteredSalesStatuses = data.filter(s => s.type === 'SALE' && !SALE_STATUS_HIDDEN.includes(s.name))
     const purchaseStatuses = data.filter(s => s.type === 'PURCHASE')
 
     const StatusTable = ({ title, statuses, isSale }: { title: string; statuses: OperationStatus[]; isSale: boolean }) => {
-        const [usageCount, setUsageCount] = useState<{ [key: number]: number }>({})
+        const [usage, setUsage] = useState<{ [key: number]: number[] }>({})
 
         useEffect(() => {
             statuses.forEach(async (s) => {
                 try {
                     const r = await api.get(`/api/admin/settings/statuses/${s.id}/usage`)
-                    setUsageCount(prev => ({ ...prev, [s.id]: (r.data.ids || []).length }))
+                    setUsage(prev => ({ ...prev, [s.id]: r.data.ids || [] }))
                 } catch (e) {
                     console.error("Error fetching usage for status", s.id, e)
                 }
@@ -87,42 +88,55 @@ export default function StatusesSettingsPage() {
                     {title}
                 </h2>
                 <div className="card p-0 overflow-hidden shadow-sm border border-muted">
-                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                    <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th className="pl-6">Nombre del Estado</th>
-                                    <th>Uso total</th>
+                                    <th className="pl-6">Operación / Uso</th>
+                                    <th>Estado</th>
                                     <th>Tipo</th>
                                     <th className="text-right pr-6">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {statuses.map((s) => (
-                                    <tr key={s.id}>
+                                {statuses.flatMap((s): { status: OperationStatus; opId: number | null }[] => {
+                                    const ids = usage[s.id] || [];
+                                    if (ids.length === 0) return [{ status: s, opId: null }];
+                                    return ids.map(id => ({ status: s, opId: id }));
+                                }).map((item, idx) => (
+                                    <tr key={`${item.status.id}-${item.opId ?? idx}`}>
                                         <td className="pl-6 py-4">
+                                            {item.opId != null ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-mono text-xs bg-espresso text-white px-2 py-1 rounded shadow-sm font-bold">
+                                                        #{item.opId}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-primary-400 uppercase tracking-tighter">
+                                                        ID {isSale ? 'VENTA' : 'COMPRA'}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] text-primary-300 italic font-medium">Sin operaciones vinculadas</span>
+                                            )}
+                                        </td>
+                                        <td className="font-bold text-espresso">
                                             <div className="flex items-center gap-2">
-                                                <div className={`w-2.5 h-2.5 rounded-full`} style={{ backgroundColor: s.color || (isSale ? '#10b981' : '#3b82f6') }} />
-                                                <span className="font-bold text-espresso">{s.name}</span>
+                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.status.color || (isSale ? '#10b981' : '#3b82f6') }} />
+                                                {item.status.name}
                                             </div>
                                         </td>
                                         <td>
-                                            <span className="text-xs font-mono bg-primary-50 text-primary-600 px-2 py-1 rounded border border-primary-100">
-                                                {usageCount[s.id] || 0} operaciones
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${s.type === 'SALE' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                                                {s.type === 'SALE' ? 'Ingreso' : 'Egreso'}
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${item.status.type === 'SALE' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                {item.status.type === 'SALE' ? 'Ingreso' : 'Egreso'}
                                             </span>
                                         </td>
                                         <td className="pr-6">
                                             <div className="flex justify-end gap-1">
-                                                <button onClick={() => openEdit(s)} title="Editar nombre de etiqueta" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400 transition-colors">
+                                                <button onClick={() => openEdit(item.status)} title="Editar etiqueta" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400 transition-colors">
                                                     <Edit className="w-4 h-4" />
                                                 </button>
-                                                {(usageCount[s.id] || 0) === 0 && (
-                                                    <button onClick={() => handleDelete([s.id])} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
+                                                {item.opId == null && (
+                                                    <button onClick={() => handleDelete([item.status.id])} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
@@ -159,7 +173,7 @@ export default function StatusesSettingsPage() {
                 <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div>
             ) : (
                 <>
-                    <StatusTable title="Ventas (Ingresos)" statuses={salesStatuses} isSale={true} />
+                    <StatusTable title="Ventas (Ingresos)" statuses={filteredSalesStatuses} isSale={true} />
                     <StatusTable title="Compras (Egresos)" statuses={purchaseStatuses} isSale={false} />
                 </>
             )}
