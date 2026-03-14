@@ -100,7 +100,7 @@ export default function StatusesSettingsPage() {
                             </thead>
                             <tbody>
                                 {statuses.flatMap((s): { status: OperationStatus; opId: number | null }[] => {
-                                    const ids = usage[s.id] || [];
+                                    const ids = [...(usage[s.id] || [])].sort((a, b) => b - a);
                                     if (ids.length === 0) return [{ status: s, opId: null }];
                                     return ids.map(id => ({ status: s, opId: id }));
                                 }).map((item, idx) => (
