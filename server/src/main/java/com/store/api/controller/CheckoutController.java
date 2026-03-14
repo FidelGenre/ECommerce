@@ -122,10 +122,15 @@ public class CheckoutController {
             // Build and save pending SaleOrder first to get its ID
             SaleOrder order = new SaleOrder();
 
-            statusRepo.findByType("SALE").stream()
+            List<OperationStatus> saleStatuses = statusRepo.findByType("SALE");
+            saleStatuses.stream()
                     .filter(s -> s.getName().equalsIgnoreCase("PENDIENTE") || s.getName().equalsIgnoreCase("PENDING"))
                     .findFirst()
-                    .ifPresent(order::setStatus);
+                    .ifPresentOrElse(order::setStatus, () -> {
+                        if (!saleStatuses.isEmpty()) {
+                            order.setStatus(saleStatuses.get(0));
+                        }
+                    });
 
             paymentMethodRepo.findAll().stream()
                     .filter(p -> p.getName().toLowerCase().contains("mercado"))

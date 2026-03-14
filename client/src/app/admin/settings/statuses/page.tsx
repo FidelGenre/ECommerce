@@ -67,13 +67,13 @@ export default function StatusesSettingsPage() {
     const purchaseStatuses = data.filter(s => s.type === 'PURCHASE')
 
     const StatusTable = ({ title, statuses, isSale }: { title: string; statuses: OperationStatus[]; isSale: boolean }) => {
-        const [usage, setUsage] = useState<{ [key: number]: number[] }>({})
+        const [usageCount, setUsageCount] = useState<{ [key: number]: number }>({})
 
         useEffect(() => {
             statuses.forEach(async (s) => {
                 try {
                     const r = await api.get(`/api/admin/settings/statuses/${s.id}/usage`)
-                    setUsage(prev => ({ ...prev, [s.id]: r.data.ids }))
+                    setUsageCount(prev => ({ ...prev, [s.id]: (r.data.ids || []).length }))
                 } catch (e) {
                     console.error("Error fetching usage for status", s.id, e)
                 }
@@ -91,56 +91,40 @@ export default function StatusesSettingsPage() {
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th className="pl-6">Operación / Uso</th>
-                                    <th>Estado</th>
+                                    <th className="pl-6">Nombre del Estado</th>
+                                    <th>Uso total</th>
                                     <th>Tipo</th>
                                     <th className="text-right pr-6">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {statuses.flatMap((s): { status: OperationStatus; opId: number | null }[] => {
-                                    const ids = usage[s.id] || [];
-                                    if (ids.length === 0) {
-                                        return [{ status: s, opId: null }];
-                                    }
-                                    return ids.map(id => ({ status: s, opId: id }));
-                                }).map((item, idx) => (
-                                    <tr key={`${item.status.id}-${item.opId || idx}`}>
+                                {statuses.map((s) => (
+                                    <tr key={s.id}>
                                         <td className="pl-6 py-4">
-                                            {item.opId ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-mono text-xs bg-espresso text-white px-2 py-1 rounded shadow-sm font-bold">
-                                                        #{item.opId}
-                                                    </span>
-                                                    <span className="text-[10px] font-bold text-primary-400 uppercase tracking-tighter">
-                                                        ID {isSale ? 'VENTA' : 'COMPRA'}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-[10px] text-primary-300 italic font-medium">Sin operaciones vinculadas</span>
-                                            )}
-                                        </td>
-                                        <td className="font-bold text-espresso">
                                             <div className="flex items-center gap-2">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${isSale ? 'bg-emerald-500' : 'bg-blue-500'}`} />
-                                                {item.status.name}
+                                                <div className={`w-2.5 h-2.5 rounded-full`} style={{ backgroundColor: s.color || (isSale ? '#10b981' : '#3b82f6') }} />
+                                                <span className="font-bold text-espresso">{s.name}</span>
                                             </div>
                                         </td>
                                         <td>
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${item.status.type === 'SALE' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                                                {item.status.type === 'SALE' ? 'Ingreso' : 'Egreso'}
+                                            <span className="text-xs font-mono bg-primary-50 text-primary-600 px-2 py-1 rounded border border-primary-100">
+                                                {usageCount[s.id] || 0} operaciones
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${s.type === 'SALE' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                {s.type === 'SALE' ? 'Ingreso' : 'Egreso'}
                                             </span>
                                         </td>
                                         <td className="pr-6">
                                             <div className="flex justify-end gap-1">
-                                                {!(item.status.name === 'Completado' || item.status.name === 'Cancelado') ? (
-                                                    <button onClick={() => openEdit(item.status)} title="Configurar etiqueta" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400 transition-colors">
-                                                        <Edit className="w-4 h-4" />
+                                                <button onClick={() => openEdit(s)} title="Editar nombre de etiqueta" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400 transition-colors">
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                {(usageCount[s.id] || 0) === 0 && (
+                                                    <button onClick={() => handleDelete([s.id])} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
+                                                        <Trash2 className="w-4 h-4" />
                                                     </button>
-                                                ) : (
-                                                    <span className="text-[9px] font-black text-primary-200 uppercase px-2 py-1 tracking-widest border border-muted rounded" title="Solo el estado inicial es configurable">
-                                                        Bloqueado
-                                                    </span>
                                                 )}
                                             </div>
                                         </td>

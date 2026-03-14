@@ -200,7 +200,8 @@ export default function SalesPage() {
     }
     const STATUS_LABELS: Record<string, string> = {
         Completed: 'Completado', Pending: 'Pendiente', Cancelled: 'Cancelado', Reserved: 'Reservado',
-        PENDING: 'Pendiente', COMPLETED: 'Completado', CANCELLED: 'Cancelado', RESERVED: 'Reservado'
+        PENDING: 'Pendiente', COMPLETED: 'Completado', CANCELLED: 'Cancelado', RESERVED: 'Reservado',
+        Approved: 'Aprobado', Aprobado: 'Aprobado', APPROVED: 'Aprobado'
     }
 
     const HIDDEN_STATUSES = ['Aprobado', 'Approved', 'Reserved', 'Reservado']
@@ -321,17 +322,18 @@ export default function SalesPage() {
                                             <td>
                                                 {(() => {
                                                     const s_ = o.status;
+                                                    const isLocked = s_?.name === 'Completado' || s_?.name === 'Cancelado';
                                                     return (
                                                         <select
-                                                            className={`input py-1 px-2 text-xs font-semibold w-auto ${s_?.name === 'Completado' || s_?.name === 'Cancelado' ? 'bg-primary-50 text-primary-500 border-transparent cursor-not-allowed appearance-none' : 'cursor-pointer'}`}
+                                                            className={`input py-1 px-2 text-xs font-semibold w-auto ${isLocked ? 'bg-primary-50 text-primary-500 border-transparent cursor-not-allowed appearance-none' : 'cursor-pointer'}`}
                                                             value={s_?.id || ''}
                                                             onChange={(e) => updateStatus(o.id, e.target.value)}
-                                                            disabled={s_?.name === 'Completado' || s_?.name === 'Cancelado'}
+                                                            disabled={isLocked}
                                                         >
                                                             {s_ && !uniqueStatuses.find(us => us.id === s_.id) && (
                                                                 <option value={s_.id}>{STATUS_LABELS[s_.name] || s_.name}</option>
                                                             )}
-                                                            <option value="" disabled>—</option>
+                                                            <option value="" disabled>{!s_ ? 'Pendiente' : '—'}</option>
                                                             {uniqueStatuses.map(s => (
                                                                 <option key={s.id} value={s.id}>{STATUS_LABELS[s.name] || s.name}</option>
                                                             ))}
