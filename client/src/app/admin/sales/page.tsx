@@ -322,10 +322,11 @@ export default function SalesPage() {
                                             <td>
                                                 {(() => {
                                                     const s_ = o.status;
-                                                    const isLocked = s_?.name === 'Completado' || s_?.name === 'Cancelado';
+                                                    const isPending = !s_ || s_?.name === 'Pendiente' || s_?.name === 'Pending' || s_?.name === 'PENDING';
+                                                    const isLocked = !isPending;
                                                     return (
                                                         <select
-                                                            className={`input py-1 px-2 text-xs font-semibold w-auto ${isLocked ? 'bg-primary-50 text-primary-500 border-transparent cursor-not-allowed appearance-none' : 'cursor-pointer'}`}
+                                                            className={`input py-1 px-2 text-xs font-semibold w-auto ${isLocked ? 'bg-primary-50 text-primary-500 border-transparent cursor-not-allowed' : 'cursor-pointer'}`}
                                                             value={s_?.id || ''}
                                                             onChange={(e) => updateStatus(o.id, e.target.value)}
                                                             disabled={isLocked}
