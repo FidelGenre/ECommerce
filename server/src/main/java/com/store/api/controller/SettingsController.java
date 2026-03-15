@@ -90,11 +90,25 @@ public class SettingsController {
     @GetMapping("/statuses/{id}/usage")
     public ResponseEntity<?> getStatusUsage(@PathVariable Long id) {
         return statusRepo.findById(id).map(s -> {
+            // Find all statuses of same type and same name (case-insensitive) to merge
+            // duplicate entries
+            List<OperationStatus> sameNameStatuses = statusRepo.findByType(s.getType()).stream()
+                    .filter(other -> other.getName().equalsIgnoreCase(s.getName()))
+                    .toList();
+
             if ("SALE".equals(s.getType())) {
-                List<Long> ids = saleRepo.findByStatusId(id).stream().map(SaleOrder::getId).toList();
+                List<Long> ids = sameNameStatuses.stream()
+                        .flatMap(st -> saleRepo.findByStatusId(st.getId()).stream())
+                        .map(SaleOrder::getId)
+                        .distinct()
+                        .toList();
                 return ResponseEntity.ok(java.util.Map.of("type", "SALE", "ids", ids));
             } else {
-                List<Long> ids = purchaseRepo.findByStatusId(id).stream().map(PurchaseOrder::getId).toList();
+                List<Long> ids = sameNameStatuses.stream()
+                        .flatMap(st -> purchaseRepo.findByStatusId(st.getId()).stream())
+                        .map(PurchaseOrder::getId)
+                        .distinct()
+                        .toList();
                 return ResponseEntity.ok(java.util.Map.of("type", "PURCHASE", "ids", ids));
             }
         }).orElse(ResponseEntity.notFound().build());

@@ -199,18 +199,26 @@ export default function SalesPage() {
         Completed: 'badge-green', Pending: 'badge-yellow', Cancelled: 'badge-red', Reserved: 'badge-blue'
     }
     const STATUS_LABELS: Record<string, string> = {
+        // English → Spanish
         Completed: 'Completado', Pending: 'Pendiente', Cancelled: 'Cancelado', Reserved: 'Reservado',
         PENDING: 'Pendiente', COMPLETED: 'Completado', CANCELLED: 'Cancelado', RESERVED: 'Reservado',
-        Approved: 'Aprobado', Aprobado: 'Aprobado', APPROVED: 'Aprobado'
+        Approved: 'Aprobado', APPROVED: 'Aprobado',
+        // Spanish self-mapping so label always resolves
+        Completado: 'Completado', Pendiente: 'Pendiente', Cancelado: 'Cancelado',
+        Aprobado: 'Aprobado', Reservado: 'Reservado',
     }
 
-    const HIDDEN_STATUSES = ['Aprobado', 'Approved', 'Reserved', 'Reservado']
+    const HIDE_NORM = new Set(['Aprobado', 'Reservado'])
 
-    const uniqueStatuses = statuses.filter((s, index, self) =>
-        index === self.findIndex((t) => (
-            (STATUS_LABELS[t.name] || t.name) === (STATUS_LABELS[s.name] || s.name)
-        ))
-    ).filter(s => !HIDDEN_STATUSES.includes(s.name));
+    // Deduplicate by normalized label, but always keep Pendiente
+    const seenLabels = new Set<string>()
+    const uniqueStatuses = statuses.filter(s => {
+        const label = STATUS_LABELS[s.name] || s.name
+        if (HIDE_NORM.has(label)) return false
+        if (seenLabels.has(label)) return false
+        seenLabels.add(label)
+        return true
+    })
 
     const hasFilters = !!fromDate || !!toDate || !!statusFilter || !!buyerFilter || !!vendedorFilter || !!orderCategoryFilter || !!q
 
