@@ -81,6 +81,28 @@ export default function StatusesSettingsPage() {
             })
         }, [statuses])
 
+        // Normalize name: map English → Spanish so duplicates are merged
+        const NORMALIZE: Record<string, string> = {
+            completed: 'Completado', completado: 'Completado',
+            pending: 'Pendiente', pendiente: 'Pendiente',
+            cancelled: 'Cancelado', cancelado: 'Cancelado',
+            approved: 'Aprobado', aprobado: 'Aprobado',
+        }
+        const normName = (s: OperationStatus) => NORMALIZE[s.name.toLowerCase()] ?? s.name
+
+        // Merge statuses with same normalized name → keep the first, combine all IDs
+        const mergedStatuses: { status: OperationStatus; allIds: number[] }[] = []
+        statuses.forEach(s => {
+            const key = normName(s)
+            const existing = mergedStatuses.find(m => normName(m.status) === key)
+            const ids = usage[s.id] || []
+            if (existing) {
+                existing.allIds = [...new Set([...existing.allIds, ...ids])]
+            } else {
+                mergedStatuses.push({ status: s, allIds: [...ids] })
+            }
+        })
+
         return (
             <div className="space-y-4">
                 <h2 className="text-lg font-bold text-espresso flex items-center gap-2 px-1">
@@ -99,8 +121,8 @@ export default function StatusesSettingsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {statuses.flatMap((s): { status: OperationStatus; opId: number | null }[] => {
-                                    const ids = [...(usage[s.id] || [])].sort((a, b) => b - a);
+                                {mergedStatuses.flatMap(({ status: s, allIds }): { status: OperationStatus; opId: number | null }[] => {
+                                    const ids = [...allIds].sort((a, b) => b - a);
                                     if (ids.length === 0) return [{ status: s, opId: null }];
                                     return ids.map(id => ({ status: s, opId: id }));
                                 }).map((item, idx) => (
@@ -122,7 +144,7 @@ export default function StatusesSettingsPage() {
                                         <td className="font-bold text-espresso">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.status.color || (isSale ? '#10b981' : '#3b82f6') }} />
-                                                {item.status.name}
+                                                {normName(item.status)}
                                             </div>
                                         </td>
                                         <td>
