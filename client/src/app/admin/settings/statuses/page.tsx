@@ -81,7 +81,7 @@ export default function StatusesSettingsPage() {
             })
         }, [statuses])
 
-        // Normalize name: map English → Spanish so duplicates are merged
+        // Normalize name: map English → Spanish
         const NORMALIZE: Record<string, string> = {
             completed: 'Completado', completado: 'Completado',
             pending: 'Pendiente', pendiente: 'Pendiente',
@@ -90,7 +90,7 @@ export default function StatusesSettingsPage() {
         }
         const normName = (s: OperationStatus) => NORMALIZE[s.name.toLowerCase()] ?? s.name
 
-        // Merge statuses with same normalized name → keep the first, combine all IDs
+        // Merge statuses with same normalized name → combine all IDs
         const mergedStatuses: { status: OperationStatus; allIds: number[] }[] = []
         statuses.forEach(s => {
             const key = normName(s)
@@ -109,72 +109,57 @@ export default function StatusesSettingsPage() {
                     <div className={`w-2 h-2 rounded-full ${isSale ? 'bg-emerald-500' : 'bg-blue-500'}`} />
                     {title}
                 </h2>
-                <div className="card p-0 overflow-hidden shadow-sm border border-muted">
-                    <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th className="pl-6">Operación / Uso</th>
-                                    <th>Estado</th>
-                                    <th>Tipo</th>
-                                    <th className="text-right pr-6">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {mergedStatuses.flatMap(({ status: s, allIds }): { status: OperationStatus; opId: number | null }[] => {
-                                    const ids = [...allIds].sort((a, b) => b - a);
-                                    if (ids.length === 0) return [{ status: s, opId: null }];
-                                    return ids.map(id => ({ status: s, opId: id }));
-                                }).map((item, idx) => (
-                                    <tr key={`${item.status.id}-${item.opId ?? idx}`}>
-                                        <td className="pl-6 py-4">
-                                            {item.opId != null ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-mono text-xs bg-espresso text-white px-2 py-1 rounded shadow-sm font-bold">
-                                                        #{item.opId}
-                                                    </span>
-                                                    <span className="text-[10px] font-bold text-primary-400 uppercase tracking-tighter">
-                                                        ID {isSale ? 'VENTA' : 'COMPRA'}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-[10px] text-primary-300 italic font-medium">Sin operaciones vinculadas</span>
-                                            )}
-                                        </td>
-                                        <td className="font-bold text-espresso">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.status.color || (isSale ? '#10b981' : '#3b82f6') }} />
-                                                {normName(item.status)}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${item.status.type === 'SALE' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                                                {item.status.type === 'SALE' ? 'Ingreso' : 'Egreso'}
+
+                {mergedStatuses.map(({ status: s, allIds }) => {
+                    const sortedIds = [...allIds].sort((a, b) => b - a)
+                    return (
+                        <div key={s.id} className="card p-0 overflow-hidden shadow-sm border border-muted">
+                            {/* Status header */}
+                            <div className="flex items-center justify-between px-5 py-3 bg-primary-50 border-b border-muted">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color || (isSale ? '#10b981' : '#3b82f6') }} />
+                                    <span className="font-bold text-espresso">{normName(s)}</span>
+                                    <span className="text-[10px] font-bold text-primary-400 bg-white px-2 py-0.5 rounded border border-primary-100">
+                                        {sortedIds.length} ops.
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${s.type === 'SALE' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                                        {s.type === 'SALE' ? 'Ingreso' : 'Egreso'}
+                                    </span>
+                                </div>
+                                <div className="flex gap-1">
+                                    <button onClick={() => openEdit(s)} title="Editar etiqueta" className="btn-ghost p-1.5 hover:bg-white hover:text-primary-700 text-primary-400 transition-colors">
+                                        <Edit className="w-4 h-4" />
+                                    </button>
+                                    {sortedIds.length === 0 && (
+                                        <button onClick={() => handleDelete([s.id])} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Operations list */}
+                            {sortedIds.length === 0 ? (
+                                <div className="px-5 py-3 text-[11px] text-primary-300 italic">Sin operaciones vinculadas</div>
+                            ) : (
+                                <div className="divide-y divide-muted max-h-48 overflow-y-auto custom-scrollbar">
+                                    {sortedIds.map(id => (
+                                        <div key={id} className="flex items-center gap-2 px-5 py-2.5">
+                                            <span className="font-mono text-xs bg-espresso text-white px-2 py-0.5 rounded font-bold">#{id}</span>
+                                            <span className="text-[10px] font-bold text-primary-400 uppercase tracking-tighter">
+                                                ID {isSale ? 'VENTA' : 'COMPRA'}
                                             </span>
-                                        </td>
-                                        <td className="pr-6">
-                                            <div className="flex justify-end gap-1">
-                                                <button onClick={() => openEdit(item.status)} title="Editar etiqueta" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400 transition-colors">
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                {item.opId == null && (
-                                                    <button onClick={() => handleDelete([item.status.id])} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {statuses.length === 0 && (
-                                    <tr>
-                                        <td colSpan={4} className="text-center py-12 text-primary-400">No hay estados configurados</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
+
+                {statuses.length === 0 && (
+                    <div className="card p-8 text-center text-primary-400 text-sm">No hay estados configurados</div>
+                )}
             </div>
         )
     }

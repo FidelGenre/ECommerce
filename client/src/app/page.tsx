@@ -593,7 +593,7 @@ export default function StorefrontPage() {
       {/* Mobile menu — fullscreen overlay via portal */}
       {mobileMenu && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[9999] bg-primary-800/95 backdrop-blur-sm flex flex-col overlay-animate"
-          style={{ touchAction: 'none' }}>
+          style={{ overscrollBehavior: 'contain' }}>
           {/* Top bar with logo and close */}
           <div className="flex items-center justify-between px-4 py-4">
             <span className="text-white font-bold text-xl tracking-wide">Coffee Beans</span>
