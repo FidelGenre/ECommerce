@@ -3,14 +3,25 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect } from 'react'
 import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
+import api from '@/lib/api'
 
 function FailureContent() {
     const params = useSearchParams()
     const rawPaymentId = params.get('payment_id') || params.get('collection_id')
     const paymentId = rawPaymentId && rawPaymentId !== 'null' ? rawPaymentId : null
+    const externalRef = params.get('external_reference')
 
     useEffect(() => {
-        sessionStorage.removeItem('pending_checkout_order')
+        // Cancel the order from sessionStorage OR from URL external_reference
+        const pendingOrderId = sessionStorage.getItem('pending_checkout_order') || externalRef
+        if (pendingOrderId && pendingOrderId !== 'null') {
+            sessionStorage.removeItem('pending_checkout_order')
+            api.post(`/api/checkout/cancel/${pendingOrderId}`)
+                .then(() => console.log('Order', pendingOrderId, 'cancelled from failure page'))
+                .catch(e => console.error('Could not cancel order:', e))
+        } else {
+            sessionStorage.removeItem('pending_checkout_order')
+        }
     }, [])
 
     return (

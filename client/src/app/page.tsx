@@ -53,17 +53,34 @@ export default function StorefrontPage() {
   }, [])
 
   // Cancel abandoned checkout orders (user pressed browser back from MP)
+  // Uses 'pageshow' event because browser back button restores page from bfcache,
+  // which does NOT re-run useEffect hooks. pageshow fires in both cases.
   useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      const pendingOrderId = sessionStorage.getItem('pending_checkout_order')
+      if (pendingOrderId) {
+        sessionStorage.removeItem('pending_checkout_order')
+        api.post(`/api/checkout/cancel/${pendingOrderId}`)
+          .then(() => {
+            console.log('Abandoned order', pendingOrderId, 'cancelled')
+            fetchItems() // refresh stock
+          })
+          .catch(e => console.error('Could not cancel abandoned order:', e))
+      }
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    // Also check on initial mount (for cases where bfcache doesn't apply)
     const pendingOrderId = sessionStorage.getItem('pending_checkout_order')
     if (pendingOrderId) {
       sessionStorage.removeItem('pending_checkout_order')
       api.post(`/api/checkout/cancel/${pendingOrderId}`)
         .then(() => {
           console.log('Abandoned order', pendingOrderId, 'cancelled')
-          fetchItems() // refresh stock
+          fetchItems()
         })
         .catch(e => console.error('Could not cancel abandoned order:', e))
     }
+    return () => window.removeEventListener('pageshow', handlePageShow)
   }, [])
 
   const filteredItems = selectedCategory ? items.filter((it: any) => it.category?.name === selectedCategory) : items;

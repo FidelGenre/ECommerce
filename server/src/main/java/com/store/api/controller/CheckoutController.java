@@ -216,7 +216,8 @@ public class CheckoutController {
 
     /**
      * Cancel an abandoned checkout order.
-     * Only cancels if the order is still pending (no MP payment received).
+     * Handles the case where MP webhook auto-approves in test/sandbox mode
+     * before the user even completes the payment.
      */
     @PostMapping("/cancel/{orderId}")
     public ResponseEntity<?> cancelAbandonedOrder(@PathVariable Long orderId, Authentication auth) {
@@ -226,17 +227,20 @@ public class CheckoutController {
                 return ResponseEntity.notFound().build();
             }
 
-            // Only allow cancellation if the order hasn't been paid yet
-            if (order.getMpPaymentId() != null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Esta orden ya fue pagada y no puede cancelarse."));
-            }
-
-            // Only the user who created the order (or any authenticated user) can cancel
+            // Only the user who created the order (or admin) can cancel
             if (auth != null && order.getCreatedBy() != null) {
                 User currentUser = userRepo.findByUsername(auth.getName()).orElse(null);
                 if (currentUser != null && !currentUser.getId().equals(order.getCreatedBy().getId())
                         && !"ADMIN".equals(currentUser.getRole())) {
                     return ResponseEntity.status(403).body(Map.of("error", "No tenés permiso para cancelar esta orden."));
+                }
+            }
+
+            // Check if status is already cancelled
+            if (order.getStatus() != null) {
+                String statusName = order.getStatus().getName().toLowerCase();
+                if (statusName.equals("cancelado") || statusName.equals("cancelled")) {
+                    return ResponseEntity.ok(Map.of("message", "La orden ya estaba cancelada"));
                 }
             }
 
@@ -248,6 +252,9 @@ public class CheckoutController {
                     })
                     .findFirst()
                     .ifPresent(order::setStatus);
+
+            // Clear the MP payment ID so it's treated as unpaid
+            order.setMpPaymentId(null);
 
             // Return the reserved stock
             stockService.returnStockForSale(order, "Checkout abandoned by user");
