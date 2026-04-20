@@ -196,7 +196,7 @@ public class CheckoutController {
             order.setMpInitPoint(preference.getInitPoint());
             saleOrderRepo.save(order);
 
-            return ResponseEntity.ok(Map.of("id", preference.getId(), "init_point", preference.getInitPoint()));
+            return ResponseEntity.ok(Map.of("id", preference.getId(), "init_point", preference.getInitPoint(), "orderId", order.getId().toString()));
 
         } catch (RuntimeException e) {
             System.err.println("Validation error: " + e.getMessage());
@@ -211,6 +211,54 @@ public class CheckoutController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("Error creating preference: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Cancel an abandoned checkout order.
+     * Only cancels if the order is still pending (no MP payment received).
+     */
+    @PostMapping("/cancel/{orderId}")
+    public ResponseEntity<?> cancelAbandonedOrder(@PathVariable Long orderId, Authentication auth) {
+        try {
+            SaleOrder order = saleOrderRepo.findById(orderId).orElse(null);
+            if (order == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Only allow cancellation if the order hasn't been paid yet
+            if (order.getMpPaymentId() != null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Esta orden ya fue pagada y no puede cancelarse."));
+            }
+
+            // Only the user who created the order (or any authenticated user) can cancel
+            if (auth != null && order.getCreatedBy() != null) {
+                User currentUser = userRepo.findByUsername(auth.getName()).orElse(null);
+                if (currentUser != null && !currentUser.getId().equals(order.getCreatedBy().getId())
+                        && !"ADMIN".equals(currentUser.getRole())) {
+                    return ResponseEntity.status(403).body(Map.of("error", "No tenés permiso para cancelar esta orden."));
+                }
+            }
+
+            // Set status to Cancelado
+            statusRepo.findByType("SALE").stream()
+                    .filter(s -> {
+                        String n = s.getName().toLowerCase();
+                        return n.equals("cancelado") || n.equals("cancelled");
+                    })
+                    .findFirst()
+                    .ifPresent(order::setStatus);
+
+            // Return the reserved stock
+            stockService.returnStockForSale(order, "Checkout abandoned by user");
+
+            saleOrderRepo.save(order);
+            System.out.println("Checkout cancelled: order " + order.getId() + " abandoned, stock returned.");
+            return ResponseEntity.ok(Map.of("message", "Orden cancelada correctamente"));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("error", "Error al cancelar la orden: " + e.getMessage()));
         }
     }
 }

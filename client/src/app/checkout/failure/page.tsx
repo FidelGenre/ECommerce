@@ -1,12 +1,17 @@
 'use client'
 import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 
 function FailureContent() {
     const params = useSearchParams()
-    const paymentId = params.get('payment_id') || params.get('collection_id')
+    const rawPaymentId = params.get('payment_id') || params.get('collection_id')
+    const paymentId = rawPaymentId && rawPaymentId !== 'null' ? rawPaymentId : null
+
+    useEffect(() => {
+        sessionStorage.removeItem('pending_checkout_order')
+    }, [])
 
     return (
         <div className="min-h-screen bg-warm-50 flex items-center justify-center p-6">
@@ -20,10 +25,15 @@ function FailureContent() {
                     <h1 className="text-2xl font-bold text-espresso">El pago no fue procesado</h1>
                     <p className="text-primary-500 mt-2">Hubo un problema con tu pago. Podés intentarlo de nuevo.</p>
                 </div>
-                {paymentId && (
+                {paymentId ? (
                     <div className="bg-red-50 rounded-xl p-4 text-left">
                         <p className="text-xs text-red-400 font-medium uppercase tracking-wider mb-2">Referencia</p>
                         <span className="font-mono font-bold text-espresso text-sm">{paymentId}</span>
+                    </div>
+                ) : (
+                    <div className="bg-red-50 rounded-xl p-4 text-left">
+                        <p className="text-xs text-red-400 font-medium uppercase tracking-wider mb-2">Estado</p>
+                        <span className="font-medium text-espresso text-sm">El pago fue cancelado o no se completó</span>
                     </div>
                 )}
                 <div className="flex flex-col gap-3">

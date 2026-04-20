@@ -36,7 +36,7 @@ export default function StorefrontPage() {
     return () => document.body.classList.remove('menu-open')
   }, [mobileMenu])
 
-  useEffect(() => {
+  const fetchItems = () => {
     api.get('/api/public/items?size=100')
       .then(r => {
         const fetchedItems = r.data.content ?? [];
@@ -46,6 +46,24 @@ export default function StorefrontPage() {
       })
       .catch(() => setItems([]))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    fetchItems()
+  }, [])
+
+  // Cancel abandoned checkout orders (user pressed browser back from MP)
+  useEffect(() => {
+    const pendingOrderId = sessionStorage.getItem('pending_checkout_order')
+    if (pendingOrderId) {
+      sessionStorage.removeItem('pending_checkout_order')
+      api.post(`/api/checkout/cancel/${pendingOrderId}`)
+        .then(() => {
+          console.log('Abandoned order', pendingOrderId, 'cancelled')
+          fetchItems() // refresh stock
+        })
+        .catch(e => console.error('Could not cancel abandoned order:', e))
+    }
   }, [])
 
   const filteredItems = selectedCategory ? items.filter((it: any) => it.category?.name === selectedCategory) : items;
@@ -56,11 +74,7 @@ export default function StorefrontPage() {
     setCart(prev => prev.map(c => {
       if (c.item.id === id) {
         const stock = Number(c.item.stock)
-        const newQty = Math.max(0, Math.floor(c.qty + delta))
-        if (newQty > stock) {
-          alert(`Solo hay ${stock} unidades disponibles de este producto.`);
-          return { ...c, qty: stock };
-        }
+        const newQty = Math.min(stock, Math.max(0, Math.floor(c.qty + delta)))
         return { ...c, qty: newQty }
       }
       return c
@@ -71,11 +85,7 @@ export default function StorefrontPage() {
     setCart(prev => prev.map(c => {
       if (c.item.id === id) {
         const stock = Number(c.item.stock)
-        const newQty = Math.max(0, Math.floor(val))
-        if (newQty > stock) {
-          alert(`Solo hay ${stock} unidades disponibles de este producto.`);
-          return { ...c, qty: stock };
-        }
+        const newQty = Math.min(stock, Math.max(0, Math.floor(val)))
         return { ...c, qty: newQty }
       }
       return c
@@ -83,21 +93,22 @@ export default function StorefrontPage() {
   }
 
   const addToCart = (item: Item) => {
-    const step = 1;
     const stock = Number(item.stock);
     setCart(prev => {
       const existing = prev.find(c => c.item.id === item.id)
       if (existing) {
-        if (existing.qty + step > stock) {
-          alert(`No puedes agregar más. El stock disponible es ${stock}.`);
-          return prev;
-        }
-        return prev.map(c => c.item.id === item.id ? { ...c, qty: c.qty + step } : c)
+        if (existing.qty >= stock) return prev;
+        return prev.map(c => c.item.id === item.id ? { ...c, qty: c.qty + 1 } : c)
       } else {
-        if (step > stock) return prev;
-        return [...prev, { item, qty: step }]
+        if (stock <= 0) return prev;
+        return [...prev, { item, qty: 1 }]
       }
     })
+  }
+
+  const getAvailableStock = (itemId: number, totalStock: number) => {
+    const inCart = cart.find(c => c.item.id === itemId)
+    return totalStock - (inCart ? inCart.qty : 0)
   }
 
   const cartTotal = cart.reduce((s: number, c) => s + (c.item.price * c.qty), 0)
@@ -121,6 +132,15 @@ export default function StorefrontPage() {
       }
       const res = await api.post('/api/checkout/preference', payload)
       if (res.data?.init_point) {
+        // Store the order ID so we can cancel it if the user presses browser back
+        const preferenceId = res.data.id
+        // Extract order ID from external_reference — it's embedded in the preference
+        // We need to get it from the response. The backend stores the order ID.
+        // For now, we'll use a different approach: store a flag and let the page
+        // cancel any pending orders on next load.
+        if (res.data.orderId) {
+          sessionStorage.setItem('pending_checkout_order', res.data.orderId)
+        }
         window.location.href = res.data.init_point
       }
     } catch (e: any) {
@@ -426,7 +446,10 @@ export default function StorefrontPage() {
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredItems.map(item => (
+                  {filteredItems.map(item => {
+                    const available = getAvailableStock(item.id, Number(item.stock))
+                    const soldOut = available <= 0
+                    return (
                     <div key={item.id}
                       className="bg-[#FFFDF8] rounded-lg overflow-hidden flex flex-col transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1">
 
@@ -442,8 +465,8 @@ export default function StorefrontPage() {
                       <div className="p-5 flex flex-col text-center flex-1">
                         <h3 className="font-extrabold text-[#4A2D19] text-lg mb-2">{item.name.toLowerCase()}</h3>
 
-                        <p className={`text-xs font-semibold mb-6 ${item.stock <= 0 ? 'text-red-500' : 'text-[#8B6A4B]'}`}>
-                          {item.stock <= 0 ? 'Sin stock' : `Stock: ${item.stock} disponibles`}
+                        <p className={`text-xs font-semibold mb-6 ${soldOut ? 'text-red-500' : 'text-[#8B6A4B]'}`}>
+                          {soldOut ? 'Sin stock disponible' : `Stock: ${available} disponibles`}
                         </p>
 
                         <div className="flex items-center justify-between mt-auto">
@@ -453,17 +476,18 @@ export default function StorefrontPage() {
                           </span>
                           <button
                             onClick={() => addToCart(item)}
-                            disabled={item.stock <= 0}
-                            className={`text-sm font-semibold px-5 py-2 rounded-md transition-colors shadow-sm ${item.stock <= 0
+                            disabled={soldOut}
+                            className={`text-sm font-semibold px-5 py-2 rounded-md transition-colors shadow-sm ${soldOut
                               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                               : 'bg-[#5C3A21] hover:bg-[#4A2D19] text-white'
                               }`}>
-                            {item.stock <= 0 ? 'Sin stock' : 'Añadir'}
+                            {soldOut ? 'Sin stock' : 'Añadir'}
                           </button>
                         </div>
                       </div>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </>
             )}

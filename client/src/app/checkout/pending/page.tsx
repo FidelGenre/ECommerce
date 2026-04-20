@@ -1,12 +1,17 @@
 'use client'
 import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Clock, ArrowLeft, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 
 function PendingContent() {
     const params = useSearchParams()
-    const paymentId = params.get('payment_id') || params.get('collection_id')
+    const rawPaymentId = params.get('payment_id') || params.get('collection_id')
+    const paymentId = rawPaymentId && rawPaymentId !== 'null' ? rawPaymentId : null
+
+    useEffect(() => {
+        sessionStorage.removeItem('pending_checkout_order')
+    }, [])
 
     return (
         <div className="min-h-screen bg-warm-50 flex items-center justify-center p-6">
