@@ -6,7 +6,7 @@ import api from '@/lib/api'
 import { SaleOrder } from '@/types'
 import {
     User, Mail, Star, Package, RefreshCw, LogOut, ShoppingBag,
-    Edit2, Check, X, Lock, Eye, EyeOff, Phone, MapPin, CreditCard
+    Edit2, Check, X, Lock, Eye, EyeOff, Phone, MapPin, CreditCard, Clock, AlertTriangle
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -17,6 +17,91 @@ const STATUS_COLORS: Record<string, string> = {
     Pendiente: 'badge-yellow',
     Cancelado: 'badge-red',
     Reservado: 'badge-blue',
+}
+
+function OrderCountdown({ until }: { until?: string }) {
+    const [text, setText] = useState<string | null>(null)
+    const [urgent, setUrgent] = useState(false)
+
+    useEffect(() => {
+        if (!until) return
+        const update = () => {
+            const ms = new Date(until).getTime() - Date.now()
+            if (ms <= 0) { setText('Reserva vencida'); setUrgent(false); return }
+            const totalMinutes = Math.floor(ms / 60000)
+            const hours = Math.floor(totalMinutes / 60)
+            const minutes = totalMinutes % 60
+            setUrgent(totalMinutes < 30)
+            if (hours > 0) setText(`${hours}h ${minutes}m para pagar`)
+            else setText(`${minutes} min para pagar`)
+        }
+        update()
+        const id = setInterval(update, 30000)
+        return () => clearInterval(id)
+    }, [until])
+
+    if (!text) return null
+    return (
+        <div className={`mt-2 flex items-center gap-1.5 text-xs font-medium rounded-lg px-2.5 py-1.5 ${
+            urgent ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-700'
+        }`}>
+            {urgent ? <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> : <Clock className="w-3.5 h-3.5 shrink-0" />}
+            {text}
+        </div>
+    )
+}
+
+function OrderCard({ order }: { order: SaleOrder }) {
+    const isPending = order.status?.name === 'Pendiente' || order.status?.name === 'Reservado'
+    return (
+        <div className={`border rounded-xl p-4 transition-colors ${
+            isPending ? 'border-amber-200 bg-amber-50/30 hover:border-amber-400' : 'border-muted hover:border-caramel'
+        }`}>
+            <div className="flex items-start justify-between mb-2">
+                <div>
+                    <p className="font-semibold text-espresso text-sm">Orden #{order.id}</p>
+                    <p className="text-xs text-primary-400">{new Date(order.createdAt).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+                <div className="text-right">
+                    <p className="font-bold text-espresso">{FMT(order.total)}</p>
+                    {order.status && (
+                        <span className={`mt-1 inline-block ${STATUS_COLORS[order.status.name] ?? 'badge-brown'}`}>
+                            {order.status.name}
+                        </span>
+                    )}
+                </div>
+            </div>
+            {order.lines?.length > 0 && (
+                <ul className="text-xs text-primary-500 space-y-0.5 border-t border-muted pt-2">
+                    {order.lines.map(line => (
+                        <li key={line.id} className="flex justify-between">
+                            <span>{line.item?.name} × {line.quantity}</span>
+                            <span>{FMT((line.unitPrice ?? 0) * line.quantity)}</span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+            {order.mpPaymentId && (
+                <div className="mt-2 pt-2 border-t border-muted flex items-center justify-between">
+                    <span className="text-xs text-primary-400">Comprobante MP</span>
+                    <span className="text-xs font-mono font-semibold text-primary-600">#{order.mpPaymentId}</span>
+                </div>
+            )}
+            {isPending && (
+                <OrderCountdown until={order.reservedUntil} />
+            )}
+            {isPending && order.mpInitPoint && (
+                <div className="mt-3">
+                    <a
+                        href={order.mpInitPoint}
+                        className="btn-primary w-full flex items-center justify-center gap-2 py-2 text-sm"
+                    >
+                        <CreditCard className="w-4 h-4" /> Completar pago
+                    </a>
+                </div>
+            )}
+        </div>
+    )
 }
 
 type CustomerProfile = {
@@ -339,43 +424,7 @@ export default function AccountPage() {
                                     </Link>
                                 </div>
                             ) : filteredOrders.map(order => (
-                                <div key={order.id} className="border border-muted rounded-xl p-4 hover:border-caramel transition-colors">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div>
-                                            <p className="font-semibold text-espresso text-sm">Orden #{order.id}</p>
-                                            <p className="text-xs text-primary-400">{new Date(order.createdAt).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-espresso">{FMT(order.total)}</p>
-                                            {order.status && (
-                                                <span className={`mt-1 inline-block ${STATUS_COLORS[order.status.name] ?? 'badge-brown'}`}>{order.status.name}</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {order.lines?.length > 0 && (
-                                        <ul className="text-xs text-primary-500 space-y-0.5 border-t border-muted pt-2">
-                                            {order.lines.map(line => (
-                                                <li key={line.id} className="flex justify-between">
-                                                    <span>{line.item?.name} × {line.quantity}</span>
-                                                    <span>{FMT((line.unitPrice ?? 0) * line.quantity)}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                    {(order as any).mpPaymentId && (
-                                        <div className="mt-2 pt-2 border-t border-muted flex items-center justify-between">
-                                            <span className="text-xs text-primary-400">Comprobante MP</span>
-                                            <span className="text-xs font-mono font-semibold text-primary-600">#{(order as any).mpPaymentId}</span>
-                                        </div>
-                                    )}
-                                    {order.status?.name === 'Pendiente' && order.mpInitPoint && (
-                                        <div className="mt-3">
-                                            <a href={order.mpInitPoint} className="btn-primary w-full flex items-center justify-center gap-2 py-2 text-sm">
-                                                <CreditCard className="w-4 h-4" /> Pagar ahora
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
+                                <OrderCard key={order.id} order={order} />
                             ))}
                         </div>
                     </div>

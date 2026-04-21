@@ -130,7 +130,6 @@ public class CheckoutController {
                         // Recreate 'Pendiente' if it was deleted
                         OperationStatus missingPendiente = new OperationStatus();
                         missingPendiente.setName("Pendiente");
-                        missingPendiente.setDescription("Orden creada pero aún no pagada");
                         missingPendiente.setType("SALE");
                         missingPendiente.setColor("amber");
                         missingPendiente = statusRepo.save(missingPendiente);
@@ -181,6 +180,8 @@ public class CheckoutController {
 
             SaleOrder saved = saleOrderRepo.save(order);
             // Reserva de stock inmediata al momento del checkout (queda Pendiente)
+            // El stock queda reservado hasta por 4 horas
+            order.setReservedUntil(java.time.LocalDateTime.now().plusHours(4));
             stockService.deductStockForSale(order, "Checkout online iniciado");
             saleOrderRepo.save(order);
 

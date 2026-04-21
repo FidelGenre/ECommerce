@@ -16,11 +16,7 @@ import java.util.Map;
 public class MpWebhookController {
 
     private final SaleOrderRepository saleOrderRepo;
-    private final ItemRepository itemRepo;
     private final OperationStatusRepository statusRepo;
-    private final StockMovementRepository stockMovementRepo;
-    private final NotificationRepository notificationRepo;
-    private final com.store.api.service.StockService stockService;
 
     @PostMapping("/webhook")
     public ResponseEntity<?> webhook(@RequestBody Map<String, Object> payload) {
@@ -53,6 +49,7 @@ public class MpWebhookController {
 
             // Mark as paid/completed
             order.setMpPaymentId(paymentId);
+            order.setReservedUntil(null); // Payment confirmed, no longer pending
             statusRepo.findByType("SALE").stream()
                     .filter(s -> {
                         String n = s.getName().toLowerCase();
@@ -64,10 +61,13 @@ public class MpWebhookController {
                             .findFirst())
                     .ifPresent(order::setStatus);
 
-            stockService.deductStockForSale(order, "Venta online - Pago MP " + paymentId);
+            // NOTE: Stock was already deducted at checkout (Pendiente state).
+            // Do NOT call deductStockForSale again here — it would double-deduct.
+            // StockService guard (stockDeducted flag) prevents double deduction, but
+            // we avoid the call entirely for clarity.
 
             saleOrderRepo.save(order);
-            System.out.println("MP webhook: order " + order.getId() + " confirmed, stock decremented.");
+            System.out.println("MP webhook: order " + order.getId() + " confirmed payment " + paymentId + ", status set to Completado.");
             return ResponseEntity.ok().build();
 
         } catch (Exception e) {

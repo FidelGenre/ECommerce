@@ -117,6 +117,7 @@ export interface SaleOrder {
     createdAt: string
     mpPaymentId?: string
     mpInitPoint?: string
+    reservedUntil?: string
     stockDeducted?: boolean
     lines: OrderLine[]
 }

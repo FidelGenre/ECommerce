@@ -39,13 +39,15 @@ public class ScheduledReportService {
         @Value("${spring.mail.username:noreply@coffeebeans.com}")
         private String fromEmail;
 
-        // Cancelar reservas vencidas (más de 24 horas en estado Reservado)
-        @Scheduled(fixedRate = 3600000) // cada hora
+        // Cancelar reservas vencidas usando el campo reservedUntil.
+        // Si el campo no está seteado, se usa createdAt + 4h como fallback.
+        @Scheduled(fixedRate = 1800000) // cada 30 minutos
+        @org.springframework.transaction.annotation.Transactional
         public void expireReservations() {
                 log.info("Checking for expired reservations...");
-                LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
+                LocalDateTime now = LocalDateTime.now();
 
-                var targetStatuses = statusRepo.findByType("SALE").stream()
+                var pendingStatusIds = statusRepo.findByType("SALE").stream()
                                 .filter(s -> "Reservado".equalsIgnoreCase(s.getName())
                                                 || "Reserved".equalsIgnoreCase(s.getName())
                                                 || "Pendiente".equalsIgnoreCase(s.getName())
@@ -53,31 +55,34 @@ public class ScheduledReportService {
                                 .map(com.store.api.entity.OperationStatus::getId)
                                 .collect(Collectors.toSet());
 
-                if (!targetStatuses.isEmpty()) {
-                        var pendingOrders = saleRepo.findAll().stream()
-                                        .filter(o -> o.getStatus() != null
-                                                        && targetStatuses.contains(o.getStatus().getId()))
-                                        .filter(o -> o.getCreatedAt().isBefore(twentyFourHoursAgo))
-                                        .collect(Collectors.toList());
+                statusRepo.findByType("SALE").stream()
+                                .filter(s -> "Cancelado".equalsIgnoreCase(s.getName())
+                                                || "Cancelled".equalsIgnoreCase(s.getName()))
+                                .findFirst()
+                                .ifPresent(cancelledStatus -> {
+                                        if (pendingStatusIds.isEmpty()) return;
 
-                        if (!pendingOrders.isEmpty()) {
-                                statusRepo.findByType("SALE").stream()
-                                                .filter(s -> "Cancelado".equalsIgnoreCase(s.getName())
-                                                                || "Cancelled".equalsIgnoreCase(
-                                                                                s.getName()))
-                                                .findFirst()
-                                                .ifPresent(cancelledStatus -> {
-                                                        for (var order : pendingOrders) {
-                                                                log.info("Expiring reservation for order {}",
-                                                                                order.getId());
-                                                                order.setStatus(cancelledStatus);
-                                                                stockService.returnStockForSale(order,
-                                                                                "Automatic expiration of 24h reservation");
-                                                                saleRepo.save(order);
-                                                        }
-                                                });
-                        }
-                }
+                                        var expiredOrders = saleRepo.findAll().stream()
+                                                        .filter(o -> o.getStatus() != null
+                                                                        && pendingStatusIds.contains(o.getStatus().getId()))
+                                                        .filter(o -> {
+                                                                // Use reservedUntil if present, otherwise fallback to createdAt + 4h
+                                                                LocalDateTime expiry = o.getReservedUntil() != null
+                                                                                ? o.getReservedUntil()
+                                                                                : o.getCreatedAt().plusHours(4);
+                                                                return expiry.isBefore(now);
+                                                        })
+                                                        .collect(Collectors.toList());
+
+                                        for (var order : expiredOrders) {
+                                                log.info("Expiring pending order {} (reservedUntil={})",
+                                                                order.getId(), order.getReservedUntil());
+                                                order.setStatus(cancelledStatus);
+                                                stockService.returnStockForSale(order,
+                                                                "Caducó la reserva de stock (4h sin pago)");
+                                                saleRepo.save(order);
+                                        }
+                                });
         }
 
         // Run every day at 20:00 as requested

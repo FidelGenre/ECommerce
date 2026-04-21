@@ -63,6 +63,9 @@ public class SaleOrder {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "reserved_until")
+    private LocalDateTime reservedUntil;
+
     @OneToMany(mappedBy = "saleOrder", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties({ "saleOrder" })
     private List<SaleLine> lines = new ArrayList<>();
