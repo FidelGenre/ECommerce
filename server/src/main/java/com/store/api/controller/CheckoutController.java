@@ -200,6 +200,7 @@ public class CheckoutController {
             PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                     .items(mpItems)
                     .backUrls(backUrls)
+                    .autoReturn("approved")
                     .externalReference(order.getId().toString())
                     .notificationUrl(publicBaseUrl + "/api/public/mp/webhook")
                     .build();
