@@ -2,7 +2,25 @@
 import { useEffect, useState, useMemo } from 'react'
 import api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { Plus, X, Edit, ToggleLeft, ToggleRight, Search, Filter, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Plus, X, Edit, ToggleLeft, ToggleRight, Search, Filter, Trash2, Eye, EyeOff, ShieldCheck, Users as UsersIcon, CheckSquare, Square } from 'lucide-react'
+
+interface Role {
+    code: string;
+    name: string;
+    permissions: string[];
+}
+
+const ALL_PERMISSIONS = [
+    { id: 'VIEW_DASHBOARD', label: 'Ver Dashboard' },
+    { id: 'MANAGE_SALES', label: 'Ventas y Checkout' },
+    { id: 'MANAGE_PURCHASES', label: 'Compras y Proveedores' },
+    { id: 'MANAGE_INVENTORY', label: 'Inventario y Productos' },
+    { id: 'MANAGE_CASH', label: 'Caja y Transacciones' },
+    { id: 'VIEW_REPORTS', label: 'Reportes y Métricas' },
+    { id: 'MANAGE_CUSTOMERS', label: 'Clientes (CRM)' },
+    { id: 'MANAGE_SUPPLIERS', label: 'Proveedores (ABM)' },
+    { id: 'MANAGE_SETTINGS', label: 'Configuración y Roles' }
+];
 
 interface UserRow {
     id: number;
@@ -22,7 +40,9 @@ interface UserRow {
 
 export default function UsersSettingsPage() {
     const { user: authUser, logout } = useAuth()
+    const [activeTab, setActiveTab] = useState<'USERS' | 'ROLES'>('USERS')
     const [data, setData] = useState<UserRow[]>([])
+    const [roles, setRoles] = useState<Role[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [editing, setEditing] = useState<UserRow | null>(null)
@@ -31,6 +51,11 @@ export default function UsersSettingsPage() {
         firstName: '', lastName: '', phone: '', address: '', taxId: '', loyaltyPoints: 0
     })
     const [saving, setSaving] = useState(false)
+    // Roles State
+    const [showRoleModal, setShowRoleModal] = useState(false);
+    const [editingRole, setEditingRole] = useState<Role | null>(null);
+    const [roleForm, setRoleForm] = useState<Role>({ code: '', name: '', permissions: [] });
+
     // Selection
     const [selected, setSelected] = useState<Set<number>>(new Set())
     const [deleting, setDeleting] = useState("")
@@ -90,13 +115,22 @@ export default function UsersSettingsPage() {
     const load = async () => {
         setLoading(true);
         try {
-            const params = new URLSearchParams({ size: '100' })
-            if (search) params.append('search', search)
-            if (roleFilter !== 'ALL') params.append('role', roleFilter)
-            if (activeFilter !== 'ALL') params.append('active', activeFilter === '1' ? 'true' : 'false')
+            if (activeTab === 'USERS') {
+                const params = new URLSearchParams({ size: '100' })
+                if (search) params.append('search', search)
+                if (roleFilter !== 'ALL') params.append('role', roleFilter)
+                if (activeFilter !== 'ALL') params.append('active', activeFilter === '1' ? 'true' : 'false')
 
-            const r = await api.get(`/api/admin/users?${params.toString()}`)
-            setData(r.data.content);
+                const [usersRes, rolesRes] = await Promise.all([
+                    api.get(`/api/admin/users?${params.toString()}`),
+                    api.get('/api/admin/roles')
+                ])
+                setData(usersRes.data.content);
+                setRoles(rolesRes.data);
+            } else {
+                const { data } = await api.get('/api/admin/roles');
+                setRoles(data);
+            }
         } finally {
             setLoading(false)
         }
@@ -106,7 +140,7 @@ export default function UsersSettingsPage() {
     useEffect(() => {
         const timeout = setTimeout(load, 300)
         return () => clearTimeout(timeout)
-    }, [search, roleFilter, activeFilter])
+    }, [search, roleFilter, activeFilter, activeTab])
 
     const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE', firstName: '', lastName: '', phone: '', address: '', taxId: '', loyaltyPoints: 0 }); setShowModal(true) }
     const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role, firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', address: u.address || '', taxId: u.taxId || '', loyaltyPoints: u.loyaltyPoints || 0 }); setShowModal(true) }
@@ -119,6 +153,30 @@ export default function UsersSettingsPage() {
             load()
         } finally { setSaving(false) }
     }
+
+    const openNewRole = () => { setEditingRole(null); setRoleForm({ code: '', name: '', permissions: [] }); setShowRoleModal(true) }
+    const openEditRole = (r: Role) => { setEditingRole(r); setRoleForm({ ...r }); setShowRoleModal(true) }
+    const handleSaveRole = async (e: React.FormEvent) => {
+        e.preventDefault(); setSaving(true)
+        try {
+            if (editingRole) await api.put(`/api/admin/roles/${editingRole.code}`, roleForm)
+            else await api.post('/api/admin/roles', roleForm)
+            setShowRoleModal(false);
+            load()
+        } catch (e: any) {
+            alert(e.response?.data?.message || e.response?.data || 'Error al guardar el rol. Verifica que el código no exista ya.');
+        } finally { setSaving(false) }
+    }
+    const handleDeleteRole = async (code: string) => {
+        if (!confirm(`¿Eliminar permanentemente el rol ${code}?`)) return;
+        try {
+            await api.delete(`/api/admin/roles/${code}`);
+            load();
+        } catch (error: any) {
+             alert(error.response?.data || error.response?.data?.message || 'Error al eliminar rol');
+        }
+    }
+
     const toggle = async (id: number) => { await api.patch(`/api/admin/users/${id}/toggle`); load() }
     const handleDelete = async (ids: number[]) => {
         if (!confirm(`¿Eliminar permanentemente ${ids.length === 1 ? 'este usuario' : `estos ${ids.length} usuarios`}?`)) return
@@ -152,19 +210,36 @@ export default function UsersSettingsPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-espresso">Usuarios</h1>
+                <h1 className="text-2xl font-bold text-espresso">Usuarios y Permisos</h1>
                 <div className="flex items-center gap-2">
-                    {selected.size > 0 && (
+                    {activeTab === 'USERS' && selected.size > 0 && (
                         <button onClick={() => handleDelete([...selected])} disabled={deleting !== ""}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
                     )}
-                    <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar usuario</button>
+                    {activeTab === 'USERS' && <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar usuario</button>}
+                    {activeTab === 'ROLES' && <button onClick={openNewRole} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Nuevo Rol</button>}
                 </div>
             </div>
 
+            <div className="flex bg-white/50 border-b border-primary-100 rounded-t-xl overflow-hidden">
+                <button 
+                    onClick={() => setActiveTab('USERS')} 
+                    className={`flex items-center gap-2 px-6 py-3 font-medium text-sm transition-colors ${activeTab === 'USERS' ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-600' : 'text-primary-400 hover:bg-primary-50/50 hover:text-primary-600'}`}
+                >
+                    <UsersIcon className="w-4 h-4" /> Usuarios Activos
+                </button>
+                <button 
+                    onClick={() => setActiveTab('ROLES')} 
+                    className={`flex items-center gap-2 px-6 py-3 font-medium text-sm transition-colors ${activeTab === 'ROLES' ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-600' : 'text-primary-400 hover:bg-primary-50/50 hover:text-primary-600'}`}
+                >
+                    <ShieldCheck className="w-4 h-4" /> Roles y Permisos (RBAC)
+                </button>
+            </div>
+
             {/* Filters */}
+            {activeTab === 'USERS' && (
             <div className="card py-3 px-4 flex flex-wrap items-center gap-4 border border-muted bg-warm-50/50 shadow-sm">
                 <div className="relative flex-1 min-w-[200px]">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary-400" />
@@ -178,9 +253,9 @@ export default function UsersSettingsPage() {
                     <Filter className="w-4 h-4 text-primary-400" />
                     <select className="input py-2 text-sm w-auto cursor-pointer font-medium" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
                         <option value="ALL">Todos los roles</option>
-                        <option value="CLIENTE">Cliente</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="NONE">Sin rol</option>
+                        {roles.map(r => (
+                            <option key={r.code} value={r.code}>{r.name}</option>
+                        ))}
                     </select>
                 </div>
                 <select className="input py-2 text-sm w-auto cursor-pointer font-medium" value={activeFilter} onChange={e => setActiveFilter(e.target.value)}>
@@ -194,9 +269,10 @@ export default function UsersSettingsPage() {
                     </button>
                 )}
             </div>
+            )}
 
             <div className="card p-0 overflow-hidden shadow-sm border border-muted">
-                {loading ? <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div> : (
+                {loading ? <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div> : activeTab === 'USERS' ? (
                     <div className="overflow-x-auto">
                         <table className="data-table">
                             <thead>
@@ -223,7 +299,7 @@ export default function UsersSettingsPage() {
                                             )}
                                         </td>
                                         <td className="text-primary-600 text-sm font-medium">{u.email}</td>
-                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : u.role === 'NONE' ? 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500' : 'badge-brown'}>{{ ADMIN: 'Admin', CLIENTE: 'Cliente', CUSTOMER: 'Cliente', SUPPLIER: 'Proveedor', CASHIER: 'Cajero', NONE: 'Sin rol' }[u.role] ?? u.role}</span></td>
+                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : u.role === 'NONE' ? 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500' : 'badge-brown'}>{roles.find(r => r.code === u.role)?.name ?? u.role}</span></td>
                                         <td className="text-sm text-primary-500 font-medium">{formatDate(u.createdAt)}</td>
                                         <td className="text-right font-semibold text-espresso">{u.accountBalance !== undefined ? formatCurrency(u.accountBalance) : '—'}</td>
                                         <td className="text-right font-medium text-amber-600">{typeof u.loyaltyPoints === 'number' ? u.loyaltyPoints + ' pts' : <span className="text-primary-300 font-normal">Sin puntos</span>}</td>
@@ -251,6 +327,49 @@ export default function UsersSettingsPage() {
                                         <td colSpan={9} className="text-center py-8 text-primary-400">No se encontraron usuarios</td>
                                     </tr>
                                 )}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Cód. de Sistema</th>
+                                    <th>Nombre del Rol</th>
+                                    <th>Permisos Configurados</th>
+                                    <th className="text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {roles.map(r => (
+                                    <tr key={r.code}>
+                                        <td className="font-mono text-xs text-primary-500 font-semibold">{r.code}</td>
+                                        <td className="font-semibold text-espresso">{r.name}</td>
+                                        <td>
+                                            <div className="flex flex-wrap gap-1">
+                                                {r.permissions.length === 0 && <span className="text-xs text-primary-300">Ninguno</span>}
+                                                {r.permissions.map(p => (
+                                                    <span key={p} className="inline-block px-1.5 py-0.5 bg-primary-50 border border-primary-100 text-primary-600 rounded text-[10px] uppercase font-bold">
+                                                        {p.replace('MANAGE_', '').replace('VIEW_', '')}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="flex justify-end gap-1">
+                                                <button onClick={() => openEditRole(r)} title="Editar" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400">
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                {r.code !== 'ADMIN' && r.code !== 'CLIENTE' && (
+                                                    <button onClick={() => handleDeleteRole(r.code)} title="Eliminar" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
@@ -292,8 +411,9 @@ export default function UsersSettingsPage() {
                                 <label className="block text-xs font-semibold text-primary-700 mb-1">Rol</label>
                                 <select className="select" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
                                     <option value="NONE">Sin rol</option>
-                                    <option value="CLIENTE">Cliente</option>
-                                    <option value="ADMIN">Administrador</option>
+                                    {roles.map(r => (
+                                        <option key={r.code} value={r.code}>{r.name}</option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -332,6 +452,61 @@ export default function UsersSettingsPage() {
                             </div>
                             <div className="flex gap-2 pt-4">
                                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1 py-2 text-sm shadow-sm">Cancelar</button>
+                                <button type="submit" className="btn-primary flex-1 py-2 text-sm shadow-sm" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Rol */}
+            {showRoleModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl my-auto">
+                        <div className="flex items-center justify-between p-5 border-b border-muted">
+                            <h2 className="text-lg font-bold text-espresso">{editingRole ? 'Editar Rol' : 'Nuevo Rol'}</h2>
+                            <button onClick={() => setShowRoleModal(false)} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500"><X className="w-5 h-5" /></button>
+                        </div>
+                        <form onSubmit={handleSaveRole} className="p-5 space-y-4">
+                            {!editingRole && (
+                                <div>
+                                    <label className="block text-xs font-semibold text-primary-700 mb-1">Código del Rol (Unico, Sistema)</label>
+                                    <input className="input font-mono text-sm uppercase placeholder:normal-case" placeholder="Ej: VENDEDOR, SUPERVISOR" 
+                                           value={roleForm.code} 
+                                           onChange={e => setRoleForm({ ...roleForm, code: e.target.value.toUpperCase().replace(/[^A-Z_]/g, '') })} required />
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-xs font-semibold text-primary-700 mb-1">Nombre Display (Humano)</label>
+                                <input className="input" placeholder="Ej: Vendedor de Sucursal" value={roleForm.name} onChange={e => setRoleForm({ ...roleForm, name: e.target.value })} required />
+                            </div>
+
+                            <hr className="border-t border-muted my-4" />
+                            <h3 className="text-sm font-bold text-espresso mb-2">Permisos del Sistema</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pl-1 pb-1 pr-3 custom-scrollbar">
+                                {ALL_PERMISSIONS.map(p => (
+                                    <label key={p.id} className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer select-none transition-colors ${roleForm.permissions.includes(p.id) ? 'bg-primary-50 border-primary-200 text-primary-800' : 'bg-white border-muted text-primary-600 hover:bg-gray-50'}`}>
+                                        <div className="mt-0.5">
+                                            {roleForm.permissions.includes(p.id) ? <CheckSquare className="w-4 h-4 text-emerald-600" /> : <Square className="w-4 h-4 text-primary-300" />}
+                                        </div>
+                                        <span className="text-sm font-medium leading-tight">{p.label}</span>
+                                        {/* Hidden checkbox for a11y */}
+                                        <input type="checkbox" className="sr-only" 
+                                            checked={roleForm.permissions.includes(p.id)}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setRoleForm(prev => ({
+                                                    ...prev,
+                                                    permissions: checked ? [...prev.permissions, p.id] : prev.permissions.filter(x => x !== p.id)
+                                                }))
+                                            }}
+                                        />
+                                    </label>
+                                ))}
+                            </div>
+
+                            <div className="flex gap-2 pt-4">
+                                <button type="button" onClick={() => setShowRoleModal(false)} className="btn-secondary flex-1 py-2 text-sm shadow-sm">Cancelar</button>
                                 <button type="submit" className="btn-primary flex-1 py-2 text-sm shadow-sm" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
                             </div>
                         </form>

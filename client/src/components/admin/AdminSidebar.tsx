@@ -10,25 +10,25 @@ import {
 } from 'lucide-react'
 
 const NAV = [
-    { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/admin/sales', icon: ShoppingCart, label: 'Ventas' },
-    { href: '/admin/purchases', icon: Truck, label: 'Compras' },
-    { href: '/admin/inventory', icon: Boxes, label: 'Inventario' },
-    { href: '/admin/cash', icon: Banknote, label: 'Caja' },
-    { href: '/admin/reports', icon: BarChart3, label: 'Informes' },
-    { separator: true, label: 'Gestión' },
-    { href: '/admin/productos', icon: Package, label: 'Productos' },
-    { href: '/admin/clientes', icon: Users, label: 'Clientes' },
-    { href: '/admin/costs', icon: ClipboardList, label: 'Costos Internos' },
-    { href: '/admin/suppliers', icon: Truck, label: 'Proveedores' },
-    { href: '/admin/notifications', icon: Bell, label: 'Notificaciones' },
-    { href: '/admin/audit', icon: ClipboardList, label: 'Auditoría' },
-    { separator: true, label: 'Configuración' },
-    { href: '/admin/settings/categories', icon: Settings, label: 'Categorías de Productos' },
-    { href: '/admin/settings/supplier-categories', icon: Truck, label: 'Categorías de Proveedores' },
-    { href: '/admin/settings/users', icon: Users, label: 'Usuarios' },
-    { href: '/admin/settings/payments', icon: Banknote, label: 'Formas de Pago' },
-    { href: '/admin/settings/statuses', icon: Settings, label: 'Estados de Operación' },
+    { href: '/admin', icon: LayoutDashboard, label: 'Dashboard', perm: 'VIEW_DASHBOARD' },
+    { href: '/admin/sales', icon: ShoppingCart, label: 'Ventas', perm: 'MANAGE_SALES' },
+    { href: '/admin/purchases', icon: Truck, label: 'Compras', perm: 'MANAGE_PURCHASES' },
+    { href: '/admin/inventory', icon: Boxes, label: 'Inventario', perm: 'MANAGE_INVENTORY' },
+    { href: '/admin/cash', icon: Banknote, label: 'Caja', perm: 'MANAGE_CASH' },
+    { href: '/admin/reports', icon: BarChart3, label: 'Informes', perm: 'VIEW_REPORTS' },
+    { separator: true, label: 'Gestión', perm: null }, // Visibilidad condicional abajo
+    { href: '/admin/productos', icon: Package, label: 'Productos', perm: 'MANAGE_INVENTORY' },
+    { href: '/admin/clientes', icon: Users, label: 'Clientes', perm: 'MANAGE_CUSTOMERS' },
+    { href: '/admin/costs', icon: ClipboardList, label: 'Costos Internos', perm: 'MANAGE_CASH' },
+    { href: '/admin/suppliers', icon: Truck, label: 'Proveedores', perm: 'MANAGE_SUPPLIERS' },
+    { href: '/admin/notifications', icon: Bell, label: 'Notificaciones', perm: 'MANAGE_SETTINGS' },
+    { href: '/admin/audit', icon: ClipboardList, label: 'Auditoría', perm: 'MANAGE_SETTINGS' },
+    { separator: true, label: 'Configuración', perm: 'MANAGE_SETTINGS' },
+    { href: '/admin/settings/categories', icon: Settings, label: 'Categorías de Productos', perm: 'MANAGE_SETTINGS' },
+    { href: '/admin/settings/supplier-categories', icon: Truck, label: 'Categorías de Proveedores', perm: 'MANAGE_SETTINGS' },
+    { href: '/admin/settings/users', icon: Users, label: 'Usuarios y Permisos', perm: 'MANAGE_SETTINGS' },
+    { href: '/admin/settings/payments', icon: Banknote, label: 'Formas de Pago', perm: 'MANAGE_SETTINGS' },
+    { href: '/admin/settings/statuses', icon: Settings, label: 'Estados de Operación', perm: 'MANAGE_SETTINGS' },
 ]
 
 function SidebarInner({ onNav }: { onNav?: () => void }) {
@@ -51,6 +51,9 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
             {/* Nav */}
             <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5 sidebar-scroll">
                 {NAV.map((item, i) => {
+                    const hasPerm = !item.perm || user?.role === 'ADMIN' || (user?.permissions && user.permissions.includes(item.perm as string))
+                    if (!hasPerm) return null
+
                     if ('separator' in item) {
                         return (
                             <div key={i} className="pt-4 pb-1 px-3">
@@ -146,6 +149,9 @@ export default function AdminSidebar() {
                     {/* Centered nav items */}
                     <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto py-4 -mt-4 overlay-items-animate">
                         {NAV.map((item, i) => {
+                            const hasPerm = !item.perm || user?.role === 'ADMIN' || (user?.permissions && user.permissions.includes(item.perm as string))
+                            if (!hasPerm) return null
+
                             if ('separator' in item) {
                                 return (
                                     <div key={i} className="w-48 mt-3 mb-1">

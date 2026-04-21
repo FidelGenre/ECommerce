@@ -6,8 +6,9 @@ import api from '@/lib/api'
 interface AuthUser {
     userId: number
     username: string
-    role: 'ADMIN' | 'CLIENTE' | 'SUPPLIER'
+    role: string
     token: string
+    permissions?: string[]
 }
 
 interface AuthCtx {

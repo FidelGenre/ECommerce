@@ -5,6 +5,7 @@ import com.store.api.dto.LoginResponse;
 import com.store.api.entity.User;
 import com.store.api.repository.CustomerRepository;
 import com.store.api.repository.UserRepository;
+import com.store.api.repository.RoleRepository;
 import com.store.api.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ import com.store.api.repository.AccountMovementRepository;
 public class AuthController {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final CustomerRepository customerRepo;
@@ -42,7 +44,10 @@ public class AuthController {
         }
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
-        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId()));
+        java.util.Set<String> permissions = roleRepository.findById(user.getRole())
+                .map(com.store.api.entity.Role::getPermissions)
+                .orElse(java.util.Set.of());
+        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId(), permissions));
     }
 
     @PostMapping("/register")
@@ -68,7 +73,10 @@ public class AuthController {
         customerRepo.save(c);
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
-        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId()));
+        java.util.Set<String> permissions = roleRepository.findById(user.getRole())
+                .map(com.store.api.entity.Role::getPermissions)
+                .orElse(java.util.Set.of());
+        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId(), permissions));
     }
 
     @GetMapping("/refresh")
@@ -79,7 +87,10 @@ public class AuthController {
         if (user == null)
             return ResponseEntity.notFound().build();
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
-        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId()));
+        java.util.Set<String> permissions = roleRepository.findById(user.getRole())
+                .map(com.store.api.entity.Role::getPermissions)
+                .orElse(java.util.Set.of());
+        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId(), permissions));
     }
 
     @PatchMapping("/profile")

@@ -2,6 +2,25 @@
 -- Seed Data
 -- ============================================================
 
+-- Roles
+INSERT INTO roles (code, name) VALUES
+('ADMIN', 'Administrador'),
+('CLIENTE', 'Cliente')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO role_permissions (role_code, permission) VALUES
+('ADMIN', 'VIEW_DASHBOARD'),
+('ADMIN', 'MANAGE_SALES'),
+('ADMIN', 'MANAGE_PURCHASES'),
+('ADMIN', 'MANAGE_INVENTORY'),
+('ADMIN', 'MANAGE_CASH'),
+('ADMIN', 'VIEW_REPORTS'),
+('ADMIN', 'MANAGE_CUSTOMERS'),
+('ADMIN', 'MANAGE_SUPPLIERS'),
+('ADMIN', 'MANAGE_SETTINGS'),
+('CLIENTE', 'VIEW_DASHBOARD')
+ON CONFLICT DO NOTHING;
+
 -- Admin user (password: admin123)
 INSERT INTO users (username, email, password_hash, role, active, created_at) VALUES
 ('admin', 'admin@coffeebeans.com', '$2a$10$RQkX7wPZ4Ivv6hJiwuliWuVokJ8.1wMBnstlS2M/T6cfHkX5TRzvm', 'ADMIN', true, CURRENT_TIMESTAMP)
