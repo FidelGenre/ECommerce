@@ -349,20 +349,22 @@ export default function UsersSettingsPage() {
                                         <td>
                                             <div className="flex flex-wrap gap-1">
                                                 {r.permissions.length === 0 && <span className="text-xs text-primary-300">Ninguno</span>}
-                                                {r.permissions.map(p => (
-                                                    <span key={p} className="inline-block px-1.5 py-0.5 bg-primary-50 border border-primary-100 text-primary-600 rounded text-[10px] uppercase font-bold">
-                                                        {p.replace('MANAGE_', '').replace('VIEW_', '')}
+                                                {r.permissions.map(p => {
+                                                    const permInfo = ALL_PERMISSIONS.find(ap => ap.id === p);
+                                                    return (
+                                                    <span key={p} className="inline-flex items-center gap-1 px-2 py-1 bg-primary-50 border border-primary-100 text-primary-700 rounded-md text-[10px] uppercase font-bold tracking-wider">
+                                                        {permInfo ? permInfo.label : p.replace('MANAGE_', '').replace('VIEW_', '')}
                                                     </span>
-                                                ))}
+                                                )})}
                                             </div>
                                         </td>
                                         <td>
                                             <div className="flex justify-end gap-1">
-                                                <button onClick={() => openEditRole(r)} title="Editar" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400">
-                                                    <Edit className="w-4 h-4" />
+                                                <button onClick={() => openEditRole(r)} title="Editar permisos" className="btn-ghost px-2 py-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-500 font-medium text-xs flex items-center gap-1.5">
+                                                    <Edit className="w-3.5 h-3.5" /> Editar
                                                 </button>
                                                 {r.code !== 'ADMIN' && r.code !== 'CLIENTE' && (
-                                                    <button onClick={() => handleDeleteRole(r.code)} title="Eliminar" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
+                                                    <button onClick={() => handleDeleteRole(r.code)} title="Eliminar rol" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
@@ -370,6 +372,15 @@ export default function UsersSettingsPage() {
                                         </td>
                                     </tr>
                                 ))}
+                                {roles.length === 0 && (
+                                    <tr>
+                                        <td colSpan={4} className="text-center py-12 px-4">
+                                            <ShieldCheck className="w-12 h-12 text-primary-200 mx-auto mb-3" />
+                                            <p className="text-primary-600 font-medium">No se encontraron roles de sistema</p>
+                                            <p className="text-sm text-primary-400 mt-1">Crea nuevos roles para gestionar el nivel de acceso al panel de administración.</p>
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -408,11 +419,13 @@ export default function UsersSettingsPage() {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-primary-700 mb-1">Rol</label>
+                                <label className="block text-xs font-semibold text-primary-700 mb-1">Rol de Permisos</label>
                                 <select className="select" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-                                    <option value="NONE">Sin rol</option>
+                                    <option value="NONE">Sin rol (Bloqueado)</option>
+                                    {roles.length === 0 && <option value="CLIENTE">Cliente (Default)</option>}
+                                    {roles.length === 0 && <option value="ADMIN">Admin (Default)</option>}
                                     {roles.map(r => (
-                                        <option key={r.code} value={r.code}>{r.name}</option>
+                                        <option key={r.code} value={r.code}>{r.name} - {r.code}</option>
                                     ))}
                                 </select>
                             </div>
@@ -470,10 +483,19 @@ export default function UsersSettingsPage() {
                         <form onSubmit={handleSaveRole} className="p-5 space-y-4">
                             {!editingRole && (
                                 <div>
-                                    <label className="block text-xs font-semibold text-primary-700 mb-1">Código del Rol (Unico, Sistema)</label>
+                                    <label className="block text-xs font-semibold text-primary-700 mb-1">Código del Rol</label>
                                     <input className="input font-mono text-sm uppercase placeholder:normal-case" placeholder="Ej: VENDEDOR, SUPERVISOR" 
                                            value={roleForm.code} 
                                            onChange={e => setRoleForm({ ...roleForm, code: e.target.value.toUpperCase().replace(/[^A-Z_]/g, '') })} required />
+                                </div>
+                            )}
+                            {editingRole && (
+                                <div className="bg-primary-50 p-2.5 rounded border border-primary-100 flex items-center gap-2">
+                                    <ShieldCheck className="w-5 h-5 text-primary-400" />
+                                    <div>
+                                        <p className="text-xs text-primary-500 font-semibold uppercase tracking-wider">MODIFICANDO ROL DEL SISTEMA</p>
+                                        <p className="text-sm font-bold text-espresso">{roleForm.code}</p>
+                                    </div>
                                 </div>
                             )}
                             <div>
