@@ -46,7 +46,7 @@ export default function ReportsPage() {
                 api.get(`/api/admin/dashboard/profitability?${dateParam}`),
                 api.get(`/api/admin/dashboard/sales-by-hour?${dateParam}`),
                 api.get(`/api/admin/dashboard/non-rotating?${dateParam}`),
-                api.get('/api/admin/dashboard/margin-evolution?months=12'),
+                api.get(`/api/admin/dashboard/margin-evolution?${dateParam}`),
                 api.get('/api/admin/items?size=500'),
             ])
 
@@ -417,7 +417,7 @@ export default function ReportsPage() {
                             <div className="card">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="font-semibold text-espresso flex items-center gap-2">
-                                        <DollarSign className="w-5 h-5 text-emerald-600" />Ganancias Mensuales (12 meses)
+                                        <DollarSign className="w-5 h-5 text-emerald-600" />Ganancias Mensuales
                                     </h2>
                                     <button onClick={() => exportExcel(marginEvolution.map(m => ({ Mes: m.month, Ventas: m.sales, Compras: m.purchases, Margen: m.margin })), 'Ganancias', 'ganancias_mensuales')}
                                         className="btn-secondary flex items-center gap-1.5 text-xs py-1 px-2.5">

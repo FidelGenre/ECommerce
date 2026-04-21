@@ -143,7 +143,7 @@ export default function StatusesSettingsPage() {
                                     </span>
                                 </div>
                                 <div className="flex gap-1">
-                                    {sortedIds.length === 0 && (
+                                    {sortedIds.length === 0 && normName(s) !== 'Pendiente' && (
                                         <button onClick={() => handleDelete([s.id])} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
                                             <Trash2 className="w-4 h-4" />
                                         </button>

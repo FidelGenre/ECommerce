@@ -43,6 +43,45 @@ export default function UsersSettingsPage() {
     })
     const toggleAll = () => setSelected(prev => prev.size === data.length ? new Set() : new Set(data.map(u => u.id)))
 
+    const [sortCol, setSortCol] = useState<string>('')
+    const [sortAsc, setSortAsc] = useState(true)
+
+    const sortedData = useMemo(() => {
+        let copy = [...data]
+        if (!sortCol) return copy
+        copy.sort((a: any, b: any) => {
+            let valA, valB;
+            if (sortCol === 'username') {
+                valA = a.username.toLowerCase()
+                valB = b.username.toLowerCase()
+            } else if (sortCol === 'email') {
+                valA = a.email.toLowerCase()
+                valB = b.email.toLowerCase()
+            } else if (sortCol === 'role') {
+                valA = a.role
+                valB = b.role
+            } else if (sortCol === 'createdAt') {
+                valA = new Date(a.createdAt).getTime()
+                valB = new Date(b.createdAt).getTime()
+            } else if (sortCol === 'balance') {
+                valA = a.accountBalance ?? 0
+                valB = b.accountBalance ?? 0
+            } else if (sortCol === 'loyalty') {
+                valA = a.loyaltyPoints ?? 0
+                valB = b.loyaltyPoints ?? 0
+            }
+            if (valA < valB) return sortAsc ? -1 : 1
+            if (valA > valB) return sortAsc ? 1 : -1
+            return 0
+        })
+        return copy
+    }, [data, sortCol, sortAsc])
+
+    const handleSort = (col: string) => {
+        if (sortCol === col) setSortAsc(!sortAsc)
+        else { setSortCol(col); setSortAsc(true) }
+    }
+
     // Filters
     const [search, setSearch] = useState('')
     const [roleFilter, setRoleFilter] = useState('ALL')
@@ -163,18 +202,18 @@ export default function UsersSettingsPage() {
                             <thead>
                                 <tr>
                                     <th className="w-8 pl-4"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th>
-                                    <th>Usuario</th>
-                                    <th>Email</th>
-                                    <th>Rol</th>
-                                    <th>Creado el</th>
-                                    <th className="text-right">Balance</th>
-                                    <th className="text-right">Fidelización</th>
+                                    <th className="cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('username')}>Usuario {sortCol === 'username' ? (sortAsc ? '↑' : '↓') : ''}</th>
+                                    <th className="cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('email')}>Email {sortCol === 'email' ? (sortAsc ? '↑' : '↓') : ''}</th>
+                                    <th className="cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('role')}>Rol {sortCol === 'role' ? (sortAsc ? '↑' : '↓') : ''}</th>
+                                    <th className="cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('createdAt')}>Creado el {sortCol === 'createdAt' ? (sortAsc ? '↑' : '↓') : ''}</th>
+                                    <th className="text-right cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('balance')}>Balance {sortCol === 'balance' ? (sortAsc ? '↑' : '↓') : ''}</th>
+                                    <th className="text-right cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('loyalty')}>Fidelización {sortCol === 'loyalty' ? (sortAsc ? '↑' : '↓') : ''}</th>
                                     <th>Estado</th>
                                     <th className="text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {data.map(u => (
+                                {sortedData.map(u => (
                                     <tr key={u.id} className={selected.has(u.id) ? 'bg-red-50' : ''}>
                                         <td className="pl-4"><input type="checkbox" checked={selected.has(u.id)} onChange={() => toggleSelect(u.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
                                         <td>

@@ -19,6 +19,42 @@ export default function ClientesPage() {
     const [page, setPage] = useState(0)
     const [q, setQ] = useState('')
 
+    const [sortCol, setSortCol] = useState<string>('')
+    const [sortAsc, setSortAsc] = useState(true)
+
+    const sortedData = useMemo(() => {
+        let copy = [...data]
+        if (!sortCol) return copy
+        copy.sort((a: any, b: any) => {
+            let valA, valB;
+            if (sortCol === 'name') {
+                valA = `${a.firstName} ${a.lastName || ''}`.toLowerCase()
+                valB = `${b.firstName} ${b.lastName || ''}`.toLowerCase()
+            } else if (sortCol === 'contact') {
+                valA = a.phone || ''
+                valB = b.phone || ''
+            } else if (sortCol === 'taxId') {
+                valA = a.taxId || ''
+                valB = b.taxId || ''
+            } else if (sortCol === 'balance') {
+                valA = a.accountBalance || 0
+                valB = b.accountBalance || 0
+            } else if (sortCol === 'points') {
+                valA = a.loyaltyPoints || 0
+                valB = b.loyaltyPoints || 0
+            }
+            if (valA < valB) return sortAsc ? -1 : 1
+            if (valA > valB) return sortAsc ? 1 : -1
+            return 0
+        })
+        return copy
+    }, [data, sortCol, sortAsc])
+
+    const handleSort = (col: string) => {
+        if (sortCol === col) setSortAsc(!sortAsc)
+        else { setSortCol(col); setSortAsc(true) }
+    }
+
     // Detail Modal
     const [showModal, setShowModal] = useState(false)
     const [editing, setEditing] = useState<Customer | null>(null)
@@ -159,16 +195,16 @@ export default function ClientesPage() {
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th>Nombre Completo</th>
-                                    <th>Contacto</th>
-                                    <th>DNI / CUIT</th>
-                                    <th className="text-right">Saldo</th>
-                                    <th className="text-right">Puntos</th>
+                                    <th className="cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('name')}>Nombre Completo {sortCol === 'name' ? (sortAsc ? '↑' : '↓') : ''}</th>
+                                    <th className="cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('contact')}>Contacto {sortCol === 'contact' ? (sortAsc ? '↑' : '↓') : ''}</th>
+                                    <th className="cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('taxId')}>DNI / CUIT {sortCol === 'taxId' ? (sortAsc ? '↑' : '↓') : ''}</th>
+                                    <th className="text-right cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('balance')}>Saldo {sortCol === 'balance' ? (sortAsc ? '↑' : '↓') : ''}</th>
+                                    <th className="text-right cursor-pointer hover:bg-primary-50 select-none" onClick={() => handleSort('points')}>Puntos {sortCol === 'points' ? (sortAsc ? '↑' : '↓') : ''}</th>
                                     <th className="text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {data.map(c => (
+                                {sortedData.map(c => (
                                     <tr key={c.id}>
                                         <td>
                                             <div className="flex items-center gap-3">

@@ -82,9 +82,14 @@ public class SettingsController {
     }
 
     @DeleteMapping("/statuses/{id}")
-    public ResponseEntity<Void> deleteStatus(@PathVariable Long id) {
-        statusRepo.deleteById(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteStatus(@PathVariable Long id) {
+        return statusRepo.findById(id).map(s -> {
+            if ("Pendiente".equalsIgnoreCase(s.getName())) {
+                return ResponseEntity.badRequest().body(java.util.Map.of("error", "No se puede eliminar el estado Pendiente"));
+            }
+            statusRepo.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/statuses/{id}/usage")
