@@ -294,8 +294,7 @@ export default function ClientesPage() {
                                 {[
                                     { id: 'profile', icon: User, label: 'Perfil' },
                                     { id: 'account', icon: Banknote, label: 'Cuenta Corriente' },
-                                    { id: 'loyalty', icon: Star, label: 'Fidelización' },
-                                    { id: 'sales', icon: History, label: 'Historial' }
+                                    { id: 'loyalty', icon: Star, label: 'Fidelización' }
                                 ].map(tab => (
                                     <button
                                         key={tab.id}
@@ -455,50 +454,6 @@ export default function ClientesPage() {
                                                 <span className="text-xs uppercase font-bold">Restar</span>
                                             </button>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'sales' && editing && (
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className="text-sm font-bold text-espresso uppercase tracking-wider">Historial de Compras</h3>
-                                        <span className="badge-brown">{history.length} órdenes</span>
-                                    </div>
-                                    <div className="space-y-3">
-                                        {history.map(sale => (
-                                            <div key={sale.id} className="card p-4 hover:border-primary-300 transition-colors shadow-sm group">
-                                                <div className="flex items-center justify-between gap-4">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-600 group-hover:bg-primary-100 transition-colors">
-                                                            <FileText className="w-5 h-5" />
-                                                        </div>
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="font-bold text-espresso">Orden #{sale.id}</p>
-                                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${sale.status?.color === 'emerald' ? 'bg-emerald-100 text-emerald-700' :
-                                                                    sale.status?.color === 'red' ? 'bg-red-100 text-red-700' :
-                                                                        'bg-amber-100 text-amber-700'
-                                                                    }`}>
-                                                                    {sale.status?.name}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-xs text-primary-400 font-medium">{FMT_DATE(sale.createdAt)}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-lg font-black text-espresso">{FMT_CUR(sale.total)}</p>
-                                                        <p className="text-[10px] text-primary-400 font-bold uppercase tracking-tight">{sale.paymentMethod?.name}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {history.length === 0 && (
-                                            <div className="text-center py-20 bg-primary-50/30 rounded-2xl border-2 border-dashed border-muted">
-                                                <AlertCircle className="w-10 h-10 text-primary-300 mx-auto mb-3" />
-                                                <p className="text-primary-500 font-medium">Este cliente todavía no realizó compras.</p>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             )}
