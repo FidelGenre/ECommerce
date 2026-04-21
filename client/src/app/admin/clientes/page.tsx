@@ -381,12 +381,12 @@ export default function ClientesPage() {
                                             <p className="text-xs font-bold text-primary-400 uppercase tracking-widest mb-2">Acción Rápida</p>
                                             <div className="flex gap-2">
                                                 <button onClick={() => {
-                                                    const amt = prompt('Monto a cargar (positivo para saldo a favor, negativo para deuda):')
-                                                    if (amt) adjustBalance(parseFloat(amt), 'Ajuste manual')
+                                                    const amt = prompt('Monto a cargar (aumenta el saldo):')
+                                                    if (amt) adjustBalance(Math.abs(parseFloat(amt)), 'Ajuste manual')
                                                 }} className="btn-primary py-1.5 text-xs flex-1">Cargar Saldo</button>
                                                 <button onClick={() => {
-                                                    const amt = prompt('Monto a pagar de la deuda (monto positivo):')
-                                                    if (amt) adjustBalance(parseFloat(amt), 'Cobro de cuenta corriente')
+                                                    const amt = prompt('Monto del pago (disminuye el saldo):')
+                                                    if (amt) adjustBalance(-Math.abs(parseFloat(amt)), 'Cobro de cuenta corriente')
                                                 }} className="btn-secondary py-1.5 text-xs flex-1">Registrar Pago</button>
                                             </div>
                                         </div>
@@ -410,8 +410,8 @@ export default function ClientesPage() {
                                                         <tr key={m.id}>
                                                             <td className="text-primary-500 font-medium">{FMT_DATE(m.createdAt)}</td>
                                                             <td className="font-semibold text-espresso">{m.description}</td>
-                                                            <td className={`text-right font-bold ${m.movementType === 'CHARGE' ? 'text-red-500' : 'text-emerald-600'}`}>
-                                                                {m.movementType === 'CHARGE' ? '-' : '+'}{FMT_CUR(m.amount)}
+                                                            <td className={`text-right font-bold ${m.movementType === 'CHARGE' ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                                {m.movementType === 'CHARGE' ? '+' : '-'}{FMT_CUR(Math.abs(m.amount))}
                                                             </td>
                                                         </tr>
                                                     ))}

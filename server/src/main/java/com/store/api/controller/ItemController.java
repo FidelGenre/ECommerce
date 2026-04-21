@@ -63,6 +63,8 @@ public class ItemController {
             @RequestParam(required = false) Long category,
             @RequestParam(required = false) Long supplier,
             @RequestParam(required = false) Boolean visible,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
             @RequestParam(defaultValue = "ASC") String dir) {
         try {
             Sort.Direction direction = dir.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
@@ -78,6 +80,18 @@ public class ItemController {
                     predicates.add(cb.equal(root.get("supplier").get("id"), supplier));
                 if (visible != null)
                     predicates.add(cb.equal(root.get("visible"), visible));
+                if (from != null && !from.isBlank()) {
+                    try {
+                        java.time.LocalDateTime fromDate = java.time.LocalDate.parse(from).atStartOfDay();
+                        predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
+                    } catch (Exception e) {}
+                }
+                if (to != null && !to.isBlank()) {
+                    try {
+                        java.time.LocalDateTime toDate = java.time.LocalDate.parse(to).atTime(23, 59, 59);
+                        predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
+                    } catch (Exception e) {}
+                }
                 return cb.and(predicates.toArray(new Predicate[0]));
             };
             return ResponseEntity.ok(itemRepository.findAll(spec, pageable));

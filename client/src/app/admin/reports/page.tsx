@@ -47,7 +47,7 @@ export default function ReportsPage() {
                 api.get(`/api/admin/dashboard/sales-by-hour?${dateParam}`),
                 api.get(`/api/admin/dashboard/non-rotating?${dateParam}`),
                 api.get(`/api/admin/dashboard/margin-evolution?${dateParam}`),
-                api.get('/api/admin/items?size=500'),
+                api.get(`/api/admin/items?size=500&${dateParam}`),
             ])
 
             const getData = (res: PromiseSettledResult<any>) => res.status === 'fulfilled' ? res.value.data : []
