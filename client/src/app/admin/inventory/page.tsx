@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx'
 import { QRCodeSVG } from 'qrcode.react'
 
 type StockStatus = 'all' | 'ok' | 'low' | 'critical' | 'out'
-type SortField = 'name' | 'stock' | 'category'
+type SortField = 'name' | 'stock' | 'category' | 'id' | 'minStock' | 'supplier' | 'status'
 type SortDir = 'asc' | 'desc'
 
 export default function InventoryPage() {
@@ -99,6 +99,10 @@ export default function InventoryPage() {
             let av: any, bv: any
             if (sortField === 'name') { av = a.name; bv = b.name }
             else if (sortField === 'stock') { av = a.stock; bv = b.stock }
+            else if (sortField === 'id') { av = a.id; bv = b.id }
+            else if (sortField === 'minStock') { av = a.minStock; bv = b.minStock }
+            else if (sortField === 'supplier') { av = a.supplier?.name ?? ''; bv = b.supplier?.name ?? '' }
+            else if (sortField === 'status') { av = stockStatus(a).key; bv = stockStatus(b).key }
             else { av = a.category?.name ?? ''; bv = b.category?.name ?? '' }
             if (av < bv) return sortDir === 'asc' ? -1 : 1
             if (av > bv) return sortDir === 'asc' ? 1 : -1
@@ -218,13 +222,13 @@ export default function InventoryPage() {
                     <div className="table-wrapper rounded-none border-0">
                         <table className="data-table">
                             <thead><tr>
-                                <th>ID</th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('id')}>ID <SortIcon field="id" /></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('name')}>Producto <SortIcon field="name" /></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('stock')}>Stock <SortIcon field="stock" /></th>
-                                <th>Mín.</th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('minStock')}>Mín. <SortIcon field="minStock" /></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('category')}>Categoría <SortIcon field="category" /></th>
-                                <th>Proveedor</th>
-                                <th>Estado</th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('supplier')}>Proveedor <SortIcon field="supplier" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('status')}>Estado <SortIcon field="status" /></th>
                                 <th>Acciones</th>
                             </tr></thead>
                             <tbody>

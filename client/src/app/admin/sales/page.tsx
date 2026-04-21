@@ -9,7 +9,7 @@ import { SavedFilters } from '@/components/SavedFilters'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
-type SortField = 'id' | 'total' | 'createdAt' | 'paymentMethod'
+type SortField = 'id' | 'total' | 'createdAt' | 'paymentMethod' | 'customer' | 'createdBy' | 'status'
 type SortDir = 'asc' | 'desc'
 
 export default function SalesPage() {
@@ -301,9 +301,9 @@ export default function SalesPage() {
                             <thead><tr>
                                 <th className="w-6"></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('id')}># <SortIcon field="id" /></th>
-                                <th>Comprador</th>
-                                <th>Vendedor</th>
-                                <th>Estado</th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('customer')}>Comprador <SortIcon field="customer" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('createdBy')}>Vendedor <SortIcon field="createdBy" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('status')}>Estado <SortIcon field="status" /></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('paymentMethod')}>Pago <SortIcon field="paymentMethod" /></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('total')}>Total <SortIcon field="total" /></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('createdAt')}>Fecha <SortIcon field="createdAt" /></th>

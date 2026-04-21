@@ -2,16 +2,13 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { OperationStatus } from '@/types'
-import { Plus, X, Edit, Trash2, Search } from 'lucide-react'
+import { X, Trash2, Search } from 'lucide-react'
 import { SavedFilters } from '@/components/SavedFilters'
 
 export default function StatusesSettingsPage() {
     const [data, setData] = useState<OperationStatus[]>([])
     const [loading, setLoading] = useState(true)
-    const [showModal, setShowModal] = useState(false)
-    const [editing, setEditing] = useState<OperationStatus | null>(null)
-    const [form, setForm] = useState({ name: '', type: 'SALE' })
-    const [saving, setSaving] = useState(false)
+
 
     // Filters
     const [fromDate, setFromDate] = useState('')
@@ -56,16 +53,7 @@ export default function StatusesSettingsPage() {
     }
     useEffect(() => { load() }, [])
 
-    const openNew = () => { setEditing(null); setForm({ name: '', type: 'SALE' }); setShowModal(true) }
-    const openEdit = (s: OperationStatus) => { setEditing(s); setForm({ name: s.name, type: s.type }); setShowModal(true) }
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault(); setSaving(true)
-        try {
-            if (editing) await api.put(`/api/admin/settings/statuses/${editing.id}`, { ...form, color: '#6B3F1F' })
-            else await api.post('/api/admin/settings/statuses', { ...form, color: '#6B3F1F' })
-            setShowModal(false); load()
-        } finally { setSaving(false) }
-    }
+
     const handleDelete = async (ids: number[]) => {
         if (!confirm(`¿Eliminar ${ids.length === 1 ? 'este estado' : `estos ${ids.length} estados`}?`)) return
         setDeleting(true)
@@ -155,9 +143,6 @@ export default function StatusesSettingsPage() {
                                     </span>
                                 </div>
                                 <div className="flex gap-1">
-                                    <button onClick={() => openEdit(s)} title="Editar etiqueta" className="btn-ghost p-1.5 hover:bg-white hover:text-primary-700 text-primary-400 transition-colors">
-                                        <Edit className="w-4 h-4" />
-                                    </button>
                                     {sortedIds.length === 0 && (
                                         <button onClick={() => handleDelete([s.id])} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
                                             <Trash2 className="w-4 h-4" />
@@ -197,11 +182,8 @@ export default function StatusesSettingsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-espresso">Estados de Operación</h1>
-                    <p className="text-sm text-primary-400 font-medium">Configuración de etiquetas para el seguimiento de transacciones.</p>
+                    <p className="text-sm text-primary-400 font-medium">Vista de etiquetas para el seguimiento de transacciones.</p>
                 </div>
-                <button onClick={openNew} className="btn-primary flex items-center gap-2 py-2 px-4 shadow-sm active:scale-95 transition-transform">
-                    <Plus className="w-4 h-4" /> Nueva etiqueta
-                </button>
             </div>
             
             {/* Filter bar */}
@@ -243,47 +225,7 @@ export default function StatusesSettingsPage() {
                 </>
             )}
 
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
-                        <div className="flex items-center justify-between p-6 border-b border-muted">
-                            <div invention-id="modal-header">
-                                <h2 className="text-lg font-bold text-espresso">Editar Estado de Venta</h2>
-                                <p className="font-mono text-[10px] text-primary-400 font-bold uppercase mt-0.5">ID: #{editing?.id}</p>
-                            </div>
-                            <button onClick={() => setShowModal(false)} className="btn-ghost p-1.5 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors"><X className="w-5 h-5" /></button>
-                        </div>
-                        <form onSubmit={handleSave} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-primary-700 uppercase tracking-wider mb-1.5">Nuevo Nombre</label>
-                                <select
-                                    className="input focus:ring-primary-700 w-full"
-                                    value={form.name}
-                                    onChange={e => setForm({ ...form, name: e.target.value })}
-                                    required
-                                >
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="Completado">Completado</option>
-                                    <option value="Cancelado">Cancelado</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-primary-700 uppercase tracking-wider mb-1.5">Tipo (No editable)</label>
-                                <div className="bg-primary-50 text-primary-700 px-3 py-2 rounded-lg text-sm font-semibold border border-primary-100 flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                    Venta (Ingreso)
-                                </div>
-                            </div>
-                            <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancelar</button>
-                                <button type="submit" className="btn-primary flex-1 shadow-md active:scale-95 transition-transform" disabled={saving}>
-                                    {saving ? 'Guardando…' : 'Guardar Cambios'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+
         </div>
     )
 }

@@ -171,8 +171,8 @@ export default function SuppliersPage() {
                                 <th className="w-8 pl-4"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('name')}>Nombre <SortIcon field="name" /></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('alias')}>Alias <SortIcon field="alias" /></th>
-                                <th>Email</th>
-                                <th>Teléfono</th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('email')}>Email <SortIcon field="email" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('phone')}>Teléfono <SortIcon field="phone" /></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('category.name')}>Categoría <SortIcon field="category.name" /></th>
                                 <th className="cursor-pointer select-none" onClick={() => toggleSort('accountBalance')}>Saldo C/C <SortIcon field="accountBalance" /></th>
                                 <th>Acciones</th>

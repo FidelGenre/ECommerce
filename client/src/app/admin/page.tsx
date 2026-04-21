@@ -4,7 +4,8 @@ import api from '@/lib/api'
 import { DashboardKpi } from '@/types'
 import {
     TrendingUp, ShoppingCart, Package, AlertTriangle,
-    DollarSign, Bell, Boxes, RefreshCw, Users, Calendar
+    DollarSign, Bell, Boxes, RefreshCw, Users, Calendar,
+    PackageX, BarChart2
 } from 'lucide-react'
 import {
     LineChart, Line, BarChart, Bar, XAxis, YAxis,
@@ -82,6 +83,9 @@ export default function AdminDashboard() {
     const [byCategory, setByCategory] = useState<any[]>([])
     const [salesByPayment, setSalesByPayment] = useState<any[]>([])
     const [purchasesByPayment, setPurchasesByPayment] = useState<any[]>([])
+    const [topProducts, setTopProducts] = useState<any[]>([])
+    const [marginEvolution, setMarginEvolution] = useState<any[]>([])
+    const [nonRotating, setNonRotating] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     const [preset, setPreset] = useState<Preset>('all')
@@ -93,7 +97,8 @@ export default function AdminDashboard() {
         setLoading(true)
         try {
             const params = `from=${from}&to=${to}`
-            const [k, s, sup, ls, tc, cat, sp, pp] = await Promise.allSettled([
+            const daysDiff = Math.max(1, Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / 86400000))
+            const [k, s, sup, ls, tc, cat, sp, pp, me, nr] = await Promise.allSettled([
                 api.get(`/api/admin/dashboard/kpi?${params}`),
                 api.get(`/api/admin/dashboard/sales-by-period?${params}`),
                 api.get(`/api/admin/dashboard/purchases-by-supplier?${params}`),
@@ -102,6 +107,8 @@ export default function AdminDashboard() {
                 api.get(`/api/admin/dashboard/sales-by-category?${params}`),
                 api.get(`/api/admin/dashboard/sales-by-payment?${params}`),
                 api.get(`/api/admin/dashboard/purchases-by-payment?${params}`),
+                api.get('/api/admin/dashboard/margin-evolution?months=6'),
+                api.get(`/api/admin/dashboard/non-rotating?days=${daysDiff}`),
             ])
 
             if (k.status === 'fulfilled') setKpi(k.value.data)
@@ -112,6 +119,14 @@ export default function AdminDashboard() {
             if (cat.status === 'fulfilled') setByCategory(cat.value.data)
             if (sp.status === 'fulfilled') setSalesByPayment(sp.value.data)
             if (pp.status === 'fulfilled') setPurchasesByPayment(pp.value.data)
+            if (me.status === 'fulfilled') setMarginEvolution(me.value.data)
+            if (nr.status === 'fulfilled') setNonRotating(nr.value.data)
+
+            // Top products from profitability
+            api.get('/api/admin/dashboard/profitability').then(r => {
+                const sorted = [...(r.data || [])].sort((a: any, b: any) => b.unitsSold - a.unitsSold).slice(0, 5)
+                setTopProducts(sorted)
+            }).catch(() => {})
         } finally {
             setLoading(false)
         }
@@ -234,6 +249,119 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
+            {/* Top Products + Top Customers */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {/* Productos más vendidos */}
+                <div className="card">
+                    <div className="flex items-center gap-2 mb-4">
+                        <BarChart2 className="w-5 h-5 text-amber-600" />
+                        <h2 className="text-base font-semibold text-espresso">Productos Más Vendidos</h2>
+                    </div>
+                    {topProducts.length === 0 ? (
+                        <p className="text-primary-400 text-sm text-center py-10">Sin datos de ventas</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {topProducts.map((p: any, i: number) => (
+                                <div key={p.id} className="flex items-center gap-3">
+                                    <span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-sm font-medium text-espresso truncate">{p.name}</span>
+                                            <span className="text-xs font-bold text-primary-500 shrink-0">{p.unitsSold} uds.</span>
+                                        </div>
+                                        <div className="mt-1 h-1.5 bg-primary-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-amber-500 rounded-full transition-all"
+                                                style={{ width: `${Math.round((p.unitsSold / (topProducts[0]?.unitsSold || 1)) * 100)}%` }} />
+                                        </div>
+                                    </div>
+                                    <span className="text-xs font-semibold text-espresso shrink-0">{FMT(p.revenue)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Clientes más importantes */}
+                {topCustomers.length > 0 && (
+                    <div className="card">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Users className="w-5 h-5 text-primary-600" />
+                            <h2 className="text-base font-semibold text-espresso">Clientes Más Importantes</h2>
+                        </div>
+                        <div className="table-wrapper">
+                            <table className="data-table">
+                                <thead><tr><th>#</th><th>Comprador</th><th className="text-right">Total</th></tr></thead>
+                                <tbody>
+                                    {topCustomers.map((c: any, i: number) => (
+                                        <tr key={c.id}>
+                                            <td className="font-bold text-primary-400">{i + 1}</td>
+                                            <td className="font-medium">{c.name}</td>
+                                            <td className="text-right font-bold text-espresso">{FMT(c.totalPurchases)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Evolución del Margen + Rotación de Productos */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {/* Evolución del Margen */}
+                <div className="card">
+                    <h2 className="text-base font-semibold text-espresso mb-4">Evolución del Margen (6 meses)</h2>
+                    {marginEvolution.length === 0 ? (
+                        <p className="text-primary-400 text-sm text-center py-10">Sin datos</p>
+                    ) : (
+                        <ResponsiveContainer width="100%" height={220}>
+                            <BarChart data={marginEvolution}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#D9C9B0" />
+                                <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="#A67C52" />
+                                <YAxis tick={{ fontSize: 11 }} stroke="#A67C52" />
+                                <Tooltip formatter={(v: any) => FMT(v)} />
+                                <Bar dataKey="sales" name="Ventas" fill="#6B3F1F" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="purchases" name="Compras" fill="#C49A6C" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="margin" name="Margen" fill="#4A2C14" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    )}
+                </div>
+
+                {/* Productos sin rotación */}
+                <div className="card">
+                    <div className="flex items-center gap-2 mb-4">
+                        <PackageX className="w-5 h-5 text-red-500" />
+                        <h2 className="text-base font-semibold text-espresso">Productos sin Rotación</h2>
+                    </div>
+                    {nonRotating.length === 0 ? (
+                        <p className="text-emerald-600 text-sm text-center py-10">🎉 Todos los productos tuvieron ventas en este período</p>
+                    ) : (
+                        <div className="table-wrapper">
+                            <table className="data-table">
+                                <thead><tr><th>Producto</th><th className="text-right">Stock</th><th className="text-right">Días s/venta</th></tr></thead>
+                                <tbody>
+                                    {nonRotating.slice(0, 6).map((p: any) => (
+                                        <tr key={p.id}>
+                                            <td className="font-medium">{p.name}</td>
+                                            <td className="text-right text-primary-500">{p.stock}</td>
+                                            <td className="text-right">
+                                                <span className={`font-semibold ${p.daysSinceCreated > 60 ? 'text-red-500' : 'text-yellow-600'}`}>
+                                                    {p.daysSinceCreated}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {nonRotating.length > 6 && (
+                                <p className="text-xs text-primary-400 text-center py-2">y {nonRotating.length - 6} más...</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Low Stock Table */}
             {lowStock.length > 0 && (
                 <div className="card">
@@ -261,45 +389,20 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* Top Customers + Category Distribution */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {topCustomers.length > 0 && (
-                    <div className="card">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Users className="w-5 h-5 text-primary-600" />
-                            <h2 className="text-base font-semibold text-espresso">Top 5 Compradores</h2>
-                        </div>
-                        <div className="table-wrapper">
-                            <table className="data-table">
-                                <thead><tr><th>#</th><th>Comprador</th><th className="text-right">Total</th></tr></thead>
-                                <tbody>
-                                    {topCustomers.map((c: any, i: number) => (
-                                        <tr key={c.id}>
-                                            <td className="font-bold text-primary-400">{i + 1}</td>
-                                            <td className="font-medium">{c.name}</td>
-                                            <td className="text-right font-bold text-espresso">{FMT(c.totalPurchases)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
-
-                {byCategory.length > 0 && (
-                    <div className="card">
-                        <h2 className="text-base font-semibold text-espresso mb-4">Ventas por Categoría</h2>
-                        <ResponsiveContainer width="100%" height={220}>
-                            <PieChart>
-                                <Pie data={byCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
-                                    {byCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip formatter={(v: any) => FMT(v)} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                )}
-            </div>
+            {/* Ventas por Categoría */}
+            {byCategory.length > 0 && (
+                <div className="card">
+                    <h2 className="text-base font-semibold text-espresso mb-4">Ventas por Categoría</h2>
+                    <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                            <Pie data={byCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
+                                {byCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip formatter={(v: any) => FMT(v)} />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
 
             {/* Payment Method Breakdown */}
             {(salesByPayment.length > 0 || purchasesByPayment.length > 0) && (

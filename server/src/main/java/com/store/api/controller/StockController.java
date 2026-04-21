@@ -75,7 +75,7 @@ public class StockController {
 
         if (item.getStock().compareTo(item.getMinStock()) <= 0) {
             Notification notification = new Notification();
-            notification.setMessage("Low stock: " + item.getName() + " (" + item.getStock() + " left)");
+            notification.setMessage("Stock bajo: " + item.getName() + " (" + item.getStock() + " restante, mín: " + item.getMinStock() + ")");
             notification.setType("WARNING");
             notificationRepo.save(notification);
         }
