@@ -262,10 +262,14 @@ public class DashboardController {
         // Sales by hour of day
         @GetMapping("/sales-by-hour")
         public ResponseEntity<List<Map<String, Object>>> salesByHour(
-                        @RequestParam(defaultValue = "30") int days) {
+                        @RequestParam(defaultValue = "30") int days,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay() : LocalDate.now().minusDays(days).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now().plusDays(1);
                 List<Map<String, Object>> data = new ArrayList<>();
                 saleRepo.findAll().stream()
-                                .filter(s -> s.getCreatedAt().isAfter(LocalDateTime.now().minusDays(days)))
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom) && !s.getCreatedAt().isAfter(rangeTo))
                                 .collect(Collectors.groupingBy(
                                                 s -> s.getCreatedAt().getHour(),
                                                 TreeMap::new,
@@ -476,11 +480,14 @@ public class DashboardController {
 
         @GetMapping("/non-rotating")
         public ResponseEntity<List<Map<String, Object>>> nonRotatingProducts(
-                        @RequestParam(defaultValue = "30") int days) {
-                LocalDateTime threshold = LocalDateTime.now().minusDays(days);
+                        @RequestParam(defaultValue = "30") int days,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay() : LocalDate.now().minusDays(days).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now().plusDays(1);
 
                 Set<Long> soldItemIds = saleRepo.findAll().stream()
-                                .filter(s -> s.getCreatedAt().isAfter(threshold))
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom) && !s.getCreatedAt().isAfter(rangeTo))
                                 .flatMap(o -> o.getLines().stream())
                                 .filter(l -> l.getItem() != null)
                                 .map(l -> l.getItem().getId())
