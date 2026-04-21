@@ -52,6 +52,9 @@ public class SaleOrder {
     @Column(name = "points_used", columnDefinition = "integer default 0")
     private Integer pointsUsed = 0;
 
+    @Column(name = "points_granted", columnDefinition = "boolean default false")
+    private Boolean pointsGranted = false;
+
     @Column(name = "cash_registered", columnDefinition = "boolean default false")
     private Boolean cashRegistered = false;
 

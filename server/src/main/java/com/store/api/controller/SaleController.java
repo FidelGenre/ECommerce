@@ -169,6 +169,7 @@ public class SaleController {
             if (earned > 0) {
                 c.setLoyaltyPoints((c.getLoyaltyPoints() != null ? c.getLoyaltyPoints() : 0) + earned);
                 customerRepo.save(c);
+                order.setPointsGranted(true);
             }
         }
 
@@ -228,6 +229,20 @@ public class SaleController {
                     String method = order.getPaymentMethod().getName();
                     cashService.record("INCOME", order.getTotal(), "[" + method + "] Venta #" + order.getId());
                     order.setCashRegistered(true);
+                }
+
+                if (("Completed".equals(statusName) || "Completado".equals(statusName))
+                        && !Boolean.TRUE.equals(order.getPointsGranted())
+                        && order.getCustomer() != null
+                        && order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                    
+                    Customer c = order.getCustomer();
+                    int earned = order.getTotal().intValue() / 1000;
+                    if (earned > 0) {
+                        c.setLoyaltyPoints((c.getLoyaltyPoints() != null ? c.getLoyaltyPoints() : 0) + earned);
+                        customerRepo.save(c);
+                        order.setPointsGranted(true);
+                    }
                 }
             }
             return ResponseEntity.ok(saleRepo.save(order));

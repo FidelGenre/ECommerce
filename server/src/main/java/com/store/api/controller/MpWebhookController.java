@@ -82,6 +82,7 @@ public class MpWebhookController {
                     int current = customer.getLoyaltyPoints() != null ? customer.getLoyaltyPoints() : 0;
                     customer.setLoyaltyPoints(current + earned);
                     customerRepo.save(customer);
+                    order.setPointsGranted(true);
                     System.out.println("MP webhook: awarded " + earned + " loyalty points to customer "
                             + customer.getId() + " for order " + order.getId());
                 }

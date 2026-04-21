@@ -202,7 +202,6 @@ public class CheckoutController {
                     .backUrls(backUrls)
                     .autoReturn("approved")
                     .externalReference(order.getId().toString())
-                    .notificationUrl(publicBaseUrl + "/api/public/mp/webhook")
                     .build();
 
             PreferenceClient client = new PreferenceClient();
