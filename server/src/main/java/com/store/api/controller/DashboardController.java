@@ -252,7 +252,7 @@ public class DashboardController {
                                 .collect(Collectors.groupingBy(
                                                 l -> l.getItem().getCategory().getName(),
                                                 Collectors.reducing(BigDecimal.ZERO,
-                                                                l -> l.getUnitPrice().multiply(l.getQuantity()),
+                                                                l -> l.getUnitCost().multiply(l.getQuantity()),
                                                                 BigDecimal::add)))
                                 .forEach((cat, total) -> data.add(Map.of("category", cat, "total", total)));
                 data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
