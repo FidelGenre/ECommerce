@@ -51,7 +51,7 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
             {/* Nav */}
             <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5 sidebar-scroll">
                 {NAV.map((item, i) => {
-                    const hasPerm = !item.perm || user?.role === 'ADMIN' || (user?.permissions && user.permissions.includes(item.perm as string))
+                    const hasPerm = !item.perm || (user?.permissions && user.permissions.includes(item.perm as string))
                     if (!hasPerm) return null
 
                     if ('separator' in item) {
@@ -149,7 +149,7 @@ export default function AdminSidebar() {
                     {/* Centered nav items */}
                     <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto py-4 -mt-4 overlay-items-animate">
                         {NAV.map((item, i) => {
-                            const hasPerm = !item.perm || user?.role === 'ADMIN' || (user?.permissions && user.permissions.includes(item.perm as string))
+                            const hasPerm = !item.perm || (user?.permissions && user.permissions.includes(item.perm as string))
                             if (!hasPerm) return null
 
                             if ('separator' in item) {
