@@ -21,6 +21,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final com.store.api.repository.UserRepository userRepository;
+    private final com.store.api.repository.RoleRepository roleRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,9 +37,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 // Verify user is still active in database
                 var userOpt = userRepository.findByUsername(username);
                 if (userOpt.isPresent() && userOpt.get().getActive()) {
+                    java.util.List<SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
+                    authorities.add(new SimpleGrantedAuthority(role));
+
+                    roleRepository.findById(role).ifPresent(r -> {
+                        r.getPermissions().forEach(p -> authorities.add(new SimpleGrantedAuthority(p)));
+                    });
+
                     var auth = new UsernamePasswordAuthenticationToken(
-                            username, null,
-                            List.of(new SimpleGrantedAuthority(role)));
+                            username, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }

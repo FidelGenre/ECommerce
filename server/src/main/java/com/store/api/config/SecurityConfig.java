@@ -44,7 +44,7 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/payment/webhook").permitAll()
                                                 .requestMatchers("/checkout/**").permitAll()
                                                 .requestMatchers("/error").permitAll()
-                                                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                                                .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN", "VIEW_DASHBOARD", "MANAGE_SALES", "MANAGE_PURCHASES", "MANAGE_INVENTORY", "MANAGE_CASH", "VIEW_REPORTS", "MANAGE_CUSTOMERS", "MANAGE_SUPPLIERS", "MANAGE_SETTINGS")
                                                 .anyRequest().authenticated())
                                 .exceptionHandling(ex -> ex
                                                 .authenticationEntryPoint(this::jsonUnauthorized)
