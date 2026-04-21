@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { Customer, AccountMovement } from '@/types'
-import { Plus, X, ChevronLeft, ChevronRight, Search, History, ArrowDownRight, ArrowUpRight, Star, Trash2 } from 'lucide-react'
+import { Plus, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, History, ArrowDownRight, ArrowUpRight, Star, Trash2 } from 'lucide-react'
 
 const FIELD_LABELS: Record<string, string> = {
     firstName: 'Nombre',
@@ -19,6 +19,10 @@ export default function CustomersPage() {
     const [page, setPage] = useState(0)
     const [q, setQ] = useState('')
     const [loading, setLoading] = useState(true)
+
+    // Sort
+    const [sortField, setSortField] = useState('firstName')
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
     // Edit Modal
     const [showModal, setShowModal] = useState(false)
@@ -49,10 +53,21 @@ export default function CustomersPage() {
 
     const load = async () => {
         setLoading(true)
-        const r = await api.get(`/api/admin/customers?page=${page}&size=15${q ? '&q=' + q : ''}`)
+        const r = await api.get(`/api/admin/customers?page=${page}&size=15${q ? '&q=' + q : ''}&sort=${sortField}&dir=${sortDir.toUpperCase()}`)
         setData(r.data.content); setTotal(r.data.totalElements); setLoading(false)
     }
-    useEffect(() => { load() }, [page, q])
+    useEffect(() => { load() }, [page, q, sortField, sortDir])
+
+    const toggleSort = (field: string) => {
+        setPage(0)
+        if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+        else { setSortField(field); setSortDir('asc') }
+    }
+    const SortIcon = ({ field }: { field: string }) => (
+        <span className="inline-flex items-center ml-1">
+            {sortField === field && sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : sortField === field && sortDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <span className="opacity-30">↕</span>}
+        </span>
+    )
 
     const openNew = () => { setEditing(null); setForm({ firstName: '', lastName: '', email: '', phone: '', address: '', taxId: '', notes: '' }); setShowModal(true) }
     const openEdit = (c: Customer) => { setEditing(c); setForm({ firstName: c.firstName, lastName: c.lastName ?? '', email: c.email ?? '', phone: c.phone ?? '', address: c.address ?? '', taxId: c.taxId ?? '', notes: c.notes ?? '' }); setShowModal(true) }
@@ -151,7 +166,7 @@ export default function CustomersPage() {
                 {loading ? <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div> : (
                     <div className="table-wrapper rounded-none border-0">
                         <table className="data-table">
-                            <thead><tr><th className="w-8 pl-4"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Saldo C/C</th><th>Puntos</th><th>Acciones</th></tr></thead>
+                            <thead><tr><th className="w-8 pl-4"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th><th className="cursor-pointer select-none" onClick={() => toggleSort('firstName')}>Nombre <SortIcon field="firstName" /></th><th className="cursor-pointer select-none" onClick={() => toggleSort('email')}>Email <SortIcon field="email" /></th><th className="cursor-pointer select-none" onClick={() => toggleSort('phone')}>Teléfono <SortIcon field="phone" /></th><th className="cursor-pointer select-none" onClick={() => toggleSort('accountBalance')}>Saldo C/C <SortIcon field="accountBalance" /></th><th className="cursor-pointer select-none" onClick={() => toggleSort('loyaltyPoints')}>Puntos <SortIcon field="loyaltyPoints" /></th><th>Acciones</th></tr></thead>
                             <tbody>
                                 {data.map(c => (
                                     <tr key={c.id} className={selected.has(c.id) ? 'bg-red-50' : ''}>

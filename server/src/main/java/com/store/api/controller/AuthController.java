@@ -32,14 +32,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
-        User user = userRepository.findByUsername(req.getUsername())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+        User user = userRepository.findByUsername(req.getUsername()).orElse(null);
 
-        if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
-            return ResponseEntity.status(401).body("Invalid credentials");
+        if (user == null || !passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
+            return ResponseEntity.status(401).body("Usuario o contraseña inválidos");
         }
         if (!user.getActive()) {
-            return ResponseEntity.status(403).body("Account disabled");
+            return ResponseEntity.status(403).body("La cuenta se encuentra deshabilitada");
         }
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());

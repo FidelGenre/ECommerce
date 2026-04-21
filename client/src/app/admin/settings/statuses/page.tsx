@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { OperationStatus } from '@/types'
-import { Plus, X, Edit, Trash2 } from 'lucide-react'
+import { Plus, X, Edit, Trash2, Search } from 'lucide-react'
+import { SavedFilters } from '@/components/SavedFilters'
 
 export default function StatusesSettingsPage() {
     const [data, setData] = useState<OperationStatus[]>([])
@@ -11,6 +12,25 @@ export default function StatusesSettingsPage() {
     const [editing, setEditing] = useState<OperationStatus | null>(null)
     const [form, setForm] = useState({ name: '', type: 'SALE' })
     const [saving, setSaving] = useState(false)
+
+    // Filters
+    const [fromDate, setFromDate] = useState('')
+    const [toDate, setToDate] = useState('')
+    const [searchQ, setSearchQ] = useState('')
+
+    const hasFilters = !!fromDate || !!toDate || !!searchQ
+    const currentFilters = { fromDate, toDate, searchQ }
+    const handleLoadFilters = (f: Record<string, any>) => {
+        setFromDate(f.fromDate || '')
+        setToDate(f.toDate || '')
+        setSearchQ(f.searchQ || '')
+    }
+
+    const resetFilters = () => {
+        setFromDate('')
+        setToDate('')
+        setSearchQ('')
+    }
 
     // Selection
     const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -67,19 +87,27 @@ export default function StatusesSettingsPage() {
     const filteredSalesStatuses = data.filter(s => s.type === 'SALE' && !SALE_STATUS_HIDDEN.includes(s.name))
     const purchaseStatuses = data.filter(s => s.type === 'PURCHASE')
 
-    const StatusTable = ({ title, statuses, isSale }: { title: string; statuses: OperationStatus[]; isSale: boolean }) => {
+    const StatusTable = ({ title, statuses, isSale, fromDate, toDate, searchQ }: { title: string; statuses: OperationStatus[]; isSale: boolean; fromDate: string; toDate: string; searchQ: string }) => {
         const [usage, setUsage] = useState<{ [key: number]: number[] }>({})
 
         useEffect(() => {
             statuses.forEach(async (s) => {
                 try {
-                    const r = await api.get(`/api/admin/settings/statuses/${s.id}/usage`)
+                    const params = new URLSearchParams()
+                    if (fromDate) params.set('from', fromDate + 'T00:00:00')
+                    if (toDate) params.set('to', toDate + 'T23:59:59')
+                    if (searchQ) params.set('search', searchQ)
+                    
+                    let url = `/api/admin/settings/statuses/${s.id}/usage`
+                    if (params.toString()) url += '?' + params.toString()
+                    
+                    const r = await api.get(url)
                     setUsage(prev => ({ ...prev, [s.id]: r.data.ids || [] }))
                 } catch (e) {
                     console.error("Error fetching usage for status", s.id, e)
                 }
             })
-        }, [statuses])
+        }, [statuses, fromDate, toDate, searchQ])
 
         // Normalize name: map English → Spanish
         const NORMALIZE: Record<string, string> = {
@@ -175,13 +203,43 @@ export default function StatusesSettingsPage() {
                     <Plus className="w-4 h-4" /> Nueva etiqueta
                 </button>
             </div>
+            
+            {/* Filter bar */}
+            <div className="card p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
+                        <input className="input pl-9 w-full text-sm" placeholder="Buscar por ID, cliente, proveedor o producto..." value={searchQ} onChange={e => { setSearchQ(e.target.value) }} />
+                    </div>
+                    <div>
+                        <div className="relative flex items-center gap-2">
+                           <span className="text-sm text-primary-500 font-medium whitespace-nowrap">Desde:</span>
+                           <input type="date" className="input text-sm w-full" value={fromDate} onChange={e => { setFromDate(e.target.value) }} />
+                        </div>
+                    </div>
+                    <div>
+                        <div className="relative flex items-center gap-2">
+                           <span className="text-sm text-primary-500 font-medium whitespace-nowrap">Hasta:</span>
+                           <input type="date" className="input text-sm w-full" value={toDate} onChange={e => { setToDate(e.target.value) }} />
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                    <SavedFilters storageKey="status_usage_filters" currentFilters={currentFilters} onLoadFilters={handleLoadFilters} />
+                    {hasFilters && (
+                        <button onClick={resetFilters} className="text-xs text-primary-500 hover:text-red-600 flex items-center gap-1 transition-colors bg-white px-2 py-1 rounded border border-transparent hover:border-red-200">
+                            <X className="w-3 h-3" /> Limpiar filtros
+                        </button>
+                    )}
+                </div>
+            </div>
 
             {loading ? (
                 <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" /></div>
             ) : (
                 <>
-                    <StatusTable title="Ventas (Ingresos)" statuses={filteredSalesStatuses} isSale={true} />
-                    <StatusTable title="Compras (Egresos)" statuses={purchaseStatuses} isSale={false} />
+                    <StatusTable title="Ventas (Ingresos)" statuses={filteredSalesStatuses} isSale={true} fromDate={fromDate} toDate={toDate} searchQ={searchQ} />
+                    <StatusTable title="Compras (Egresos)" statuses={purchaseStatuses} isSale={false} fromDate={fromDate} toDate={toDate} searchQ={searchQ} />
                 </>
             )}
 

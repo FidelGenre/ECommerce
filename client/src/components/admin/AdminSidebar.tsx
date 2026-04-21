@@ -137,9 +137,9 @@ export default function AdminSidebar() {
                             </div>
                             <span className="text-white font-bold">Coffee Beans</span>
                         </div>
-                        <button onClick={() => setMobileOpen(false)}
-                            className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center text-white hover:bg-white/20 transition-colors">
-                            <X className="w-5 h-5" />
+                        <button type="button" onClick={() => setMobileOpen(false)}
+                            className="relative z-50 w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-white hover:bg-white/20 transition-colors cursor-pointer touch-manipulation">
+                            <X className="w-6 h-6" />
                         </button>
                     </div>
 

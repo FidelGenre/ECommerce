@@ -88,24 +88,48 @@ public class SettingsController {
     }
 
     @GetMapping("/statuses/{id}/usage")
-    public ResponseEntity<?> getStatusUsage(@PathVariable Long id) {
+    public ResponseEntity<?> getStatusUsage(
+            @PathVariable Long id,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to,
+            @RequestParam(required = false) String search) {
+
         return statusRepo.findById(id).map(s -> {
-            // Find all statuses of same type and same name (case-insensitive) to merge
-            // duplicate entries
             List<OperationStatus> sameNameStatuses = statusRepo.findByType(s.getType()).stream()
                     .filter(other -> other.getName().equalsIgnoreCase(s.getName()))
                     .toList();
 
+            String q = search != null && !search.isBlank() ? search.toLowerCase() : null;
+
             if ("SALE".equals(s.getType())) {
                 List<Long> ids = sameNameStatuses.stream()
-                        .flatMap(st -> saleRepo.findByStatusId(st.getId()).stream())
+                        .flatMap(st -> saleRepo.findByStatusId(st.getId()).stream()
+                            .filter(order -> from == null || !order.getCreatedAt().toLocalDate().isBefore(from))
+                            .filter(order -> to == null || !order.getCreatedAt().toLocalDate().isAfter(to))
+                            .filter(order -> q == null ||
+                                String.valueOf(order.getId()).contains(q) ||
+                                (order.getCustomer() != null && (
+                                    (order.getCustomer().getFirstName() != null && order.getCustomer().getFirstName().toLowerCase().contains(q)) ||
+                                    (order.getCustomer().getLastName() != null && order.getCustomer().getLastName().toLowerCase().contains(q))
+                                )) ||
+                                order.getLines().stream().anyMatch(l -> l.getItem() != null && l.getItem().getName() != null && l.getItem().getName().toLowerCase().contains(q))
+                            )
+                        )
                         .map(SaleOrder::getId)
                         .distinct()
                         .toList();
                 return ResponseEntity.ok(java.util.Map.of("type", "SALE", "ids", ids));
             } else {
                 List<Long> ids = sameNameStatuses.stream()
-                        .flatMap(st -> purchaseRepo.findByStatusId(st.getId()).stream())
+                        .flatMap(st -> purchaseRepo.findByStatusId(st.getId()).stream()
+                            .filter(order -> from == null || !order.getCreatedAt().toLocalDate().isBefore(from))
+                            .filter(order -> to == null || !order.getCreatedAt().toLocalDate().isAfter(to))
+                            .filter(order -> q == null ||
+                                String.valueOf(order.getId()).contains(q) ||
+                                (order.getSupplier() != null && order.getSupplier().getName() != null && order.getSupplier().getName().toLowerCase().contains(q)) ||
+                                order.getLines().stream().anyMatch(l -> l.getItem() != null && l.getItem().getName() != null && l.getItem().getName().toLowerCase().contains(q))
+                            )
+                        )
                         .map(PurchaseOrder::getId)
                         .distinct()
                         .toList();

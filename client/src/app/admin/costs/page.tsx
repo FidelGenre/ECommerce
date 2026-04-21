@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import api from '@/lib/api'
-import { Plus, X, Pencil, Trash2, Download, ChevronLeft, ChevronRight, CheckCircle, Circle } from 'lucide-react'
+import { Plus, X, Pencil, Trash2, Download, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, CheckCircle, Circle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
@@ -22,10 +22,15 @@ export default function CostsPage() {
     const [page, setPage] = useState(0)
     const [loading, setLoading] = useState(true)
 
+    // Sort
+    const [sortField, setSortField] = useState('costDate')
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
     // Filters
     const [fromDate, setFromDate] = useState('')
     const [toDate, setToDate] = useState('')
     const [categoryFilter, setCategoryFilter] = useState('')
+    const [searchText, setSearchText] = useState('')
 
     // Modal
     const [showModal, setShowModal] = useState(false)
@@ -50,8 +55,11 @@ export default function CostsPage() {
         if (fromDate) params.set('from', fromDate)
         if (toDate) params.set('to', toDate)
         if (categoryFilter) params.set('category', categoryFilter)
+        if (searchText) params.set('search', searchText)
+        params.set('sort', sortField)
+        params.set('dir', sortDir.toUpperCase())
         return `/api/admin/costs?${params}`
-    }, [page, fromDate, toDate, categoryFilter])
+    }, [page, fromDate, toDate, categoryFilter, searchText, sortField, sortDir])
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -62,6 +70,17 @@ export default function CostsPage() {
     }, [buildUrl])
 
     useEffect(() => { load() }, [load])
+
+    const toggleSort = (field: string) => {
+        setPage(0)
+        if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+        else { setSortField(field); setSortDir('asc') }
+    }
+    const SortIcon = ({ field }: { field: string }) => (
+        <span className="inline-flex items-center ml-1">
+            {sortField === field && sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : sortField === field && sortDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <span className="opacity-30">↕</span>}
+        </span>
+    )
 
     const openCreate = () => { setEditItem(null); setForm(emptyForm); setShowModal(true) }
     const openEdit = (item: InternalCost) => {
@@ -144,7 +163,12 @@ export default function CostsPage() {
 
             {/* Filters */}
             <div className="card p-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="relative md:col-span-1">
+                        <input className="input pl-9 w-full text-sm" placeholder="Buscar descripción..." value={searchText}
+                            onChange={e => { setSearchText(e.target.value); setPage(0) }} />
+                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
                     <input type="date" className="input text-sm" value={fromDate} onChange={e => { setFromDate(e.target.value); setPage(0) }} />
                     <input type="date" className="input text-sm" value={toDate} onChange={e => { setToDate(e.target.value); setPage(0) }} />
                     <select className="select text-sm" value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(0) }}>
@@ -152,8 +176,8 @@ export default function CostsPage() {
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
-                {(fromDate || toDate || categoryFilter) && (
-                    <button onClick={() => { setFromDate(''); setToDate(''); setCategoryFilter(''); setPage(0) }}
+                {(fromDate || toDate || categoryFilter || searchText) && (
+                    <button onClick={() => { setFromDate(''); setToDate(''); setCategoryFilter(''); setSearchText(''); setPage(0) }}
                         className="mt-2 text-xs text-primary-500 hover:text-espresso flex items-center gap-1">
                         <X className="w-3 h-3" /> Limpiar filtros
                     </button>
@@ -168,11 +192,11 @@ export default function CostsPage() {
                         <table className="data-table">
                             <thead><tr>
                                 <th className="w-8 pl-4"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th>
-                                <th>Descripción</th>
-                                <th>Categoría</th>
-                                <th className="text-right">Monto</th>
-                                <th>Estado</th>
-                                <th>Fecha</th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('description')}>Descripción <SortIcon field="description" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('category')}>Categoría <SortIcon field="category" /></th>
+                                <th className="text-right cursor-pointer select-none" onClick={() => toggleSort('amount')}>Monto <SortIcon field="amount" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('paid')}>Estado <SortIcon field="paid" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('costDate')}>Fecha <SortIcon field="costDate" /></th>
                                 <th>Registrado por</th>
                                 <th>Acciones</th>
                             </tr></thead>
@@ -204,12 +228,16 @@ export default function CostsPage() {
                                                 >
                                                     {c.paid ? 'Deshacer' : 'Pagar'}
                                                 </button>
-                                                <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">
-                                                    <Pencil className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button onClick={() => setDeleteId([c.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700">
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
+                                                {!c.paid && (
+                                                    <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">
+                                                        <Pencil className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                                {!c.paid && (
+                                                    <button onClick={() => setDeleteId([c.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

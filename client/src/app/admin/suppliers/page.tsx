@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { Supplier, Category, AccountMovement } from '@/types'
-import { Plus, X, Search, ChevronLeft, ChevronRight, History, ArrowDownRight, ArrowUpRight, Trash2 } from 'lucide-react'
+import { Plus, X, Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, History, ArrowDownRight, ArrowUpRight, Trash2 } from 'lucide-react'
 
 const FIELD_LABELS: Record<string, string> = {
     name: 'Nombre',
@@ -20,6 +20,10 @@ export default function SuppliersPage() {
     const [page, setPage] = useState(0)
     const [q, setQ] = useState('')
     const [loading, setLoading] = useState(true)
+
+    // Sort
+    const [sortField, setSortField] = useState('name')
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
     // Edit Modal
     const [showModal, setShowModal] = useState(false)
@@ -66,11 +70,22 @@ export default function SuppliersPage() {
 
     const load = async () => {
         setLoading(true)
-        const r = await api.get(`/api/admin/suppliers?page=${page}&size=15${q ? '&q=' + q : ''}`)
+        const r = await api.get(`/api/admin/suppliers?page=${page}&size=15${q ? '&q=' + q : ''}&sort=${sortField}&dir=${sortDir.toUpperCase()}`)
         setData(r.data.content); setTotal(r.data.totalElements); setLoading(false)
     }
-    useEffect(() => { load() }, [page, q])
+    useEffect(() => { load() }, [page, q, sortField, sortDir])
     useEffect(() => { api.get('/api/admin/categories?type=SUPPLIER').then(r => setCategories(r.data)) }, [])
+
+    const toggleSort = (field: string) => {
+        setPage(0)
+        if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+        else { setSortField(field); setSortDir('asc') }
+    }
+    const SortIcon = ({ field }: { field: string }) => (
+        <span className="inline-flex items-center ml-1">
+            {sortField === field && sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : sortField === field && sortDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <span className="opacity-30">↕</span>}
+        </span>
+    )
 
     const openNew = () => { setEditing(null); setForm(blankForm); setNewCategoryName(''); setShowModal(true) }
     const openEdit = (s: Supplier) => { setEditing(s); setForm({ name: s.name, legalName: s.legalName ?? '', taxId: s.taxId ?? '', alias: s.alias ?? '', phone: s.phone ?? '', email: s.email ?? '', address: s.address ?? '', categoryId: s.category?.id ? String(s.category.id) : '' }); setNewCategoryName(''); setShowModal(true) }
@@ -153,8 +168,14 @@ export default function SuppliersPage() {
                     <div className="table-wrapper rounded-none border-0">
                         <table className="data-table">
                             <thead><tr>
-                                <th className="w-8"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th>
-                                <th>Nombre</th><th>Alias</th><th>Email</th><th>Teléfono</th><th>Categoría</th><th>Saldo C/C</th><th>Acciones</th>
+                                <th className="w-8 pl-4"><input type="checkbox" checked={selected.size === data.length && data.length > 0} onChange={toggleAll} className="w-4 h-4 rounded accent-primary-700" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('name')}>Nombre <SortIcon field="name" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('alias')}>Alias <SortIcon field="alias" /></th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('category.name')}>Categoría <SortIcon field="category.name" /></th>
+                                <th className="cursor-pointer select-none" onClick={() => toggleSort('accountBalance')}>Saldo C/C <SortIcon field="accountBalance" /></th>
+                                <th>Acciones</th>
                             </tr></thead>
                             <tbody>
                                 {data.map(s => (

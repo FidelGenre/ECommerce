@@ -88,14 +88,14 @@ public class StockService {
                     subMovement.setItem(subItem);
                     subMovement.setMovementType("OUT");
                     subMovement.setQuantity(totalDeduction);
-                    subMovement.setReason("Recipe component for " + item.getName() + " (Sale #" + order.getId() + ")");
+                    subMovement.setReason("Componente de receta para " + item.getName() + " (Venta #" + order.getId() + ")");
                     stockMovementRepo.save(subMovement);
                 }
             }
 
             if (item.getStock().compareTo(item.getMinStock()) <= 0) {
                 Notification notification = new Notification();
-                notification.setMessage("Low stock: " + item.getName() + " (" + item.getStock() + " left, min: "
+                notification.setMessage("Stock bajo: " + item.getName() + " (" + item.getStock() + " restante, mín: "
                         + item.getMinStock() + ")");
                 notification.setType("WARNING");
                 notificationRepo.save(notification);
@@ -122,7 +122,7 @@ public class StockService {
                 stockMovementRepo.save(bagMovement);
             });
         } catch (Exception e) {
-            System.err.println("Could not deduct bolsa: " + e.getMessage());
+            System.err.println("No se pudo descontar bolsa: " + e.getMessage());
         }
 
         order.setStockDeducted(true);
@@ -167,7 +167,7 @@ public class StockService {
                     subMovement.setMovementType("IN");
                     subMovement.setQuantity(totalReturn);
                     subMovement.setReason(
-                            "Returned parameter component for " + item.getName() + " (Sale #" + order.getId() + ")");
+                            "Devolución componente de receta para " + item.getName() + " (Venta #" + order.getId() + ")");
                     stockMovementRepo.save(subMovement);
                 }
             }
@@ -193,7 +193,7 @@ public class StockService {
                 stockMovementRepo.save(bagMovement);
             });
         } catch (Exception e) {
-            System.err.println("Could not return bolsa: " + e.getMessage());
+            System.err.println("No se pudo devolver bolsa: " + e.getMessage());
         }
 
         order.setStockDeducted(false);

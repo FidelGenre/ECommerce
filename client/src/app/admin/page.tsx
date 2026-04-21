@@ -32,13 +32,15 @@ function KpiCard({ icon: Icon, label, value, sub, color }: any) {
 
 const CHART_COLORS = ['#6B3F1F', '#C49A6C', '#8B5A2B', '#4A2C14', '#D9C9B0']
 
-type Preset = 'today' | '7d' | '30d' | 'month' | 'year' | 'custom'
+type Preset = 'all' | 'today' | '7d' | '30d' | 'month' | 'year' | 'custom'
 
 function getPresetDates(preset: Preset): { from: string; to: string; label: string } {
     const now = new Date()
     const fmt = (d: Date) => d.toISOString().split('T')[0]
     const today = fmt(now)
     switch (preset) {
+        case 'all':
+            return { from: '2020-01-01', to: today, label: 'Todo' }
         case 'today':
             return { from: today, to: today, label: 'Hoy' }
         case '7d': {
@@ -82,9 +84,9 @@ export default function AdminDashboard() {
     const [purchasesByPayment, setPurchasesByPayment] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
-    const [preset, setPreset] = useState<Preset>('30d')
-    const [dateFrom, setDateFrom] = useState(() => getPresetDates('30d').from)
-    const [dateTo, setDateTo] = useState(() => getPresetDates('30d').to)
+    const [preset, setPreset] = useState<Preset>('all')
+    const [dateFrom, setDateFrom] = useState(() => getPresetDates('all').from)
+    const [dateTo, setDateTo] = useState(() => getPresetDates('all').to)
 
     const load = async (from: string, to: string) => {
         if (user?.role === 'SUPPLIER') return
@@ -153,6 +155,7 @@ export default function AdminDashboard() {
                 <div className="flex flex-wrap items-center gap-2">
                     <Calendar className="w-4 h-4 text-primary-500 shrink-0" />
                     {([
+                        ['all', 'Todo'],
                         ['today', 'Hoy'],
                         ['7d', '7 días'],
                         ['30d', '30 días'],

@@ -32,8 +32,11 @@ public class SupplierController {
     public ResponseEntity<Page<Supplier>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String q) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "name") String sort,
+            @RequestParam(defaultValue = "ASC") String dir) {
+        Sort.Direction direction = dir.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort));
         Specification<Supplier> spec = (root, query, cb) -> {
             if (q == null || q.isBlank())
                 return cb.conjunction();

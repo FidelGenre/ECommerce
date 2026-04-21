@@ -64,7 +64,7 @@ public class MpWebhookController {
                             .findFirst())
                     .ifPresent(order::setStatus);
 
-            stockService.deductStockForSale(order, "Online sale - MP payment " + paymentId);
+            stockService.deductStockForSale(order, "Venta online - Pago MP " + paymentId);
 
             saleOrderRepo.save(order);
             System.out.println("MP webhook: order " + order.getId() + " confirmed, stock decremented.");

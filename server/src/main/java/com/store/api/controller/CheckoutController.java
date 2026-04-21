@@ -176,7 +176,7 @@ public class CheckoutController {
 
             SaleOrder saved = saleOrderRepo.save(order);
             // Reserva de stock inmediata al momento del checkout (queda Pendiente)
-            stockService.deductStockForSale(order, "Online checkout initialized");
+            stockService.deductStockForSale(order, "Checkout online iniciado");
             saleOrderRepo.save(order);
 
             // Create MP preference with order ID as external_reference
@@ -257,7 +257,7 @@ public class CheckoutController {
             order.setMpPaymentId(null);
 
             // Return the reserved stock
-            stockService.returnStockForSale(order, "Checkout abandoned by user");
+            stockService.returnStockForSale(order, "Checkout abandonado por el usuario");
 
             saleOrderRepo.save(order);
             System.out.println("Checkout cancelled: order " + order.getId() + " abandoned, stock returned.");

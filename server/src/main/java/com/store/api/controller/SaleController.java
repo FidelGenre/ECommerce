@@ -205,7 +205,7 @@ public class SaleController {
 
                 // Return stock if cancelled
                 if ("Cancelado".equalsIgnoreCase(statusName) || "Cancelled".equalsIgnoreCase(statusName)) {
-                    stockService.returnStockForSale(order, "Sale cancellation");
+                    stockService.returnStockForSale(order, "Cancelación de venta");
                 }
                 // Deduct stock if now completed or reserved or pending
                 else if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)

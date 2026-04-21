@@ -29,8 +29,11 @@ public class CustomerController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) String role,
-            @RequestParam(defaultValue = "false") boolean all) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("firstName"));
+            @RequestParam(defaultValue = "false") boolean all,
+            @RequestParam(defaultValue = "firstName") String sort,
+            @RequestParam(defaultValue = "ASC") String dir) {
+        Sort.Direction direction = dir.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort));
         Specification<Customer> spec = (root, query, cb) -> {
             var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
             if (q != null && !q.isBlank()) {

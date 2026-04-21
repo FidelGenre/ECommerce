@@ -35,8 +35,12 @@ public class InternalCostController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) String category) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "costDate"));
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "costDate") String sort,
+            @RequestParam(defaultValue = "DESC") String dir) {
+        Sort.Direction direction = dir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort));
         Specification<InternalCost> spec = (root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
             if (from != null)
@@ -45,6 +49,8 @@ public class InternalCostController {
                 predicates.add(cb.lessThanOrEqualTo(root.get("costDate"), to));
             if (category != null)
                 predicates.add(cb.like(cb.lower(root.get("category")), "%" + category.toLowerCase() + "%"));
+            if (search != null && !search.isBlank())
+                predicates.add(cb.like(cb.lower(root.get("description")), "%" + search.toLowerCase() + "%"));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
         return ResponseEntity.ok(costRepo.findAll(spec, pageable));
@@ -67,14 +73,17 @@ public class InternalCostController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<InternalCost> update(@PathVariable Long id,
+    public ResponseEntity<?> update(@PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         return costRepo.findById(id).map(cost -> {
+            if (cost.isPaid()) {
+                return ResponseEntity.badRequest().body((Object) "No se puede editar un costo que ya fue pagado.");
+            }
             cost.setDescription((String) body.get("description"));
             cost.setAmount(new java.math.BigDecimal(body.get("amount").toString()));
             cost.setCategory((String) body.get("category"));
             cost.setCostDate(LocalDate.parse((String) body.get("costDate")));
-            return ResponseEntity.ok(costRepo.save(cost));
+            return ResponseEntity.ok((Object) costRepo.save(cost));
         }).orElse(ResponseEntity.notFound().build());
     }
 

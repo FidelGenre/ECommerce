@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { CashRegister, CashMovement } from '@/types'
-import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle } from 'lucide-react'
+import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
@@ -22,16 +22,21 @@ export default function CashPage() {
     const [history, setHistory] = useState<CashRegister[]>([])
     const [fromDate, setFromDate] = useState('')
     const [toDate, setToDate] = useState('')
+    const [historyPage, setHistoryPage] = useState(0)
+    const [historyTotal, setHistoryTotal] = useState(0)
+    const [historySort, setHistorySort] = useState('openedAt')
+    const [historyDir, setHistoryDir] = useState<'asc' | 'desc'>('desc')
 
     const loadHistory = async () => {
-        let url = '/api/admin/cash'
+        let url = `/api/admin/cash?page=${historyPage}&size=10&sort=${historySort}&dir=${historyDir.toUpperCase()}`
         const params = new URLSearchParams()
         if (fromDate) params.set('from', fromDate + 'T00:00:00')
         if (toDate) params.set('to', toDate + 'T23:59:59')
-        if (params.toString()) url += '?' + params.toString()
+        if (params.toString()) url += '&' + params.toString()
         try {
             const r = await api.get(url)
-            setHistory(r.data)
+            setHistory(r.data.content)
+            setHistoryTotal(r.data.totalElements)
         } catch (e) { }
     }
 
@@ -61,7 +66,18 @@ export default function CashPage() {
         loadHistory()
     }
     useEffect(() => { load() }, [])
-    useEffect(() => { loadHistory() }, [fromDate, toDate])
+    useEffect(() => { loadHistory() }, [fromDate, toDate, historyPage, historySort, historyDir])
+
+    const toggleHistorySort = (field: string) => {
+        setHistoryPage(0)
+        if (historySort === field) setHistoryDir(d => d === 'asc' ? 'desc' : 'asc')
+        else { setHistorySort(field); setHistoryDir('desc') }
+    }
+    const HistorySortIcon = ({ field }: { field: string }) => (
+        <span className="inline-flex items-center ml-1">
+            {historySort === field && historyDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : historySort === field && historyDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <span className="opacity-30">↕</span>}
+        </span>
+    )
 
     const openRegister = async () => {
         setSaving(true)
@@ -228,10 +244,10 @@ export default function CashPage() {
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th>Apertura</th>
-                                    <th>Cierre</th>
-                                    <th>Fondo Inicial ($)</th>
-                                    <th>Cierre Declarado ($)</th>
+                                    <th className="cursor-pointer select-none" onClick={() => toggleHistorySort('openedAt')}>Apertura <HistorySortIcon field="openedAt" /></th>
+                                    <th className="cursor-pointer select-none" onClick={() => toggleHistorySort('closedAt')}>Cierre <HistorySortIcon field="closedAt" /></th>
+                                    <th className="cursor-pointer select-none" onClick={() => toggleHistorySort('openingAmount')}>Fondo Inicial ($) <HistorySortIcon field="openingAmount" /></th>
+                                    <th className="cursor-pointer select-none" onClick={() => toggleHistorySort('closingAmount')}>Cierre Declarado ($) <HistorySortIcon field="closingAmount" /></th>
                                     <th>Medios de Pago</th>
                                     <th>Notas</th>
                                 </tr>
@@ -266,6 +282,21 @@ export default function CashPage() {
                         </table>
                     </div>
                 </div>
+
+                {/* Pagination */}
+                {historyTotal > 10 && (
+                    <div className="flex items-center justify-between mt-4">
+                        <p className="text-sm text-primary-400">Página {historyPage + 1}</p>
+                        <div className="flex gap-2">
+                            <button disabled={historyPage === 0} onClick={() => setHistoryPage(p => p - 1)} className="btn-ghost p-1.5 disabled:opacity-30">
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button disabled={(historyPage + 1) * 10 >= historyTotal} onClick={() => setHistoryPage(p => p + 1)} className="btn-ghost p-1.5 disabled:opacity-30">
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Modal Abrir */}

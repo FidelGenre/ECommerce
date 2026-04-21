@@ -30,23 +30,31 @@ public class CashController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CashRegister>> history(
+    public ResponseEntity<org.springframework.data.domain.Page<CashRegister>> history(
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
-        List<CashRegister> history;
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "openedAt") String sort,
+            @RequestParam(defaultValue = "DESC") String dir) {
+            
+        org.springframework.data.domain.Sort.Direction direction = dir.equalsIgnoreCase("ASC") ? org.springframework.data.domain.Sort.Direction.ASC : org.springframework.data.domain.Sort.Direction.DESC;
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(direction, sort));
+
+        org.springframework.data.domain.Page<CashRegister> history;
         if (from != null && to != null) {
-            history = registerRepo.findByOpenedAtBetween(from, to);
+            history = registerRepo.findByOpenedAtBetween(from, to, pageable);
         } else {
-            history = registerRepo.findAll();
+            history = registerRepo.findAll(pageable);
         }
 
-        List<Long> regIds = history.stream().map(CashRegister::getId).toList();
+        List<Long> regIds = history.getContent().stream().map(CashRegister::getId).toList();
         if (!regIds.isEmpty()) {
             List<CashMovement> allMovements = movementRepo.findByRegisterIdIn(regIds);
             Map<Long, List<CashMovement>> byReg = allMovements.stream()
                     .collect(java.util.stream.Collectors.groupingBy(m -> m.getRegister().getId()));
 
-            for (CashRegister r : history) {
+            for (CashRegister r : history.getContent()) {
                 List<CashMovement> movements = byReg.getOrDefault(r.getId(), java.util.Collections.emptyList());
                 Map<String, BigDecimal> totals = new java.util.HashMap<>();
                 for (CashMovement m : movements) {
@@ -67,9 +75,7 @@ public class CashController {
             }
         }
 
-        return ResponseEntity.ok(history.stream()
-                .sorted((a, b) -> b.getOpenedAt().compareTo(a.getOpenedAt()))
-                .toList());
+        return ResponseEntity.ok(history);
     }
 
     @PostMapping("/open")
