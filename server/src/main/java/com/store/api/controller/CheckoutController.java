@@ -124,12 +124,17 @@ public class CheckoutController {
 
             List<OperationStatus> saleStatuses = statusRepo.findByType("SALE");
             saleStatuses.stream()
-                    .filter(s -> s.getName().equalsIgnoreCase("PENDIENTE") || s.getName().equalsIgnoreCase("PENDING"))
+                    .filter(s -> s.getName().toLowerCase().contains("pendient") || s.getName().toLowerCase().contains("pending"))
                     .findFirst()
                     .ifPresentOrElse(order::setStatus, () -> {
-                        if (!saleStatuses.isEmpty()) {
-                            order.setStatus(saleStatuses.get(0));
-                        }
+                        // Recreate 'Pendiente' if it was deleted
+                        OperationStatus missingPendiente = new OperationStatus();
+                        missingPendiente.setName("Pendiente");
+                        missingPendiente.setDescription("Orden creada pero aún no pagada");
+                        missingPendiente.setType("SALE");
+                        missingPendiente.setColor("amber");
+                        missingPendiente = statusRepo.save(missingPendiente);
+                        order.setStatus(missingPendiente);
                     });
 
             paymentMethodRepo.findAll().stream()
