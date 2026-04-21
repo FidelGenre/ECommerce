@@ -57,7 +57,7 @@ public class CheckoutController {
      * Falls back to the configured mpPublicBaseUrl if ngrok is not running.
      */
     @SuppressWarnings("unchecked")
-    private String resolvePublicBaseUrl() {
+    private String resolvePublicBaseUrl(jakarta.servlet.http.HttpServletRequest request) {
         try {
             RestTemplate rt = new RestTemplate();
             Map<String, Object> resp = rt.getForObject("http://localhost:4040/api/tunnels", Map.class);
@@ -74,13 +74,25 @@ public class CheckoutController {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Could not reach ngrok agent, using configured base URL: " + e.getMessage());
+            System.err.println("Could not reach ngrok agent " + e.getMessage());
         }
-        return mpPublicBaseUrl;
+
+        if (mpPublicBaseUrl != null && !mpPublicBaseUrl.contains("localhost")) {
+            return mpPublicBaseUrl;
+        }
+
+        String scheme = request.getHeader("x-forwarded-proto");
+        if (scheme == null) scheme = request.getScheme();
+        String serverName = request.getServerName();
+        int port = request.getServerPort();
+        boolean standardPort = (port == 80 && "http".equals(scheme)) || (port == 443 && "https".equals(scheme));
+        String calculatedUrl = scheme + "://" + serverName + (standardPort || port == -1 ? "" : ":" + port);
+        System.out.println("Dynamic publicBaseUrl for webhook: " + calculatedUrl);
+        return calculatedUrl;
     }
 
     @PostMapping("/preference")
-    public ResponseEntity<?> createPreference(@RequestBody OrderRequest req, Authentication auth) {
+    public ResponseEntity<?> createPreference(jakarta.servlet.http.HttpServletRequest httpRequest, @RequestBody OrderRequest req, Authentication auth) {
         try {
             if (auth != null) {
                 User user = userRepo.findByUsername(auth.getName()).orElse(null);
@@ -107,7 +119,7 @@ public class CheckoutController {
                 mpItems.add(mpItem);
             }
 
-            String publicBaseUrl = resolvePublicBaseUrl();
+            String publicBaseUrl = resolvePublicBaseUrl(httpRequest);
 
             String frontendBase = (req.getFrontendUrl() != null && !req.getFrontendUrl().isBlank())
                     ? req.getFrontendUrl()

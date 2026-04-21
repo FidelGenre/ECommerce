@@ -270,12 +270,10 @@
         <li>Desarrollar un sistema de registro e inicio de sesión de clientes y una sección “Quiénes Somos” con
             información institucional.</li>
         <li>Implementar un sistema de contacto que permita a los usuarios enviar consultas, sugerencias o reclamos.</li>
-        <li>Permitir a los usuarios seleccionar el método de entrega (envío a domicilio o retiro en local) y registrar
-            la información correspondiente en el sistema.</li>
         <li>Integrar un sistema de pagos online a través de una API externa (MercadoPago) para procesar las
             transacciones de forma segura.</li>
         <li>Implementar un sistema de gestión interna (Panel de Administración) para el control de inventario, recetas
-            de productos (BOM), compras a proveedores y flujos de caja.</li>
+            de productos, compras a proveedores y flujos de caja.</li>
         <li>Desplegar el sistema en un entorno de pruebas y posteriormente en un hosting accesible al público.</li>
     </ul>
 
@@ -288,31 +286,22 @@
 
     <h3>Requerimientos Funcionales</h3>
     <ul>
-        <li><strong>ABM de Usuarios y Seguridad</strong>:
-            <ul>
-                <li>Gestión completa con filtros por rol (Administrador, Cliente, Sin Rol).</li>
-                <li><strong>Automatización</strong>: El registro vía web asigna automáticamente el rol "Cliente".</li>
-                <li><strong>Flexibilidad</strong>: Edición manual de roles y permisos desde el panel administrativo.
-                </li>
-            </ul>
+        <li><strong>Autenticación y Perfiles:</strong>Registro e inicio de sesión con
+            roles dinámicos (Cliente, Administrador) y perfiles detallados</li>
+        <li><strong>Catálogo y Carrito:</strong> Navegación de productos con filtros avanzados y gestión de pedidos
+            dinámica con retiro en local.
         </li>
-        <li><strong>Lógica de Estados Blindada</strong>:
-            <ul>
-                <li><strong>Ventas</strong>: Una vez marcadas como "Completada" o "Cancelada", el estado queda bloqueado
-                    para evitar alteraciones.</li>
-                <li><strong>Compras</strong>: Registro automático como "Completado" sin opción a modificación posterior
-                    para asegurar integridad.</li>
-            </ul>
+        <li><strong>Módulo de Inventario:</strong> Control de stock en tiempo real con deducción automática
+            basada en recetas y alertas de stock crítico.
         </li>
-        <li><strong>Módulo de Caja y Finanzas</strong>:
-            <ul>
-                <li>Reporte detallado de ingresos desglosado por <strong>Método de Pago</strong> (Efectivo, MercadoPago,
-                    etc.).</li>
-                <li>Registro de movimientos y arqueo diario.</li>
-            </ul>
+        <li><strong>Gestión de Operaciones Separadas:</strong> Módulos independientes para Compras a
+            Proveedores y Ventas a Clientes para mayor claridad operativa.
         </li>
-        <li><strong>Optimización Visual (Responsive)</strong>: Ajustes específicos de resolución para garantizar una
-            experiencia fluida en computadoras portátiles y notebooks de pantalla reducida.</li>
+        <li><strong>Listados y Filtros CRM:</strong> Implementación de búsqueda por texto libre, paginación y filtros
+            por rango de fechas y categorías en todas las tablas.</li>
+        <li><strong>Módulo de Arqueo de Caja:</strong>Registro de caja inicial, ingresos/egresos diarios y cierres
+            con reportes detallados.
+        </li>
         <li><strong>Dashboard Analítico</strong>: Visualización de KPIs clave (Ventas del mes, productos más vendidos,
             margen bruto) y gráficos evolutivos.</li>
         <li><strong>Información y Contacto</strong>: Sección institucional "Quiénes Somos" y formulario de contacto
