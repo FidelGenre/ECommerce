@@ -281,39 +281,45 @@ public class DashboardController {
                 return ResponseEntity.ok(data);
         }
 
-        // Monthly margin evolution
         @GetMapping("/margin-evolution")
         public ResponseEntity<List<Map<String, Object>>> marginEvolution(
-                        @RequestParam(defaultValue = "6") int months) {
+                        @RequestParam(defaultValue = "12") int months,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
                 List<Map<String, Object>> data = new ArrayList<>();
-                LocalDate now = LocalDate.now();
+                LocalDate rangeFromDate = from != null ? from : LocalDate.now().minusMonths(months).withDayOfMonth(1);
+                LocalDate rangeToDate = to != null ? to : LocalDate.now();
+
+                LocalDate currentMonthDate = rangeFromDate.withDayOfMonth(1);
+                LocalDate endMonthDate = rangeToDate.withDayOfMonth(1).plusMonths(1);
 
                 List<SaleOrder> allSales = saleRepo.findAll();
                 List<PurchaseOrder> allPurchases = purchaseRepo.findAll();
 
-                for (int i = months - 1; i >= 0; i--) {
-                        LocalDate monthStart = LocalDate.now().withDayOfMonth(1).minusMonths(i);
-                        LocalDateTime from = monthStart.atStartOfDay();
-                        LocalDateTime to = monthStart.plusMonths(1).atStartOfDay();
+                while (currentMonthDate.isBefore(endMonthDate)) {
+                        LocalDateTime startOfMonth = currentMonthDate.atStartOfDay();
+                        LocalDateTime endOfMonth = currentMonthDate.plusMonths(1).atStartOfDay();
 
                         BigDecimal sales = allSales.stream()
-                                        .filter(s -> !s.getCreatedAt().isBefore(from) && s.getCreatedAt().isBefore(to))
+                                        .filter(s -> !s.getCreatedAt().isBefore(startOfMonth) && s.getCreatedAt().isBefore(endOfMonth))
                                         .map(SaleOrder::getTotal)
                                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                         BigDecimal purchases = allPurchases.stream()
-                                        .filter(p -> !p.getCreatedAt().isBefore(from) && p.getCreatedAt().isBefore(to))
+                                        .filter(p -> !p.getCreatedAt().isBefore(startOfMonth) && p.getCreatedAt().isBefore(endOfMonth))
                                         .map(PurchaseOrder::getTotal)
                                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                         BigDecimal margin = sales.subtract(purchases);
 
                         Map<String, Object> row = new LinkedHashMap<>();
-                        row.put("month", monthStart.toString().substring(0, 7));
+                        row.put("month", currentMonthDate.toString().substring(0, 7));
                         row.put("sales", sales);
                         row.put("purchases", purchases);
                         row.put("margin", margin);
                         data.add(row);
+
+                        currentMonthDate = currentMonthDate.plusMonths(1);
                 }
                 return ResponseEntity.ok(data);
         }
@@ -474,7 +480,7 @@ public class DashboardController {
                                                                         RoundingMode.HALF_UP));
                                         data.add(row);
                                 });
-                data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
+                data.sort((a, b) -> ((Integer) b.get("orders")).compareTo((Integer) a.get("orders")));
                 return ResponseEntity.ok(data);
         }
 
@@ -496,6 +502,7 @@ public class DashboardController {
                 List<Map<String, Object>> data = new ArrayList<>();
                 itemRepo.findAll().stream()
                                 .filter(Item::getVisible)
+                                .filter(i -> !i.getCreatedAt().isAfter(rangeTo))
                                 .filter(i -> !soldItemIds.contains(i.getId()))
                                 .forEach(i -> {
                                         Map<String, Object> row = new LinkedHashMap<>();
