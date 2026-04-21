@@ -12,16 +12,8 @@ function FailureContent() {
     const externalRef = params.get('external_reference')
 
     useEffect(() => {
-        // Cancel the order from sessionStorage OR from URL external_reference
-        const pendingOrderId = sessionStorage.getItem('pending_checkout_order') || externalRef
-        if (pendingOrderId && pendingOrderId !== 'null') {
-            sessionStorage.removeItem('pending_checkout_order')
-            api.post(`/api/checkout/cancel/${pendingOrderId}`)
-                .then(() => console.log('Order', pendingOrderId, 'cancelled from failure page'))
-                .catch(e => console.error('Could not cancel order:', e))
-        } else {
-            sessionStorage.removeItem('pending_checkout_order')
-        }
+        // Just clear the session storage, keep the order Pendiente so they can retry
+        sessionStorage.removeItem('pending_checkout_order')
     }, [])
 
     return (
