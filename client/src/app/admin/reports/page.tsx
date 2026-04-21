@@ -44,10 +44,10 @@ export default function ReportsPage() {
         try {
             const results = await Promise.allSettled([
                 api.get(`/api/admin/dashboard/purchases-by-supplier?${dateParam}`),
-                api.get('/api/admin/dashboard/sales-by-client'),
-                api.get('/api/admin/dashboard/sales-by-client-only'),
-                api.get('/api/admin/dashboard/top-customers?limit=20'),
-                api.get('/api/admin/dashboard/profitability'),
+                api.get(`/api/admin/dashboard/sales-by-client?${dateParam}`),
+                api.get(`/api/admin/dashboard/sales-by-client-only?${dateParam}`),
+                api.get(`/api/admin/dashboard/top-customers?limit=20&${dateParam}`),
+                api.get(`/api/admin/dashboard/profitability?${dateParam}`),
                 api.get(`/api/admin/dashboard/sales-by-hour?days=${daysDiff}`),
                 api.get(`/api/admin/dashboard/non-rotating?days=${daysDiff}`),
                 api.get('/api/admin/dashboard/margin-evolution?months=12'),
@@ -222,9 +222,9 @@ export default function ReportsPage() {
                                                 </Bar>
                                             </BarChart>
                                         </ResponsiveContainer>
-                                        <div className="mt-4 overflow-x-auto">
+                                        <div className="table-wrapper max-h-[500px] overflow-y-auto w-full">
                                             <table className="data-table">
-                                                <thead><tr>
+                                                <thead className="sticky top-0 bg-white shadow-sm"><tr>
                                                     <th>#</th><th>Proveedor</th><th className="text-right">Total Comprado</th><th className="text-right">% del Total</th>
                                                 </tr></thead>
                                                 <tbody>
@@ -263,9 +263,9 @@ export default function ReportsPage() {
                                     </button>
                                 </div>
                                 {topCustomers.length === 0 ? <p className="text-primary-400 text-sm text-center py-10">Sin datos de clientes</p> : (
-                                    <div className="overflow-x-auto">
+                                    <div className="table-wrapper max-h-[500px] overflow-y-auto w-full">
                                         <table className="data-table">
-                                            <thead><tr>
+                                            <thead className="sticky top-0 bg-white shadow-sm"><tr>
                                                 <th>#</th><th>Comprador</th><th>Email</th><th className="text-right">Pedidos</th><th className="text-right">Total</th>
                                             </tr></thead>
                                             <tbody>
@@ -294,9 +294,9 @@ export default function ReportsPage() {
                                     </button>
                                 </div>
                                 {salesByClient.length === 0 ? <p className="text-primary-400 text-sm text-center py-10">Sin datos</p> : (
-                                    <div className="overflow-x-auto">
+                                    <div className="table-wrapper max-h-[500px] overflow-y-auto w-full">
                                         <table className="data-table">
-                                            <thead><tr>
+                                            <thead className="sticky top-0 bg-white shadow-sm"><tr>
                                                 <th>Comprador</th><th className="text-right">Pedidos</th><th className="text-right">Total</th><th className="text-right">Ticket Promedio</th>
                                             </tr></thead>
                                             <tbody>
@@ -324,18 +324,19 @@ export default function ReportsPage() {
                                     </button>
                                 </div>
                                 {salesByClientOnly.length === 0 ? <p className="text-primary-400 text-sm text-center py-10">Sin datos de clientes registrados</p> : (
-                                    <div className="overflow-x-auto">
+                                    <div className="table-wrapper max-h-[500px] overflow-y-auto">
                                         <table className="data-table">
-                                            <thead><tr>
-                                                <th>Cliente</th><th className="text-right">Pedidos</th><th className="text-right">Total</th><th className="text-right">Ticket Promedio</th>
-                                            </tr></thead>
+                                            <thead className="sticky top-0 bg-white">
+                                                <tr>
+                                                    <th>Cliente</th>
+                                                    <th className="text-right">Cantidad de Compras</th>
+                                                </tr>
+                                            </thead>
                                             <tbody>
-                                                {salesByClientOnly.map((c: any, i: number) => (
+                                                {salesByClientOnly.map((r, i) => (
                                                     <tr key={i}>
-                                                        <td className="font-medium">{c.client}</td>
-                                                        <td className="text-right">{c.orders}</td>
-                                                        <td className="text-right font-bold text-espresso">{FMT(c.total)}</td>
-                                                        <td className="text-right text-primary-500">{FMT(c.avgTicket)}</td>
+                                                        <td className="font-medium">{r.client}</td>
+                                                        <td className="text-right font-bold text-primary-600">{r.orders}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -361,9 +362,9 @@ export default function ReportsPage() {
                                 </button>
                             </div>
                             {profitability.length === 0 ? <p className="text-primary-400 text-sm text-center py-10">Aún no hay ventas registradas</p> : (
-                                <div className="overflow-x-auto">
+                                <div className="table-wrapper max-h-[500px] overflow-y-auto w-full">
                                     <table className="data-table">
-                                        <thead><tr>
+                                        <thead className="sticky top-0 bg-white shadow-sm"><tr>
                                             <th>Producto</th><th className="text-right">Unidades</th><th className="text-right">Ingresos</th>
                                             <th className="text-right">Costo</th><th className="text-right">Margen</th><th className="text-right">Margen %</th>
                                         </tr></thead>
@@ -414,9 +415,9 @@ export default function ReportsPage() {
                                             </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
-                                    <div className="mt-4 overflow-x-auto">
+                                    <div className="table-wrapper max-h-[500px] overflow-y-auto w-full mt-4">
                                         <table className="data-table">
-                                            <thead><tr>
+                                            <thead className="sticky top-0 bg-white shadow-sm"><tr>
                                                 <th>Hora</th><th className="text-right">Total Ventas</th><th className="text-right">Órdenes</th>
                                             </tr></thead>
                                             <tbody>
@@ -450,12 +451,14 @@ export default function ReportsPage() {
                             {nonRotating.length === 0 ? (
                                 <p className="text-green-600 text-sm text-center py-10">Todos los productos tuvieron ventas en este período 🎉</p>
                             ) : (
-                                <div className="overflow-x-auto">
+                                <div className="table-wrapper max-h-[500px] overflow-y-auto w-full">
                                     <table className="data-table">
-                                        <thead><tr>
-                                            <th>Producto</th><th>Categoría</th><th className="text-right">Stock</th>
-                                            <th className="text-right">Precio</th><th className="text-right">Días sin venta</th>
-                                        </tr></thead>
+                                        <thead className="sticky top-0 bg-white shadow-sm">
+                                            <tr>
+                                                <th>Producto</th><th>Categoría</th><th className="text-right">Stock</th>
+                                                <th className="text-right">Precio</th><th className="text-right">Días sin venta</th>
+                                            </tr>
+                                        </thead>
                                         <tbody>
                                             {nonRotating.map((p: any) => (
                                                 <tr key={p.id}>
@@ -503,9 +506,9 @@ export default function ReportsPage() {
                                                 <Bar dataKey="margin" name="Margen" fill="#10B981" radius={[4, 4, 0, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
-                                        <div className="mt-4 overflow-x-auto">
+                                        <div className="table-wrapper max-h-[500px] overflow-y-auto w-full mt-4">
                                             <table className="data-table">
-                                                <thead><tr>
+                                                <thead className="sticky top-0 bg-white shadow-sm"><tr>
                                                     <th>Mes</th><th className="text-right">Ventas</th><th className="text-right">Compras</th><th className="text-right">Margen</th><th className="text-right">Margen %</th>
                                                 </tr></thead>
                                                 <tbody>
@@ -573,9 +576,9 @@ export default function ReportsPage() {
                                             <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
                                         </button>
                                     </div>
-                                    <div className="overflow-x-auto">
+                                    <div className="table-wrapper max-h-[500px] overflow-y-auto w-full">
                                         <table className="data-table">
-                                            <thead><tr>
+                                            <thead className="sticky top-0 bg-white shadow-sm"><tr>
                                                 <th>ID</th><th>Producto</th><th className="text-right">Stock</th><th className="text-right">Mínimo</th>
                                                 <th>Categoría</th><th>Proveedor</th><th className="text-right">Precio</th><th className="text-right">Costo</th>
                                             </tr></thead>
@@ -614,9 +617,9 @@ export default function ReportsPage() {
                                         <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
                                     </button>
                                 </div>
-                                <div className="overflow-x-auto">
+                                <div className="table-wrapper max-h-[500px] overflow-y-auto w-full">
                                     <table className="data-table">
-                                        <thead><tr>
+                                        <thead className="sticky top-0 bg-white shadow-sm"><tr>
                                             <th>ID</th><th>Producto</th><th className="text-right">Stock</th><th className="text-right">Mínimo</th>
                                             <th>Estado</th><th>Categoría</th><th>Proveedor</th><th className="text-right">Precio</th><th className="text-right">Costo</th>
                                         </tr></thead>

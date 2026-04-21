@@ -48,7 +48,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody LoginRequest req) {
         if (userRepository.existsByUsername(req.getUsername())) {
-            return ResponseEntity.badRequest().body("Username already taken");
+            return ResponseEntity.badRequest().body("El nombre de usuario ya está en uso");
         }
         User user = new User();
         user.setUsername(req.getUsername());
@@ -178,7 +178,7 @@ public class AuthController {
             return ResponseEntity.notFound().build();
 
         if ("admin".equalsIgnoreCase(user.getUsername())) {
-            return ResponseEntity.status(403).body("Admin cannot delete itself.");
+            return ResponseEntity.status(403).body("El administrador no puede eliminarse a sí mismo.");
         }
 
         if (user.getCustomer() != null && user.getCustomer().getAccountBalance().compareTo(BigDecimal.ZERO) != 0) {

@@ -83,9 +83,10 @@ export default function AdminDashboard() {
     const [byCategory, setByCategory] = useState<any[]>([])
     const [salesByPayment, setSalesByPayment] = useState<any[]>([])
     const [purchasesByPayment, setPurchasesByPayment] = useState<any[]>([])
-    const [topProducts, setTopProducts] = useState<any[]>([])
+    const [topRevenueProducts, setTopRevenueProducts] = useState<any[]>([])
+    const [topRotatingProducts, setTopRotatingProducts] = useState<any[]>([])
     const [marginEvolution, setMarginEvolution] = useState<any[]>([])
-    const [nonRotating, setNonRotating] = useState<any[]>([])
+    const [purchasesByCategory, setPurchasesByCategory] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     const [preset, setPreset] = useState<Preset>('all')
@@ -103,12 +104,12 @@ export default function AdminDashboard() {
                 api.get(`/api/admin/dashboard/sales-by-period?${params}`),
                 api.get(`/api/admin/dashboard/purchases-by-supplier?${params}`),
                 api.get('/api/admin/dashboard/low-stock'),
-                api.get(`/api/admin/dashboard/top-customers?limit=5`),
+                api.get(`/api/admin/dashboard/top-customers-clients?limit=5`),
                 api.get(`/api/admin/dashboard/sales-by-category?${params}`),
+                api.get(`/api/admin/dashboard/purchases-by-category?${params}`),
                 api.get(`/api/admin/dashboard/sales-by-payment?${params}`),
                 api.get(`/api/admin/dashboard/purchases-by-payment?${params}`),
                 api.get('/api/admin/dashboard/margin-evolution?months=6'),
-                api.get(`/api/admin/dashboard/non-rotating?days=${daysDiff}`),
             ])
 
             if (k.status === 'fulfilled') setKpi(k.value.data)
@@ -117,15 +118,18 @@ export default function AdminDashboard() {
             if (ls.status === 'fulfilled') setLow(ls.value.data)
             if (tc.status === 'fulfilled') setTopCustomers(tc.value.data)
             if (cat.status === 'fulfilled') setByCategory(cat.value.data)
-            if (sp.status === 'fulfilled') setSalesByPayment(sp.value.data)
-            if (pp.status === 'fulfilled') setPurchasesByPayment(pp.value.data)
-            if (me.status === 'fulfilled') setMarginEvolution(me.value.data)
-            if (nr.status === 'fulfilled') setNonRotating(nr.value.data)
+            if (sp.status === 'fulfilled') setPurchasesByCategory(sp.value.data)
+            if (pp.status === 'fulfilled') setSalesByPayment(pp.value.data)
+            if (me.status === 'fulfilled') setPurchasesByPayment(me.value.data)
+            if (nr.status === 'fulfilled') setMarginEvolution(nr.value.data)
 
             // Top products from profitability
             api.get('/api/admin/dashboard/profitability').then(r => {
-                const sorted = [...(r.data || [])].sort((a: any, b: any) => b.unitsSold - a.unitsSold).slice(0, 5)
-                setTopProducts(sorted)
+                const data = r.data || []
+                const byRevenue = [...data].sort((a: any, b: any) => b.revenue - a.revenue).slice(0, 5)
+                const byUnits = [...data].sort((a: any, b: any) => b.unitsSold - a.unitsSold).slice(0, 6)
+                setTopRevenueProducts(byRevenue)
+                setTopRotatingProducts(byUnits)
             }).catch(() => {})
         } finally {
             setLoading(false)
@@ -255,13 +259,13 @@ export default function AdminDashboard() {
                 <div className="card">
                     <div className="flex items-center gap-2 mb-4">
                         <BarChart2 className="w-5 h-5 text-amber-600" />
-                        <h2 className="text-base font-semibold text-espresso">Productos Más Vendidos</h2>
+                        <h2 className="text-base font-semibold text-espresso">Productos Más Vendidos (Ingresos)</h2>
                     </div>
-                    {topProducts.length === 0 ? (
+                    {topRevenueProducts.length === 0 ? (
                         <p className="text-primary-400 text-sm text-center py-10">Sin datos de ventas</p>
                     ) : (
                         <div className="space-y-2">
-                            {topProducts.map((p: any, i: number) => (
+                            {topRevenueProducts.map((p: any, i: number) => (
                                 <div key={p.id} className="flex items-center gap-3">
                                     <span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                                     <div className="flex-1 min-w-0">
@@ -271,7 +275,7 @@ export default function AdminDashboard() {
                                         </div>
                                         <div className="mt-1 h-1.5 bg-primary-100 rounded-full overflow-hidden">
                                             <div className="h-full bg-amber-500 rounded-full transition-all"
-                                                style={{ width: `${Math.round((p.unitsSold / (topProducts[0]?.unitsSold || 1)) * 100)}%` }} />
+                                                style={{ width: `${Math.round((p.revenue / (topRevenueProducts[0]?.revenue || 1)) * 100)}%` }} />
                                         </div>
                                     </div>
                                     <span className="text-xs font-semibold text-espresso shrink-0">{FMT(p.revenue)}</span>
@@ -328,35 +332,31 @@ export default function AdminDashboard() {
                     )}
                 </div>
 
-                {/* Productos sin rotación */}
+                {/* Rotación de Productos */}
                 <div className="card">
                     <div className="flex items-center gap-2 mb-4">
-                        <PackageX className="w-5 h-5 text-red-500" />
-                        <h2 className="text-base font-semibold text-espresso">Productos sin Rotación</h2>
+                        <RefreshCw className="w-5 h-5 text-blue-500" />
+                        <h2 className="text-base font-semibold text-espresso">Rotación de Productos</h2>
                     </div>
-                    {nonRotating.length === 0 ? (
-                        <p className="text-emerald-600 text-sm text-center py-10">🎉 Todos los productos tuvieron ventas en este período</p>
+                    {topRotatingProducts.length === 0 ? (
+                        <p className="text-primary-400 text-sm text-center py-10">Sin rotación en este período</p>
                     ) : (
-                        <div className="table-wrapper">
-                            <table className="data-table">
-                                <thead><tr><th>Producto</th><th className="text-right">Stock</th><th className="text-right">Días s/venta</th></tr></thead>
-                                <tbody>
-                                    {nonRotating.slice(0, 6).map((p: any) => (
-                                        <tr key={p.id}>
-                                            <td className="font-medium">{p.name}</td>
-                                            <td className="text-right text-primary-500">{p.stock}</td>
-                                            <td className="text-right">
-                                                <span className={`font-semibold ${p.daysSinceCreated > 60 ? 'text-red-500' : 'text-yellow-600'}`}>
-                                                    {p.daysSinceCreated}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {nonRotating.length > 6 && (
-                                <p className="text-xs text-primary-400 text-center py-2">y {nonRotating.length - 6} más...</p>
-                            )}
+                        <div className="space-y-2">
+                            {topRotatingProducts.map((p: any, i: number) => (
+                                <div key={p.id} className="flex items-center gap-3">
+                                    <span className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-sm font-medium text-espresso truncate">{p.name}</span>
+                                            <span className="text-xs font-bold text-blue-600 shrink-0">{p.unitsSold} uds.</span>
+                                        </div>
+                                        <div className="mt-1 h-1.5 bg-blue-50 rounded-full overflow-hidden">
+                                            <div className="h-full bg-blue-500 rounded-full transition-all"
+                                                style={{ width: `${Math.round((p.unitsSold / (topRotatingProducts[0]?.unitsSold || 1)) * 100)}%` }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -389,18 +389,36 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* Ventas por Categoría */}
-            {byCategory.length > 0 && (
-                <div className="card">
-                    <h2 className="text-base font-semibold text-espresso mb-4">Ventas por Categoría</h2>
-                    <ResponsiveContainer width="100%" height={220}>
-                        <PieChart>
-                            <Pie data={byCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
-                                {byCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                            </Pie>
-                            <Tooltip formatter={(v: any) => FMT(v)} />
-                        </PieChart>
-                    </ResponsiveContainer>
+            {/* Ventas y Compras por Categoría */}
+            {(byCategory.length > 0 || purchasesByCategory.length > 0) && (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    {byCategory.length > 0 && (
+                        <div className="card">
+                            <h2 className="text-base font-semibold text-espresso mb-4">Ventas por Categoría</h2>
+                            <ResponsiveContainer width="100%" height={220}>
+                                <PieChart>
+                                    <Pie data={byCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
+                                        {byCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                    </Pie>
+                                    <Tooltip formatter={(v: any) => FMT(v)} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
+                    
+                    {purchasesByCategory.length > 0 && (
+                        <div className="card">
+                            <h2 className="text-base font-semibold text-espresso mb-4">Compras por Categoría</h2>
+                            <ResponsiveContainer width="100%" height={220}>
+                                <PieChart>
+                                    <Pie data={purchasesByCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
+                                        {purchasesByCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                    </Pie>
+                                    <Tooltip formatter={(v: any) => FMT(v)} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
                 </div>
             )}
 

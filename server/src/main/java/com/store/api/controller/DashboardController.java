@@ -234,6 +234,31 @@ public class DashboardController {
                 return ResponseEntity.ok(data);
         }
 
+        // Purchases by category
+        @GetMapping("/purchases-by-category")
+        public ResponseEntity<List<Map<String, Object>>> purchasesByCategory(
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay()
+                                : LocalDate.now().minusDays(30).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now();
+                List<Map<String, Object>> data = new ArrayList<>();
+
+                purchaseRepo.findAll().stream()
+                                .filter(p -> !p.getCreatedAt().isBefore(rangeFrom)
+                                                && !p.getCreatedAt().isAfter(rangeTo))
+                                .flatMap(o -> o.getLines().stream())
+                                .filter(l -> l.getItem() != null && l.getItem().getCategory() != null)
+                                .collect(Collectors.groupingBy(
+                                                l -> l.getItem().getCategory().getName(),
+                                                Collectors.reducing(BigDecimal.ZERO,
+                                                                l -> l.getUnitPrice().multiply(l.getQuantity()),
+                                                                BigDecimal::add)))
+                                .forEach((cat, total) -> data.add(Map.of("category", cat, "total", total)));
+                data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
+                return ResponseEntity.ok(data);
+        }
+
         // Sales by hour of day
         @GetMapping("/sales-by-hour")
         public ResponseEntity<List<Map<String, Object>>> salesByHour(
@@ -292,9 +317,14 @@ public class DashboardController {
         // Top customers
         @GetMapping("/top-customers")
         public ResponseEntity<List<Map<String, Object>>> topCustomers(
-                        @RequestParam(defaultValue = "10") int limit) {
+                        @RequestParam(defaultValue = "10") int limit,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay() : LocalDate.of(2000, 1, 1).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now().plusDays(1);
                 List<Map<String, Object>> data = new ArrayList<>();
                 saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom) && !s.getCreatedAt().isAfter(rangeTo))
                                 .filter(s -> s.getCustomer() != null)
                                 .collect(Collectors.groupingBy(
                                                 s -> s.getCustomer().getId(),
@@ -321,9 +351,14 @@ public class DashboardController {
 
         @GetMapping("/top-customers-clients")
         public ResponseEntity<List<Map<String, Object>>> topCustomersClients(
-                        @RequestParam(defaultValue = "10") int limit) {
+                        @RequestParam(defaultValue = "10") int limit,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay() : LocalDate.of(2000, 1, 1).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now().plusDays(1);
                 List<Map<String, Object>> data = new ArrayList<>();
                 saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom) && !s.getCreatedAt().isAfter(rangeTo))
                                 .filter(s -> s.getCustomer() != null && s.getCustomer().getUser() != null
                                                 && "CLIENTE".equals(s.getCustomer().getUser().getRole()))
                                 .collect(Collectors.groupingBy(
@@ -351,9 +386,14 @@ public class DashboardController {
 
         // Sales by client (for reports)
         @GetMapping("/sales-by-client")
-        public ResponseEntity<List<Map<String, Object>>> salesByClient() {
+        public ResponseEntity<List<Map<String, Object>>> salesByClient(
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay() : LocalDate.of(2000, 1, 1).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now().plusDays(1);
                 List<Map<String, Object>> data = new ArrayList<>();
                 saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom) && !s.getCreatedAt().isAfter(rangeTo))
                                 .collect(Collectors.groupingBy(
                                                 s -> {
                                                         if (s.getCustomer() != null) {
@@ -390,9 +430,14 @@ public class DashboardController {
         }
 
         @GetMapping("/sales-by-client-only")
-        public ResponseEntity<List<Map<String, Object>>> salesByClientOnly() {
+        public ResponseEntity<List<Map<String, Object>>> salesByClientOnly(
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay() : LocalDate.of(2000, 1, 1).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now().plusDays(1);
                 List<Map<String, Object>> data = new ArrayList<>();
                 saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom) && !s.getCreatedAt().isAfter(rangeTo))
                                 .filter(s -> s.getCustomer() != null
                                                 && s.getCustomer().getUser() != null
                                                 && "CLIENTE".equals(s.getCustomer().getUser().getRole()))
@@ -463,9 +508,15 @@ public class DashboardController {
 
         // Profitability
         @GetMapping("/profitability")
-        public ResponseEntity<List<Map<String, Object>>> profitability() {
+        public ResponseEntity<List<Map<String, Object>>> profitability(
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                LocalDateTime rangeFrom = from != null ? from.atStartOfDay() : LocalDate.of(2000, 1, 1).atStartOfDay();
+                LocalDateTime rangeTo = to != null ? to.plusDays(1).atStartOfDay() : LocalDateTime.now().plusDays(1);
                 List<Map<String, Object>> data = new ArrayList<>();
-                List<SaleOrder> allSales = saleRepo.findAll();
+                List<SaleOrder> allSales = saleRepo.findAll().stream()
+                                .filter(s -> !s.getCreatedAt().isBefore(rangeFrom) && !s.getCreatedAt().isAfter(rangeTo))
+                                .collect(Collectors.toList());
 
                 itemRepo.findAll().forEach(item -> {
                         BigDecimal revenue = allSales.stream()
