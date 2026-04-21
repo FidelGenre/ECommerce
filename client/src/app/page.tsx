@@ -187,7 +187,7 @@ export default function StorefrontPage() {
                   <Link href="/account" className="hidden md:flex w-9 h-9 bg-primary-700/60 hover:bg-primary-800 rounded-lg items-center justify-center text-white transition-colors">
                     <User className="w-4 h-4" />
                   </Link>
-                  {user.role === 'ADMIN' && (
+                  {((user.permissions && user.permissions.length > 0) || user.role === 'ADMIN') && (
                     <Link href="/admin" className="hidden md:block text-caramel hover:text-amber-300 text-xs font-medium ml-1">Admin</Link>
                   )}
                 </>
@@ -661,7 +661,7 @@ export default function StorefrontPage() {
                   className="flex items-center gap-2 text-primary-300 hover:text-white text-lg font-medium py-2 active:scale-95 transition-all">
                   <User className="w-5 h-5" /> Mi Cuenta
                 </Link>
-                {user.role === 'ADMIN' && (
+                {((user.permissions && user.permissions.length > 0) || user.role === 'ADMIN') && (
                   <Link href="/admin" onClick={() => setMobileMenu(false)}
                     className="flex items-center gap-2 text-caramel hover:text-amber-300 text-lg font-medium py-2 active:scale-95 transition-all">
                     <Star className="w-5 h-5" /> Panel de Admin

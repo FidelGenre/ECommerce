@@ -197,13 +197,11 @@ public class CheckoutController {
             stockService.deductStockForSale(order, "Checkout online iniciado");
             saleOrderRepo.save(order);
 
-            // Create MP preference with order ID as external_reference
             PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                     .items(mpItems)
                     .backUrls(backUrls)
                     .externalReference(order.getId().toString())
                     .notificationUrl(publicBaseUrl + "/api/public/mp/webhook")
-                    .payer(PreferencePayerRequest.builder().email(mpTestBuyerEmail).build())
                     .build();
 
             PreferenceClient client = new PreferenceClient();
