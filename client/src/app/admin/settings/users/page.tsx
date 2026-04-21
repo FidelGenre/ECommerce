@@ -506,15 +506,19 @@ export default function UsersSettingsPage() {
                             <hr className="border-t border-muted my-4" />
                             <h3 className="text-sm font-bold text-espresso mb-2">Permisos del Sistema</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pl-1 pb-1 pr-3 custom-scrollbar">
-                                {ALL_PERMISSIONS.map(p => (
-                                    <label key={p.id} className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer select-none transition-colors ${roleForm.permissions.includes(p.id) ? 'bg-primary-50 border-primary-200 text-primary-800' : 'bg-white border-muted text-primary-600 hover:bg-gray-50'}`}>
+                                {ALL_PERMISSIONS.map(p => {
+                                    const isAdmin = roleForm.code === 'ADMIN';
+                                    const isChecked = roleForm.permissions.includes(p.id);
+                                    return (
+                                    <label key={p.id} className={`flex items-start gap-2 p-2 rounded-lg border select-none transition-colors ${isAdmin ? (isChecked ? 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed') : (isChecked ? 'bg-primary-50 border-primary-200 text-primary-800 cursor-pointer' : 'bg-white border-muted text-primary-600 hover:bg-gray-50 cursor-pointer')}`}>
                                         <div className="mt-0.5">
-                                            {roleForm.permissions.includes(p.id) ? <CheckSquare className="w-4 h-4 text-emerald-600" /> : <Square className="w-4 h-4 text-primary-300" />}
+                                            {isChecked ? <CheckSquare className={`w-4 h-4 ${isAdmin ? 'text-gray-400' : 'text-emerald-600'}`} /> : <Square className="w-4 h-4 text-primary-300" />}
                                         </div>
                                         <span className="text-sm font-medium leading-tight">{p.label}</span>
                                         {/* Hidden checkbox for a11y */}
                                         <input type="checkbox" className="sr-only" 
-                                            checked={roleForm.permissions.includes(p.id)}
+                                            disabled={isAdmin}
+                                            checked={isChecked}
                                             onChange={(e) => {
                                                 const checked = e.target.checked;
                                                 setRoleForm(prev => ({
@@ -524,7 +528,7 @@ export default function UsersSettingsPage() {
                                             }}
                                         />
                                     </label>
-                                ))}
+                                )})}
                             </div>
 
                             <div className="flex gap-2 pt-4">
