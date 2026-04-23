@@ -20,6 +20,7 @@ export default function CashPage() {
     const [moveForm, setMoveForm] = useState({ id: 0, movementType: 'INCOME', amount: '', description: '' })
     const [saving, setSaving] = useState(false)
     const [editingMove, setEditingMove] = useState(false)
+    const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [history, setHistory] = useState<CashRegister[]>([])
     const [fromDate, setFromDate] = useState('')
     const [toDate, setToDate] = useState('')
@@ -90,24 +91,33 @@ export default function CashPage() {
         await api.post(`/api/admin/cash/${register.id}/close`, { amount: Number(closeAmt) })
         setShowClose(false); load(); setSaving(false)
     }
-    const addMovement = async (e: React.FormEvent) => {
-        e.preventDefault(); if (!register) return;
-        if (!confirm('¿Estás seguro de registrar/editar este movimiento?')) return;
+    const handleFormSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!register) return
+        setShowConfirmModal(true)
+    }
+
+    const processMovement = async () => {
+        if (!register) return
         setSaving(true)
-        if (editingMove && moveForm.id) {
-            await api.put(`/api/admin/cash/movements/${moveForm.id}`, {
-                movementType: moveForm.movementType,
-                amount: Number(moveForm.amount),
-                description: moveForm.description,
-            })
-        } else {
-            await api.post(`/api/admin/cash/${register.id}/movements`, {
-                movementType: moveForm.movementType,
-                amount: Number(moveForm.amount),
-                description: moveForm.description,
-            })
+        try {
+            if (editingMove && moveForm.id) {
+                await api.put(`/api/admin/cash/movements/${moveForm.id}`, {
+                    movementType: moveForm.movementType,
+                    amount: Number(moveForm.amount),
+                    description: moveForm.description,
+                })
+            } else {
+                await api.post(`/api/admin/cash/${register.id}/movements`, {
+                    movementType: moveForm.movementType,
+                    amount: Number(moveForm.amount),
+                    description: moveForm.description,
+                })
+            }
+            setShowMove(false); setEditingMove(false); setShowConfirmModal(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); load();
+        } finally {
+            setSaving(false)
         }
-        setShowMove(false); setEditingMove(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); load(); setSaving(false)
     }
 
     const openEditMove = (m: CashMovement) => {
@@ -368,7 +378,7 @@ export default function CashPage() {
                             <h2 className="text-lg font-bold text-espresso">{editingMove ? 'Editar Movimiento' : 'Agregar Movimiento'}</h2>
                             <button onClick={() => setShowMove(false)} className="btn-ghost p-1.5"><X className="w-5 h-5" /></button>
                         </div>
-                        <form onSubmit={addMovement} className="p-6 space-y-4">
+                        <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Tipo</label>
                                 <select className="select" value={moveForm.movementType} onChange={e => setMoveForm({ ...moveForm, movementType: e.target.value })}>
@@ -389,6 +399,21 @@ export default function CashPage() {
                                 <button type="submit" className="btn-primary flex-1" disabled={saving}>{saving ? 'Guardando…' : 'Agregar'}</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Confirmación Custom */}
+            {showConfirmModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 text-center">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 py-8">
+                        <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-espresso mb-2">¿Estás seguro?</h2>
+                        <p className="text-sm text-primary-500 mb-6">Esta acción modificará los saldos de la caja actual.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowConfirmModal(false)} className="btn-secondary flex-1">Cancelar</button>
+                            <button onClick={processMovement} className="btn-primary flex-1" disabled={saving}>{saving ? 'Procesando…' : 'Sí, continuar'}</button>
+                        </div>
                     </div>
                 </div>
             )}
