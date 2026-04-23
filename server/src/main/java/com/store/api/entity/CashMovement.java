@@ -25,6 +25,7 @@ public class CashMovement {
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal amount;
 
+    @Column(length = 100)
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)

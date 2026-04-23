@@ -18,16 +18,16 @@ public class User {
     @Column(nullable = false, unique = true, length = 50)
     private String email;
 
-    @Column(name = "document_type", length = 10)
+    @Column(name = "document_type", length = 15)
     private String documentType;
 
-    @Column(name = "document_number", length = 30)
+    @Column(name = "document_number", length = 20)
     private String documentNumber;
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 50)
     private String role = "CLIENTE";
 
     @Column(nullable = false)

@@ -16,16 +16,16 @@ public class Supplier {
     @Column(nullable = false, length = 40)
     private String name;
 
-    @Column(name = "legal_name", length = 50)
+    @Column(name = "legal_name", length = 40)
     private String legalName;
 
-    @Column(name = "tax_id", length = 30)
+    @Column(name = "tax_id", length = 20)
     private String taxId;
 
     @Column(length = 40)
     private String alias;
 
-    @Column(length = 30)
+    @Column(length = 20)
     private String phone;
 
     @Column(length = 50)

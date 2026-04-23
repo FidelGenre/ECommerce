@@ -16,10 +16,10 @@ public class Notification {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(length = 100, nullable = false, columnDefinition = "TEXT")
     private String message;
 
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 20)
     private String type = "INFO"; // INFO, WARNING, ALERT
 
     @Column(name = "is_read", nullable = false)

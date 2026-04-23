@@ -23,12 +23,13 @@ public class StockMovement {
     @Column(nullable = false, precision = 14, scale = 3)
     private java.math.BigDecimal quantity;
 
+    @Column(length = 100)
     private String reason;
 
     @Column(name = "reference_id")
     private Long referenceId;
 
-    @Column(name = "reference_type", length = 30)
+    @Column(name = "reference_type", length = 50)
     private String referenceType;
 
     @ManyToOne(fetch = FetchType.LAZY)

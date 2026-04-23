@@ -1,0 +1,60 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------------< com.store:api >----------------------------
+[INFO] Building store-api 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ api ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ api ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 74 source files with javac [debug release 21] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/Notification.java:[19,22] illegal start of type
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/Notification.java:[19,29] <identifier> expected
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/InternalCost.java:[17,22] illegal start of type
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/InternalCost.java:[17,29] <identifier> expected
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/AuditLog.java:[28,21] illegal start of type
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/AuditLog.java:[28,28] <identifier> expected
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/AuditLog.java:[31,21] illegal start of type
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/AuditLog.java:[31,28] <identifier> expected
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/Item.java:[19,22] illegal start of type
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/Item.java:[19,29] <identifier> expected
+[INFO] 10 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.507 s
+[INFO] Finished at: 2026-04-23T02:20:19-03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project api: Compilation failure: Compilation failure: 
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/Notification.java:[19,22] illegal start of type
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/Notification.java:[19,29] <identifier> expected
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/InternalCost.java:[17,22] illegal start of type
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/InternalCost.java:[17,29] <identifier> expected
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/AuditLog.java:[28,21] illegal start of type
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/AuditLog.java:[28,28] <identifier> expected
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/AuditLog.java:[31,21] illegal start of type
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/AuditLog.java:[31,28] <identifier> expected
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/Item.java:[19,22] illegal start of type
+[ERROR] /C:/Program/Ecommerce/server/src/main/java/com/store/api/entity/Item.java:[19,29] <identifier> expected
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

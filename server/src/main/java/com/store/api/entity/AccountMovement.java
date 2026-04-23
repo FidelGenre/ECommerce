@@ -21,11 +21,13 @@ public class AccountMovement {
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
 
+    @Column(length = 20)
     private String movementType; // "CHARGE" (increases debt) or "PAYMENT" (decreases debt)
 
     @Column(precision = 10, scale = 2)
     private BigDecimal amount;
 
+    @Column(length = 100)
     private String description;
 
     private LocalDateTime createdAt;

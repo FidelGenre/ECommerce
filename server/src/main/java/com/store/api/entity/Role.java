@@ -11,10 +11,10 @@ import java.util.Set;
 public class Role {
 
     @Id
-    @Column(length = 50)
+    @Column(length = 20)
     private String code; // e.g. "ADMIN", "CLIENTE", "VENDEDOR"
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 40)
     private String name;
 
     @ElementCollection(fetch = FetchType.EAGER)

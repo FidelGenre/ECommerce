@@ -22,18 +22,19 @@ public class Customer {
     @Column(length = 50)
     private String email;
 
-    @Column(length = 30)
+    @Column(length = 20)
     private String phone;
 
     @Column(length = 50)
     private String address;
 
-    @Column(name = "document_type", length = 10)
+    @Column(name = "document_type", length = 15)
     private String documentType;
 
-    @Column(name = "tax_id", length = 30) // Used as documentNumber
+    @Column(name = "tax_id", length = 20) // Used as documentNumber
     private String taxId;
 
+    @Column(length = 40)
     private String notes;
 
     @Column(name = "account_balance", nullable = false, precision = 14, scale = 2)

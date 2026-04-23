@@ -14,13 +14,13 @@ public class InternalCost {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(length = 100, nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal amount;
 
-    @Column(length = 100)
+    @Column(length = 50)
     private String category;
 
     @Column(name = "cost_date", nullable = false)

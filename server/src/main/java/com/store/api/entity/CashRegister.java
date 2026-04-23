@@ -29,6 +29,7 @@ public class CashRegister {
     @JoinColumn(name = "opened_by")
     private User openedBy;
 
+    @Column(length = 40)
     private String notes;
 
     @Transient

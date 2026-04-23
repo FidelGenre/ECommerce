@@ -32,12 +32,13 @@ public class SaleOrder {
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private PaymentMethod paymentMethod;
 
+    @Column(length = 40)
     private String notes;
 
-    @Column(name = "mp_preference_id", length = 120)
+    @Column(name = "mp_preference_id", length = 100)
     private String mpPreferenceId;
 
-    @Column(name = "mp_payment_id", length = 120)
+    @Column(name = "mp_payment_id", length = 100)
     private String mpPaymentId;
 
     @Column(name = "mp_init_point", length = 500)
