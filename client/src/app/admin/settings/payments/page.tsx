@@ -80,8 +80,8 @@ export default function PaymentsSettingsPage() {
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
                         <div className="flex items-center justify-between p-6 border-b border-muted"><h2 className="text-lg font-bold text-espresso">{editing ? 'Editar' : 'Nueva'} Forma de Pago</h2><button onClick={() => setShowModal(false)} className="btn-ghost p-1.5"><X className="w-5 h-5" /></button></div>
                         <form onSubmit={handleSave} className="p-6 space-y-4">
-                            <div><label className="block text-sm font-medium text-primary-700 mb-1">Nombre</label><input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></div>
-                            <div><label className="block text-sm font-medium text-primary-700 mb-1">Descripción</label><input className="input" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+                            <div><label className="block text-sm font-medium text-primary-700 mb-1">Nombre</label><input className="input" value={form.name} onChange={e = maxLength={40}> setForm({ ...form, name: e.target.value })} required /></div>
+                            <div><label className="block text-sm font-medium text-primary-700 mb-1">Descripción</label><input className="input" value={form.description} onChange={e = maxLength={100}> setForm({ ...form, description: e.target.value })} /></div>
                             <div className="flex gap-3"><button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancelar</button><button type="submit" className="btn-primary flex-1" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button></div>
                         </form>
                     </div>

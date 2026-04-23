@@ -266,7 +266,7 @@ export default function CostsPage() {
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Descripción</label>
-                                <input className="input" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} required />
+                                <input className="input" value={form.description} onChange={e = maxLength={100}> setForm({ ...form, description: e.target.value })} required />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>

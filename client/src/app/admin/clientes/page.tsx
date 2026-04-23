@@ -328,25 +328,25 @@ export default function ClientesPage() {
                                             <label className="block text-xs font-bold text-primary-700 uppercase tracking-tight">Nombre *</label>
                                             <div className="relative">
                                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
-                                                <input className="input pl-10" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} required placeholder="Ej: Juan" />
+                                                <input className="input pl-10" value={form.firstName} onChange={e = maxLength={40}> setForm({ ...form, firstName: e.target.value })} required placeholder="Ej: Juan" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="block text-xs font-bold text-primary-700 uppercase tracking-tight">Apellido</label>
-                                            <input className="input" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} placeholder="Ej: Pérez" />
+                                            <input className="input" value={form.lastName} onChange={e = maxLength={40}> setForm({ ...form, lastName: e.target.value })} placeholder="Ej: Pérez" />
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="block text-xs font-bold text-primary-700 uppercase tracking-tight">Email</label>
                                             <div className="relative">
                                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
-                                                <input type="email" className="input pl-10" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="juan@correo.com" />
+                                                <input type="email" className="input pl-10" value={form.email} onChange={e = maxLength={50}> setForm({ ...form, email: e.target.value })} placeholder="juan@correo.com" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="block text-xs font-bold text-primary-700 uppercase tracking-tight">Teléfono</label>
                                             <div className="relative">
                                                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
-                                                <input className="input pl-10" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+54 221 ..." />
+                                                <input className="input pl-10" value={form.phone} onChange={e = maxLength={20}> setForm({ ...form, phone: e.target.value })} placeholder="+54 221 ..." />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5 col-span-2 sm:col-span-1">
@@ -363,7 +363,7 @@ export default function ClientesPage() {
                                                 </select>
                                                 <div className="relative flex-1">
                                                     <Fingerprint className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
-                                                    <input className="input pl-10 font-mono" value={form.taxId} onChange={e => setForm({ ...form, taxId: formatDoc(e.target.value, form.documentType) })} placeholder={form.documentType === 'DNI' ? '12345678' : '20-XXXXXXXX-X'} />
+                                                    <input className="input pl-10 font-mono" value={form.taxId} onChange={e = maxLength={20}> setForm({ ...form, taxId: formatDoc(e.target.value, form.documentType) })} placeholder={form.documentType === 'DNI' ? '12345678' : '20-XXXXXXXX-X'} />
                                                 </div>
                                             </div>
                                         </div>
@@ -371,12 +371,12 @@ export default function ClientesPage() {
                                             <label className="block text-xs font-bold text-primary-700 uppercase tracking-tight">Dirección</label>
                                             <div className="relative">
                                                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
-                                                <input className="input pl-10" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Calle 123, Ciudad" />
+                                                <input className="input pl-10" value={form.address} onChange={e = maxLength={50}> setForm({ ...form, address: e.target.value })} placeholder="Calle 123, Ciudad" />
                                             </div>
                                         </div>
                                         <div className="col-span-2 space-y-1.5">
                                             <label className="block text-xs font-bold text-primary-700 uppercase tracking-tight">Notas / Observaciones</label>
-                                            <textarea className="input min-h-[100px]" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Preferencias, alergias, referencias comerciales..." />
+                                            <textarea className="input min-h-[100px]" value={form.notes} onChange={e = maxLength={40}> setForm({ ...form, notes: e.target.value })} placeholder="Preferencias, alergias, referencias comerciales..." />
                                         </div>
                                     </div>
                                     <div className="flex gap-3 pt-4 border-t border-muted">

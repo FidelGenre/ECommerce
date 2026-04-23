@@ -226,7 +226,7 @@ export default function CustomersPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Notas</label>
-                                <textarea className="input" rows={2} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+                                <textarea className="input" rows={2} value={form.notes} onChange={e = maxLength={40}> setForm({ ...form, notes: e.target.value })} />
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancelar</button>
@@ -265,7 +265,7 @@ export default function CustomersPage() {
                                 </div>
                                 <div className="flex-1">
                                     <label className="block text-xs font-medium text-primary-700 mb-1">Concepto</label>
-                                    <input type="text" className="input text-sm py-1.5" value={accForm.description} onChange={e => setAccForm({ ...accForm, description: e.target.value })} placeholder="Ej. Pago en efectivo" />
+                                    <input type="text" className="input text-sm py-1.5" value={accForm.description} onChange={e = maxLength={100}> setAccForm({ ...accForm, description: e.target.value })} placeholder="Ej. Pago en efectivo" />
                                 </div>
                                 <button type="submit" disabled={saving || !accForm.amount} className="btn-primary py-1.5 px-4 text-sm whitespace-nowrap">
                                     {saving ? '...' : 'Registrar'}

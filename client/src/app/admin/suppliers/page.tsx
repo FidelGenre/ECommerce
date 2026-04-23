@@ -278,7 +278,7 @@ export default function SuppliersPage() {
                                 </div>
                                 <div className="flex-1">
                                     <label className="block text-xs font-medium text-primary-700 mb-1">Concepto</label>
-                                    <input type="text" className="input text-sm py-1.5" value={accForm.description} onChange={e => setAccForm({ ...accForm, description: e.target.value })} placeholder="Ej. Pago parcial" />
+                                    <input type="text" className="input text-sm py-1.5" value={accForm.description} onChange={e = maxLength={100}> setAccForm({ ...accForm, description: e.target.value })} placeholder="Ej. Pago parcial" />
                                 </div>
                                 <button type="submit" disabled={saving || !accForm.amount} className="btn-primary py-1.5 px-4 text-sm whitespace-nowrap">
                                     {saving ? '...' : 'Registrar'}
