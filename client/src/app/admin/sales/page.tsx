@@ -439,7 +439,7 @@ export default function SalesPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-primary-700 mb-1">Notas</label>
-                                                <input className="input" value={form.notes} onChange={e = maxLength={40}> setForm({ ...form, notes: e.target.value })} />
+                                                <input className="input" maxLength={40} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-primary-700 mb-1">Descuento Fidelización</label>

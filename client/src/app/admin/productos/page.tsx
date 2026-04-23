@@ -525,12 +525,12 @@ export default function ProductosAdminPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-primary-700 mb-1">Nombre *</label>
-                                    <input className="input" value={form.name} onChange={e = maxLength={40}> setForm({ ...form, name: e.target.value })} required placeholder="Ej: Colombian Huila Geisha" />
+                                    <input className="input" maxLength={40} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="Ej: Colombian Huila Geisha" />
                                 </div>
 
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-primary-700 mb-1">Descripción</label>
-                                    <textarea className="input" rows={3} value={form.description} onChange={e = maxLength={100}> setForm({ ...form, description: e.target.value })} placeholder="Descripción del producto para la tienda…" />
+                                    <textarea className="input" rows={3} maxLength={100} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Descripción del producto para la tienda…" />
                                 </div>
 
                                 <div className="col-span-2">
@@ -583,7 +583,7 @@ export default function ProductosAdminPage() {
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-primary-700 mb-1">Unidad de Venta (ej. g, u)</label>
-                                        <input className="input text-sm" value={form.unit} onChange={e = maxLength={20}> setForm({ ...form, unit: e.target.value })} placeholder="Ej: g" />
+                                        <input className="input text-sm" maxLength={20} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} placeholder="Ej: g" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-primary-700 mb-1">Tamaño (ej. 100 para 100g)</label>
@@ -591,7 +591,7 @@ export default function ProductosAdminPage() {
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-primary-700 mb-1">Unidad de Compra (ej. kg, caja)</label>
-                                        <input className="input text-sm" value={form.purchaseUnit} onChange={e = maxLength={20}> setForm({ ...form, purchaseUnit: e.target.value })} placeholder="Ej: kg" />
+                                        <input className="input text-sm" maxLength={20} value={form.purchaseUnit} onChange={e => setForm({ ...form, purchaseUnit: e.target.value })} placeholder="Ej: kg" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-primary-700 mb-1">Factor de Conversión</label>
@@ -626,7 +626,7 @@ export default function ProductosAdminPage() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-primary-700 mb-1">Código de barras</label>
-                                    <input className="input font-mono" value={form.barcode} onChange={e = maxLength={50}> setForm({ ...form, barcode: e.target.value })} placeholder="EAN-13, UPC…" />
+                                    <input className="input font-mono" maxLength={50} value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} placeholder="EAN-13, UPC…" />
                                 </div>
 
                                 {/* Visibility */}

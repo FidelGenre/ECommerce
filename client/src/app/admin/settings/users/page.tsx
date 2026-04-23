@@ -414,11 +414,11 @@ export default function UsersSettingsPage() {
                             )}
                             <div>
                                 <label className="block text-xs font-semibold text-primary-700 mb-1">Usuario</label>
-                                <input className="input" value={form.username} onChange={e = maxLength={40}> setForm({ ...form, username: e.target.value })} required />
+                                <input className="input" maxLength={40} value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} required />
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold text-primary-700 mb-1">Email</label>
-                                <input type="email" className="input" value={form.email} onChange={e = maxLength={50}> setForm({ ...form, email: e.target.value })} required />
+                                <input type="email" className="input" maxLength={50} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold text-primary-700 mb-1">Contraseña {editing && <span className="text-primary-400 font-normal">(dejar vacío para no cambiar)</span>}</label>
@@ -447,17 +447,17 @@ export default function UsersSettingsPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-semibold text-primary-700 mb-1">Nombre</label>
-                                    <input className="input" value={form.firstName} onChange={e = maxLength={40}> setForm({ ...form, firstName: e.target.value })} />
+                                    <input className="input" maxLength={40} value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-primary-700 mb-1">Apellido</label>
-                                    <input className="input" value={form.lastName} onChange={e = maxLength={40}> setForm({ ...form, lastName: e.target.value })} />
+                                    <input className="input" maxLength={40} value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-semibold text-primary-700 mb-1">Teléfono</label>
-                                    <input className="input" value={form.phone} onChange={e = maxLength={20}> setForm({ ...form, phone: e.target.value })} />
+                                    <input className="input" maxLength={20} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
                                 </div>
                                 <div className="col-span-2 sm:col-span-1">
                                     <label className="block text-xs font-semibold text-primary-700 mb-1">Documento</label>
@@ -471,14 +471,14 @@ export default function UsersSettingsPage() {
                                             <option value="CUIL">CUIL</option>
                                             <option value="Pasaporte">PAS</option>
                                         </select>
-                                        <input className="input font-mono flex-1" value={form.taxId} onChange={e = maxLength={20}> setForm({ ...form, taxId: formatDoc(e.target.value, form.documentType) })} placeholder={form.documentType === 'DNI' ? '12345678' : '20-XXXXXXXX-X'} />
+                                        <input className="input font-mono flex-1" maxLength={20} value={form.taxId} onChange={e => setForm({ ...form, taxId: formatDoc(e.target.value, form.documentType) })} placeholder={form.documentType === 'DNI' ? '12345678' : '20-XXXXXXXX-X'} />
                                     </div>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-semibold text-primary-700 mb-1">Dirección</label>
-                                    <input className="input" value={form.address} onChange={e = maxLength={50}> setForm({ ...form, address: e.target.value })} />
+                                    <input className="input" maxLength={50} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-primary-700 mb-1">Puntos de Fidelización</label>
@@ -508,7 +508,7 @@ export default function UsersSettingsPage() {
                                     <label className="block text-xs font-semibold text-primary-700 mb-1">Código del Rol</label>
                                     <input className="input font-mono text-sm uppercase placeholder:normal-case" placeholder="Ej: VENDEDOR, SUPERVISOR" 
                                            value={roleForm.code} 
-                                           onChange={e = maxLength={20}> setRoleForm({ ...roleForm, code: e.target.value.toUpperCase().replace(/[^A-Z_]/g, '') })} required />
+                                           onChange={e => setRoleForm({ ...roleForm, code: e.target.value.toUpperCase().replace(/[^A-Z_]/g, '') })} required />
                                 </div>
                             )}
                             {editingRole && (
@@ -522,7 +522,7 @@ export default function UsersSettingsPage() {
                             )}
                             <div>
                                 <label className="block text-xs font-semibold text-primary-700 mb-1">Nombre Display (Humano)</label>
-                                <input className="input" placeholder="Ej: Vendedor de Sucursal" value={roleForm.name} onChange={e = maxLength={40}> setRoleForm({ ...roleForm, name: e.target.value })} required />
+                                <input className="input" placeholder="Ej: Vendedor de Sucursal" maxLength={40} value={roleForm.name} onChange={e => setRoleForm({ ...roleForm, name: e.target.value })} required />
                             </div>
 
                             <hr className="border-t border-muted my-4" />

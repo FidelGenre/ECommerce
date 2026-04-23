@@ -392,7 +392,7 @@ export default function CashPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Descripción</label>
-                                <input className="input" value={moveForm.description} onChange={e = maxLength={100}> setMoveForm({ ...moveForm, description: e.target.value })} />
+                                <input className="input" maxLength={100} value={moveForm.description} onChange={e => setMoveForm({ ...moveForm, description: e.target.value })} />
                             </div>
                             <div className="flex gap-3">
                                 <button type="button" onClick={() => setShowMove(false)} className="btn-secondary flex-1">Cancelar</button>

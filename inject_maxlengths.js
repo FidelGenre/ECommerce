@@ -37,41 +37,32 @@ function processDirectory(dir) {
             processDirectory(fullPath)
         } else if (fullPath.endsWith('.tsx')) {
             let content = fs.readFileSync(fullPath, 'utf8')
-            
-            // Regex to find inputs or textareas that have value={something.PROP} or value={PROP}
-            // and don't already have a maxLength attribute
             let modified = false;
             
-            // 1. Process <input> and <textarea> tags that span multiple lines or single line
-            // We use a replacer function on tags
-            content = content.replace(/<(input|textarea)([\s\S]*?)>/g, (match, tag, attrs) => {
-                // If it already has a generic type checkbox, number, file, skip
-                if (attrs.includes('type="checkbox"') || attrs.includes('type="number"') || attrs.includes('type="radio"') || attrs.includes('maxLength')) {
-                    return match;
-                }
-                
-                // Extract value={...}
-                const valueMatch = attrs.match(/value=\{([^}]+)\}/)
-                if (valueMatch) {
-                    const val = valueMatch[1] // e.g. "form.firstName"
-                    const parts = val.split('.')
-                    const prop = parts[parts.length - 1] // e.g. "firstName"
+            // Reemplazar usando regex línea por línea para evitar romper JSX
+            const lines = content.split('\n')
+            for(let i=0; i<lines.length; i++) {
+                let line = lines[i]
+                if ((line.includes('<input ') || line.includes('<textarea ')) && line.includes('value={')) {
+                    if (line.includes('type="checkbox"') || line.includes('type="number"') || line.includes('type="radio"') || line.includes('maxLength=')) continue;
                     
-                    if (limits[prop]) {
-                        modified = true;
-                        // Inject maxLength={XX}
-                        if (match.endsWith('/>')) {
-                            return `<${tag}${attrs.substring(0, attrs.length - 1)} maxLength={${limits[prop]}} />`
-                        } else {
-                            return `<${tag}${attrs} maxLength={${limits[prop]}}>`
+                    const valueMatch = line.match(/value=\{([^}]+)\}/)
+                    if (valueMatch) {
+                        const val = valueMatch[1]
+                        const parts = val.split('.')
+                        const prop = parts[parts.length - 1]
+                        
+                        if (limits[prop]) {
+                            // Insert maxLength before the value attribute
+                            lines[i] = line.replace('value={', `maxLength={${limits[prop]}} value={`)
+                            modified = true
                         }
                     }
                 }
-                return match;
-            })
+            }
             
             if (modified) {
-                fs.writeFileSync(fullPath, content, 'utf8')
+                fs.writeFileSync(fullPath, lines.join('\n'), 'utf8')
                 console.log(`Updated ${fullPath}`)
             }
         }

@@ -120,8 +120,8 @@ export default function CategoriesPage() {
                             <button onClick={() => setShowModal(false)} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500"><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={handleSave} className="p-5 space-y-4">
-                            <div><label className="block text-xs font-semibold text-primary-700 mb-1">Nombre</label><input className="input" value={form.name} onChange={e = maxLength={40}> setForm({ ...form, name: e.target.value })} required /></div>
-                            <div><label className="block text-xs font-semibold text-primary-700 mb-1">Descripción</label><input className="input" value={form.description} onChange={e = maxLength={100}> setForm({ ...form, description: e.target.value })} /></div>
+                            <div><label className="block text-xs font-semibold text-primary-700 mb-1">Nombre</label><input className="input" maxLength={40} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></div>
+                            <div><label className="block text-xs font-semibold text-primary-700 mb-1">Descripción</label><input className="input" maxLength={100} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
                             <div className="flex gap-2 pt-2"><button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1 py-2 text-sm">Cancelar</button><button type="submit" className="btn-primary flex-1 py-2 text-sm" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button></div>
                         </form>
                     </div>
