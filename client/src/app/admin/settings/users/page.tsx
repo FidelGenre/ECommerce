@@ -33,6 +33,7 @@ interface UserRow {
     lastName?: string;
     phone?: string;
     address?: string;
+    documentType?: string;
     taxId?: string;
     accountBalance?: number;
     loyaltyPoints?: number;
@@ -48,7 +49,7 @@ export default function UsersSettingsPage() {
     const [editing, setEditing] = useState<UserRow | null>(null)
     const [form, setForm] = useState({
         username: '', email: '', password: '', role: 'CLIENTE',
-        firstName: '', lastName: '', phone: '', address: '', taxId: '', loyaltyPoints: 0
+        firstName: '', lastName: '', phone: '', address: '', documentType: 'DNI', taxId: '', loyaltyPoints: 0
     })
     const [saving, setSaving] = useState(false)
     // Roles State
@@ -142,8 +143,18 @@ export default function UsersSettingsPage() {
         return () => clearTimeout(timeout)
     }, [search, roleFilter, activeFilter, activeTab])
 
-    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE', firstName: '', lastName: '', phone: '', address: '', taxId: '', loyaltyPoints: 0 }); setShowModal(true) }
-    const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role, firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', address: u.address || '', taxId: u.taxId || '', loyaltyPoints: u.loyaltyPoints || 0 }); setShowModal(true) }
+
+    const formatDoc = (val: string, type: string) => {
+        let raw = val.replace(/\D/g, '')
+        if (type !== 'CUIT' && type !== 'CUIL') return raw.slice(0, 15)
+        raw = raw.slice(0, 11)
+        if (raw.length <= 2) return raw
+        if (raw.length <= 10) return `${raw.slice(0, 2)}-${raw.slice(2)}`
+        return `${raw.slice(0, 2)}-${raw.slice(2, 10)}-${raw.slice(10)}`
+    }
+
+    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE', firstName: '', lastName: '', phone: '', address: '', taxId: '', documentType: 'DNI', loyaltyPoints: 0 }); setShowModal(true) }
+    const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role, firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', address: u.address || '', taxId: u.taxId || '', documentType: u.documentType || 'DNI', loyaltyPoints: u.loyaltyPoints || 0 }); setShowModal(true) }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
         try {
@@ -448,9 +459,20 @@ export default function UsersSettingsPage() {
                                     <label className="block text-xs font-semibold text-primary-700 mb-1">Teléfono</label>
                                     <input className="input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-primary-700 mb-1">DNI / CUIT</label>
-                                    <input className="input" value={form.taxId} onChange={e => setForm({ ...form, taxId: e.target.value })} />
+                                <div className="col-span-2 sm:col-span-1">
+                                    <label className="block text-xs font-semibold text-primary-700 mb-1">Documento</label>
+                                    <div className="flex gap-2">
+                                        <select className="input w-24 shrink-0 px-2" value={form.documentType} onChange={e => {
+                                            const newType = e.target.value
+                                            setForm({ ...form, documentType: newType, taxId: formatDoc(form.taxId, newType) })
+                                        }}>
+                                            <option value="DNI">DNI</option>
+                                            <option value="CUIT">CUIT</option>
+                                            <option value="CUIL">CUIL</option>
+                                            <option value="Pasaporte">PAS</option>
+                                        </select>
+                                        <input className="input font-mono flex-1" value={form.taxId} onChange={e => setForm({ ...form, taxId: formatDoc(e.target.value, form.documentType) })} placeholder={form.documentType === 'DNI' ? '12345678' : '20-XXXXXXXX-X'} />
+                                    </div>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">

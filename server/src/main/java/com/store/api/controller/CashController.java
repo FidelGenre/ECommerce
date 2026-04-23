@@ -109,6 +109,16 @@ public class CashController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/movements/{moveId}")
+    public ResponseEntity<CashMovement> updateMovement(@PathVariable Long moveId, @RequestBody CashMovement req) {
+        return movementRepo.findById(moveId).map(existing -> {
+            if (req.getAmount() != null) existing.setAmount(req.getAmount());
+            if (req.getDescription() != null) existing.setDescription(req.getDescription());
+            if (req.getMovementType() != null) existing.setMovementType(req.getMovementType());
+            return ResponseEntity.ok(movementRepo.save(existing));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/{id}/summary")
     public ResponseEntity<Map<String, Object>> summary(@PathVariable Long id) {
         BigDecimal income = movementRepo.sumByRegisterAndType(id, "INCOME");

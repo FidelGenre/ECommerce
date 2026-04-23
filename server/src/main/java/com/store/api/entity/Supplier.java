@@ -13,25 +13,25 @@ public class Supplier {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 40)
     private String name;
 
-    @Column(name = "legal_name", length = 150)
+    @Column(name = "legal_name", length = 50)
     private String legalName;
 
     @Column(name = "tax_id", length = 30)
     private String taxId;
 
-    @Column(length = 80)
+    @Column(length = 40)
     private String alias;
 
     @Column(length = 30)
     private String phone;
 
-    @Column(length = 100)
+    @Column(length = 50)
     private String email;
 
-    @Column(length = 200)
+    @Column(length = 50)
     private String address;
 
     @ManyToOne(fetch = FetchType.EAGER)

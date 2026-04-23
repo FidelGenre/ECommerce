@@ -12,11 +12,17 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false, unique = true, length = 40)
     private String username;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String email;
+
+    @Column(name = "document_type", length = 10)
+    private String documentType;
+
+    @Column(name = "document_number", length = 30)
+    private String documentNumber;
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;

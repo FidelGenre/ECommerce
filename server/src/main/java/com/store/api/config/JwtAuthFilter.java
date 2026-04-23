@@ -47,6 +47,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     var auth = new UsernamePasswordAuthenticationToken(
                             username, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(auth);
+
+                    // Block writing for CONSULTA role
+                    if (request.getRequestURI().startsWith("/api/admin/") &&
+                        ("POST".equalsIgnoreCase(request.getMethod()) || "PUT".equalsIgnoreCase(request.getMethod()) ||
+                         "PATCH".equalsIgnoreCase(request.getMethod()) || "DELETE".equalsIgnoreCase(request.getMethod()))) {
+                        if (role.equals("CONSULTA")) {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Forbidden\", \"message\": \"El rol CONSULTA no tiene permisos para modificar datos.\"}");
+                            return;
+                        }
+                    }
                 }
             }
         }

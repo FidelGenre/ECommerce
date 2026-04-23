@@ -64,10 +64,19 @@ export default function ClientesPage() {
     const [loadingDetail, setLoadingDetail] = useState(false)
 
     // Form
-    const blank = { firstName: '', lastName: '', email: '', phone: '', address: '', taxId: '', notes: '' }
+    const blank = { firstName: '', lastName: '', email: '', phone: '', address: '', taxId: '', documentType: 'DNI', notes: '' }
     const [form, setForm] = useState(blank)
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
+
+    const formatDoc = (val: string, type: string) => {
+        let raw = val.replace(/\D/g, '')
+        if (type !== 'CUIT' && type !== 'CUIL') return raw.slice(0, 15)
+        raw = raw.slice(0, 11)
+        if (raw.length <= 2) return raw
+        if (raw.length <= 10) return `${raw.slice(0, 2)}-${raw.slice(2)}`
+        return `${raw.slice(0, 2)}-${raw.slice(2, 10)}-${raw.slice(10)}`
+    }
 
     const load = async () => {
         setLoading(true)
@@ -97,6 +106,7 @@ export default function ClientesPage() {
             phone: c.phone || '',
             address: c.address || '',
             taxId: c.taxId || '',
+            documentType: c.documentType || 'DNI',
             notes: c.notes || ''
         })
         setActiveTab('profile')
@@ -339,11 +349,22 @@ export default function ClientesPage() {
                                                 <input className="input pl-10" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+54 221 ..." />
                                             </div>
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="block text-xs font-bold text-primary-700 uppercase tracking-tight">DNI / CUIT</label>
-                                            <div className="relative">
-                                                <Fingerprint className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
-                                                <input className="input pl-10 font-mono" value={form.taxId} onChange={e => setForm({ ...form, taxId: e.target.value })} placeholder="20-XXXXXXXX-X" />
+                                        <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                                            <label className="block text-xs font-bold text-primary-700 uppercase tracking-tight">Documento</label>
+                                            <div className="flex gap-2">
+                                                <select className="input w-24 shrink-0 px-2" value={form.documentType} onChange={e => {
+                                                    const newType = e.target.value
+                                                    setForm({ ...form, documentType: newType, taxId: formatDoc(form.taxId, newType) })
+                                                }}>
+                                                    <option value="DNI">DNI</option>
+                                                    <option value="CUIT">CUIT</option>
+                                                    <option value="CUIL">CUIL</option>
+                                                    <option value="Pasaporte">PAS</option>
+                                                </select>
+                                                <div className="relative flex-1">
+                                                    <Fingerprint className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
+                                                    <input className="input pl-10 font-mono" value={form.taxId} onChange={e => setForm({ ...form, taxId: formatDoc(e.target.value, form.documentType) })} placeholder={form.documentType === 'DNI' ? '12345678' : '20-XXXXXXXX-X'} />
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">

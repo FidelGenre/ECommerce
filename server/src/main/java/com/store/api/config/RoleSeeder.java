@@ -42,5 +42,18 @@ public class RoleSeeder implements CommandLineRunner {
             
             logger.info("System roles properly initialized.");
         }
+
+        if (roleRepository.findById("CONSULTA").isEmpty()) {
+            Role consulta = new Role();
+            consulta.setCode("CONSULTA");
+            consulta.setName("Consulta");
+            consulta.setPermissions(Set.of(
+                "VIEW_DASHBOARD", "MANAGE_SALES", "MANAGE_PURCHASES", 
+                "MANAGE_INVENTORY", "MANAGE_CASH", "VIEW_REPORTS", 
+                "MANAGE_CUSTOMERS", "MANAGE_SUPPLIERS", "MANAGE_SETTINGS"
+            ));
+            roleRepository.save(consulta);
+            logger.info("CONSULTA role initialized.");
+        }
     }
 }

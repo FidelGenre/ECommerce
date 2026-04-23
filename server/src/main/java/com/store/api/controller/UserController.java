@@ -81,6 +81,8 @@ public class UserController {
                 dto.setPhone(c.getPhone());
                 dto.setAccountBalance(c.getAccountBalance());
                 dto.setLoyaltyPoints(c.getLoyaltyPoints());
+                dto.setDocumentType(c.getDocumentType());
+                dto.setDocumentNumber(u.getDocumentNumber() != null ? u.getDocumentNumber() : c.getTaxId());
             }
             return dto;
         }));
@@ -93,6 +95,8 @@ public class UserController {
         user.setEmail(req.getEmail());
         user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         user.setRole(req.getRole() != null ? req.getRole() : "CLIENTE");
+        user.setDocumentType(req.getDocumentType());
+        user.setDocumentNumber(req.getDocumentNumber() != null ? req.getDocumentNumber() : req.getTaxId());
         final User savedUser = userRepo.save(user);
 
         // Auto-create customer profile for all users
@@ -108,7 +112,8 @@ public class UserController {
             c.setLastName(req.getLastName());
             c.setPhone(req.getPhone());
             c.setAddress(req.getAddress());
-            c.setTaxId(req.getTaxId());
+            c.setDocumentType(req.getDocumentType() != null ? req.getDocumentType() : "DNI");
+            c.setTaxId(req.getDocumentNumber() != null ? req.getDocumentNumber() : req.getTaxId());
             if (req.getLoyaltyPoints() != null)
                 c.setLoyaltyPoints(req.getLoyaltyPoints());
             customerRepo.save(c);
@@ -132,6 +137,12 @@ public class UserController {
             }
             if (req.getRole() != null)
                 u.setRole(req.getRole());
+            if (req.getDocumentType() != null)
+                u.setDocumentType(req.getDocumentType());
+            if (req.getDocumentNumber() != null)
+                u.setDocumentNumber(req.getDocumentNumber());
+            else if (req.getTaxId() != null)
+                u.setDocumentNumber(req.getTaxId());
 
             User savedUser = userRepo.save(u);
 
@@ -153,7 +164,11 @@ public class UserController {
                     c.setPhone(req.getPhone());
                 if (req.getAddress() != null)
                     c.setAddress(req.getAddress());
-                if (req.getTaxId() != null)
+                if (req.getDocumentType() != null)
+                    c.setDocumentType(req.getDocumentType());
+                if (req.getDocumentNumber() != null)
+                    c.setTaxId(req.getDocumentNumber());
+                else if (req.getTaxId() != null)
                     c.setTaxId(req.getTaxId());
                 if (req.getLoyaltyPoints() != null)
                     c.setLoyaltyPoints(req.getLoyaltyPoints());
@@ -246,6 +261,8 @@ public class UserController {
         private String lastName;
         private String phone;
         private String address;
+        private String documentType;
+        private String documentNumber;
         private String taxId;
         private Integer loyaltyPoints;
     }
@@ -264,6 +281,8 @@ public class UserController {
         private String lastName;
         private String phone;
         private String address;
+        private String documentType;
+        private String documentNumber;
         private String taxId;
     }
 }

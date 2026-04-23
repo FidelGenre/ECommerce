@@ -13,7 +13,7 @@ public class Item {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, length = 50)
     private String name;
 
     @Column(columnDefinition = "TEXT")
@@ -45,7 +45,7 @@ public class Item {
     @Column(nullable = false)
     private Boolean visible = true;
 
-    @Column(length = 100)
+    @Column(length = 40)
     private String barcode;
 
     @Column(length = 20)

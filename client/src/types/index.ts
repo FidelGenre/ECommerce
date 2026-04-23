@@ -13,6 +13,8 @@ export interface User {
     id: number
     username: string
     email: string
+    documentType?: string
+    documentNumber?: string
     role: 'ADMIN' | 'CLIENTE'
     active: boolean
     createdAt: string
@@ -46,6 +48,7 @@ export interface Customer {
     email?: string
     phone?: string
     address?: string
+    documentType?: string
     taxId?: string
     notes?: string
     accountBalance: number

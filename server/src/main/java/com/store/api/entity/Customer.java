@@ -13,22 +13,25 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "first_name", nullable = false, length = 80)
+    @Column(name = "first_name", nullable = false, length = 40)
     private String firstName;
 
-    @Column(name = "last_name", length = 80)
+    @Column(name = "last_name", length = 40)
     private String lastName;
 
-    @Column(length = 100)
+    @Column(length = 50)
     private String email;
 
     @Column(length = 30)
     private String phone;
 
-    @Column(length = 200)
+    @Column(length = 50)
     private String address;
 
-    @Column(name = "tax_id", length = 30)
+    @Column(name = "document_type", length = 10)
+    private String documentType;
+
+    @Column(name = "tax_id", length = 30) // Used as documentNumber
     private String taxId;
 
     private String notes;

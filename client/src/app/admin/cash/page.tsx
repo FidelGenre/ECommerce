@@ -17,8 +17,9 @@ export default function CashPage() {
     const [openAmt, setOpenAmt] = useState('0')
     const [closeAmt, setCloseAmt] = useState('')
     const [showClose, setShowClose] = useState(false)
-    const [moveForm, setMoveForm] = useState({ movementType: 'INCOME', amount: '', description: '' })
+    const [moveForm, setMoveForm] = useState({ id: 0, movementType: 'INCOME', amount: '', description: '' })
     const [saving, setSaving] = useState(false)
+    const [editingMove, setEditingMove] = useState(false)
     const [history, setHistory] = useState<CashRegister[]>([])
     const [fromDate, setFromDate] = useState('')
     const [toDate, setToDate] = useState('')
@@ -90,13 +91,34 @@ export default function CashPage() {
         setShowClose(false); load(); setSaving(false)
     }
     const addMovement = async (e: React.FormEvent) => {
-        e.preventDefault(); if (!register) return; setSaving(true)
-        await api.post(`/api/admin/cash/${register.id}/movements`, {
-            movementType: moveForm.movementType,
-            amount: Number(moveForm.amount),
-            description: moveForm.description,
+        e.preventDefault(); if (!register) return;
+        if (!confirm('¿Estás seguro de registrar/editar este movimiento?')) return;
+        setSaving(true)
+        if (editingMove && moveForm.id) {
+            await api.put(`/api/admin/cash/movements/${moveForm.id}`, {
+                movementType: moveForm.movementType,
+                amount: Number(moveForm.amount),
+                description: moveForm.description,
+            })
+        } else {
+            await api.post(`/api/admin/cash/${register.id}/movements`, {
+                movementType: moveForm.movementType,
+                amount: Number(moveForm.amount),
+                description: moveForm.description,
+            })
+        }
+        setShowMove(false); setEditingMove(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); load(); setSaving(false)
+    }
+
+    const openEditMove = (m: CashMovement) => {
+        setMoveForm({
+            id: m.id,
+            movementType: m.movementType,
+            amount: String(m.amount),
+            description: m.description || ''
         })
-        setShowMove(false); setMoveForm({ movementType: 'INCOME', amount: '', description: '' }); load(); setSaving(false)
+        setEditingMove(true)
+        setShowMove(true)
     }
 
     const exportCash = () => {
@@ -134,7 +156,7 @@ export default function CashPage() {
                     : (
                         <div className="flex gap-3">
                             <button onClick={exportCash} className="btn-secondary flex items-center gap-2"><FileSpreadsheet className="w-4 h-4" />Exportar</button>
-                            <button onClick={() => setShowMove(true)} className="btn-secondary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar movimiento</button>
+                            <button onClick={() => { setEditingMove(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); setShowMove(true) }} className="btn-secondary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar movimiento</button>
                             <button onClick={() => setShowClose(true)} className="btn-danger flex items-center gap-2"><Lock className="w-4 h-4" />Cerrar caja</button>
                         </div>
                     )
@@ -192,10 +214,10 @@ export default function CashPage() {
                         </div>
                         <div className="table-wrapper rounded-none border-0">
                             <table className="data-table">
-                                <thead><tr><th>Tipo</th><th>Monto</th><th>Descripción</th><th>Hora</th></tr></thead>
+                                <thead><tr><th>Tipo</th><th>Monto</th><th>Descripción</th><th>Hora</th><th className="text-right">Acción</th></tr></thead>
                                 <tbody>
                                     {movements.length === 0
-                                        ? <tr><td colSpan={4} className="text-center text-primary-400 py-8">Sin movimientos aún</td></tr>
+                                        ? <tr><td colSpan={5} className="text-center text-primary-400 py-8">Sin movimientos aún</td></tr>
                                         : movements.map(m => (
                                             <tr key={m.id}>
                                                 <td>
@@ -207,6 +229,11 @@ export default function CashPage() {
                                                 <td className="font-semibold">{FMT(m.amount)}</td>
                                                 <td className="text-primary-500">{m.description ?? '—'}</td>
                                                 <td className="text-primary-400 text-xs">{new Date(m.createdAt).toLocaleTimeString()}</td>
+                                                <td className="text-right">
+                                                    <button onClick={() => openEditMove(m)} className="btn-ghost p-1 tooltip-left hover:bg-primary-50 hover:text-primary-600">
+                                                        Editar
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))
                                     }
@@ -338,7 +365,7 @@ export default function CashPage() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
                         <div className="flex items-center justify-between p-6 border-b border-muted">
-                            <h2 className="text-lg font-bold text-espresso">Agregar Movimiento</h2>
+                            <h2 className="text-lg font-bold text-espresso">{editingMove ? 'Editar Movimiento' : 'Agregar Movimiento'}</h2>
                             <button onClick={() => setShowMove(false)} className="btn-ghost p-1.5"><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={addMovement} className="p-6 space-y-4">
