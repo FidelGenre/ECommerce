@@ -132,12 +132,24 @@ public class DashboardController {
                 saleRepo.findAll().stream()
                                 .filter(s -> !s.getCreatedAt().isBefore(rangeFrom)
                                                 && !s.getCreatedAt().isAfter(rangeTo))
-                                .filter(s -> s.getPaymentMethod() != null)
+                                .filter(s -> s.getPaymentMethod() != null
+                                                && s.getPaymentMethod().getName() != null
+                                                && !s.getPaymentMethod().getName().isBlank())
                                 .collect(Collectors.groupingBy(
                                                 s -> s.getPaymentMethod().getName(),
-                                                Collectors.reducing(BigDecimal.ZERO, SaleOrder::getTotal,
-                                                                BigDecimal::add)))
-                                .forEach((name, total) -> data.add(Map.of("name", name, "value", total)));
+                                                Collectors.toList()))
+                                .forEach((method, ordersList) -> {
+                                        BigDecimal total = ordersList.stream()
+                                                        .map(SaleOrder::getTotal)
+                                                        .filter(t -> t != null)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        Map<String, Object> row = new LinkedHashMap<>();
+                                        row.put("method", method);
+                                        row.put("total", total);
+                                        row.put("orders", ordersList.size());
+                                        data.add(row);
+                                });
+                data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
                 return ResponseEntity.ok(data);
         }
 
@@ -152,12 +164,24 @@ public class DashboardController {
                 purchaseRepo.findAll().stream()
                                 .filter(p -> !p.getCreatedAt().isBefore(rangeFrom)
                                                 && !p.getCreatedAt().isAfter(rangeTo))
-                                .filter(p -> p.getPaymentMethod() != null)
+                                .filter(p -> p.getPaymentMethod() != null
+                                                && p.getPaymentMethod().getName() != null
+                                                && !p.getPaymentMethod().getName().isBlank())
                                 .collect(Collectors.groupingBy(
                                                 p -> p.getPaymentMethod().getName(),
-                                                Collectors.reducing(BigDecimal.ZERO, PurchaseOrder::getTotal,
-                                                                BigDecimal::add)))
-                                .forEach((name, total) -> data.add(Map.of("name", name, "value", total)));
+                                                Collectors.toList()))
+                                .forEach((method, ordersList) -> {
+                                        BigDecimal total = ordersList.stream()
+                                                        .map(PurchaseOrder::getTotal)
+                                                        .filter(t -> t != null)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        Map<String, Object> row = new LinkedHashMap<>();
+                                        row.put("method", method);
+                                        row.put("total", total);
+                                        row.put("orders", ordersList.size());
+                                        data.add(row);
+                                });
+                data.sort((a, b) -> ((BigDecimal) b.get("total")).compareTo((BigDecimal) a.get("total")));
                 return ResponseEntity.ok(data);
         }
 
