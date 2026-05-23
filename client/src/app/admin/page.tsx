@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import {
     LineChart, Line, BarChart, Bar, XAxis, YAxis,
-    CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
+    CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
@@ -395,26 +395,28 @@ export default function AdminDashboard() {
                     {byCategory.length > 0 && (
                         <div className="card">
                             <h2 className="text-base font-semibold text-espresso mb-4">Ventas por Categoría</h2>
-                            <ResponsiveContainer width="100%" height={220}>
+                            <ResponsiveContainer width="100%" height={280}>
                                 <PieChart>
-                                    <Pie data={byCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
+                                    <Pie data={byCategory} dataKey="total" nameKey="category" cx="50%" cy="45%" outerRadius={85}>
                                         {byCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                                     </Pie>
                                     <Tooltip formatter={(v: any) => FMT(v)} />
+                                    <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
                     )}
-                    
+
                     {purchasesByCategory.length > 0 && (
                         <div className="card">
                             <h2 className="text-base font-semibold text-espresso mb-4">Compras por Categoría</h2>
-                            <ResponsiveContainer width="100%" height={220}>
+                            <ResponsiveContainer width="100%" height={280}>
                                 <PieChart>
-                                    <Pie data={purchasesByCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
+                                    <Pie data={purchasesByCategory} dataKey="total" nameKey="category" cx="50%" cy="45%" outerRadius={85}>
                                         {purchasesByCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                                     </Pie>
                                     <Tooltip formatter={(v: any) => FMT(v)} />
+                                    <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
