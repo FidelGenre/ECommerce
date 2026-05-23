@@ -6,9 +6,8 @@ import {
     Plus, X, Search, Eye, EyeOff, Edit, Trash2,
     Package, ImageOff, ChevronLeft, ChevronRight,
     ChevronUp, ChevronDown,
-    Tag, Boxes, ExternalLink, Filter, QrCode, Printer
+    Tag, Boxes, ExternalLink, Filter, Printer
 } from 'lucide-react'
-import { QRCodeSVG } from 'qrcode.react'
 import { SavedFilters } from '@/components/SavedFilters'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
@@ -20,12 +19,11 @@ const FIELD_LABELS: Record<string, string> = {
     minStock: 'Stock mínimo',
 }
 
-function ProductCard({ item, onEdit, onToggle, onDelete, onQr, selected, onSelect }: {
+function ProductCard({ item, onEdit, onToggle, onDelete, selected, onSelect }: {
     item: Item
     onEdit: () => void
     onToggle: () => void
     onDelete: () => void
-    onQr: () => void
     selected: boolean
     onSelect: () => void
 }) {
@@ -94,9 +92,7 @@ function ProductCard({ item, onEdit, onToggle, onDelete, onQr, selected, onSelec
                 <button onClick={onToggle} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
                     {item.visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
-                <button onClick={onQr} className="btn-ghost p-1.5" title="Ver QR">
-                    <QrCode className="w-4 h-4" />
-                </button>
+
                 <button onClick={onDelete} className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-1.5 transition-colors" title="Eliminar">
                     <Trash2 className="w-4 h-4" />
                 </button>
@@ -131,7 +127,7 @@ export default function ProductosAdminPage() {
     const [form, setForm] = useState(blank as any)
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
-    const [qrItem, setQrItem] = useState<Item | null>(null)
+
     const [showLabels, setShowLabels] = useState(false)
 
     // Selection
@@ -374,7 +370,7 @@ export default function ProductosAdminPage() {
                             onEdit={() => openEdit(item)}
                             onToggle={() => toggleVisibility(item)}
                             onDelete={() => handleDelete([item.id])}
-                            onQr={() => setQrItem(item)}
+
                             selected={selectedIds.has(item.id)}
                             onSelect={() => toggleSelect(item.id)}
                         />
@@ -703,32 +699,6 @@ export default function ProductosAdminPage() {
                 </div>
             )}
 
-            {/* QR Modal */}
-            {qrItem && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center space-y-4">
-                        <h2 className="text-lg font-bold text-espresso">{qrItem.name}</h2>
-                        <div className="flex justify-center">
-                            <QRCodeSVG
-                                value={`PRODUCT:${qrItem.id}:${qrItem.barcode || qrItem.name}`}
-                                size={200}
-                                level="H"
-                                includeMargin
-                            />
-                        </div>
-                        <p className="text-sm text-primary-500">
-                            {qrItem.barcode && <span className="font-mono">{qrItem.barcode}</span>}
-                            {qrItem.barcode && ' · '}
-                            {FMT(qrItem.price)}
-                        </p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setQrItem(null)} className="btn-secondary flex-1">Cerrar</button>
-                            <button onClick={() => window.print()} className="btn-primary flex-1 flex items-center justify-center gap-1.5"><Printer className="w-4 h-4" />Imprimir</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Labels Modal */}
             {showLabels && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -738,7 +708,7 @@ export default function ProductosAdminPage() {
                             <button onClick={() => setShowLabels(false)} className="btn-ghost p-1.5"><X className="w-5 h-5" /></button>
                         </div>
                         <div className="p-6">
-                            <p className="text-sm text-primary-500 mb-4">Seleccioná los productos para generar etiquetas con QR:</p>
+                            <p className="text-sm text-primary-500 mb-4">Seleccioná los productos para generar etiquetas:</p>
                             <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
                                 {data.filter(i => i.visible).map(item => (
                                     <label key={item.id} className="flex items-center gap-3 p-2 hover:bg-primary-50 rounded-lg cursor-pointer">
@@ -754,8 +724,7 @@ export default function ProductosAdminPage() {
                                 <div className="grid grid-cols-3 gap-4 p-4 border border-muted rounded-xl print:border-none" id="labels-container">
                                     {data.filter(i => selectedIds.has(i.id)).map(item => (
                                         <div key={item.id} className="border border-muted rounded-lg p-3 text-center">
-                                            <QRCodeSVG value={`PRODUCT:${item.id}:${item.barcode || item.name}`} size={80} level="M" />
-                                            <p className="text-xs font-semibold mt-2 line-clamp-1">{item.name}</p>
+                                            <p className="text-xs font-semibold line-clamp-1">{item.name}</p>
                                             <p className="text-sm font-bold text-espresso">{FMT(item.price)}</p>
                                             {item.barcode && <p className="text-[10px] text-primary-400 font-mono">{item.barcode}</p>}
                                         </div>

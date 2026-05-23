@@ -4,7 +4,7 @@ import api from '@/lib/api'
 import { Item } from '@/types'
 import { AlertTriangle, RotateCcw, Plus, X, Search, Download, FileSpreadsheet, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { QRCodeSVG } from 'qrcode.react'
+
 
 type StockStatus = 'all' | 'ok' | 'low' | 'critical' | 'out'
 type SortField = 'name' | 'stock' | 'category' | 'id' | 'minStock' | 'supplier' | 'status'
@@ -315,7 +315,7 @@ export default function InventoryPage() {
                             <div className="border-2 border-dashed border-primary-300 p-6 rounded-xl flex flex-col items-center gap-3 w-64 print:border-solid print:border-black print:rounded-none">
                                 <h3 className="font-bold text-lg text-center leading-tight truncate w-full">{labelModal.name}</h3>
                                 <p className="text-xs text-primary-500">{labelModal.category?.name}</p>
-                                <QRCodeSVG value={`PROD:${labelModal.id}`} size={120} level="M" />
+
                                 <div className="mt-2 text-xl font-black text-espresso">
                                     ${Number(labelModal.price).toLocaleString('es-AR')}
                                 </div>

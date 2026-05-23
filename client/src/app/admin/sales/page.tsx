@@ -4,7 +4,7 @@ import api from '@/lib/api'
 import { SaleOrder, OperationStatus, Customer, PaymentMethod, Item } from '@/types'
 import { Plus, X, Search, FileSpreadsheet, Download, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Trash2, Printer, Eye } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { QRCodeSVG } from 'qrcode.react'
+
 import { SavedFilters } from '@/components/SavedFilters'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
@@ -585,7 +585,7 @@ export default function SalesPage() {
 
                                 <div className="text-center pt-2 text-xs flex flex-col items-center gap-3">
                                     <p>¡Gracias por su compra!</p>
-                                    <QRCodeSVG value={`https://coffeebeans.com/verify/${ticketModal.id}`} size={80} level="L" />
+
                                 </div>
                             </div>
                         </div>

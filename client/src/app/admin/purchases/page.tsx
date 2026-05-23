@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import api from '@/lib/api'
 import { PurchaseOrder, OperationStatus, Supplier, PaymentMethod, Item } from '@/types'
 import { Plus, Search, ChevronLeft, ChevronRight, X, Trash2, Download, FileSpreadsheet, ChevronUp, ChevronDown, CheckCircle, XCircle, Printer } from 'lucide-react'
-import { QRCodeSVG } from 'qrcode.react'
+
 import * as XLSX from 'xlsx'
 import { SavedFilters } from '@/components/SavedFilters'
 
@@ -492,7 +492,7 @@ export default function PurchasesPage() {
 
                                     <div className="text-center pt-2 text-xs flex flex-col items-center gap-3">
                                         <p>Registro de Entrada de Mercadería</p>
-                                        <QRCodeSVG value={`https://coffeebeans.com/purchases/${ticketModal.id}`} size={80} level="L" />
+
                                     </div>
                                 </div>
                             </div>
