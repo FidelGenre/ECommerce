@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import {
     LineChart, Line, BarChart, Bar, XAxis, YAxis,
-    CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
+    CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
@@ -32,6 +32,20 @@ function KpiCard({ icon: Icon, label, value, sub, color }: any) {
 }
 
 const CHART_COLORS = ['#6B3F1F', '#C49A6C', '#8B5A2B', '#4A2C14', '#D9C9B0']
+
+const RADIAN = Math.PI / 180
+function renderPieLabel({ cx, cy, midAngle, outerRadius, name, percent }: any) {
+    if (percent < 0.04) return null
+    const radius = outerRadius + 44
+    const x = cx + radius * Math.cos(-midAngle * RADIAN)
+    const y = cy + radius * Math.sin(-midAngle * RADIAN)
+    return (
+        <text x={x} y={y} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central"
+            fill="#6B3F1F" fontSize={11} fontWeight={500}>
+            {name}
+        </text>
+    )
+}
 
 type Preset = 'all' | 'today' | '7d' | '30d' | 'month' | 'year' | 'custom'
 
@@ -395,13 +409,13 @@ export default function AdminDashboard() {
                     {byCategory.length > 0 && (
                         <div className="card">
                             <h2 className="text-base font-semibold text-espresso mb-4">Ventas por Categoría</h2>
-                            <ResponsiveContainer width="100%" height={280}>
-                                <PieChart>
-                                    <Pie data={byCategory} dataKey="total" nameKey="category" cx="50%" cy="45%" outerRadius={85}>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <PieChart margin={{ top: 16, right: 60, bottom: 16, left: 60 }}>
+                                    <Pie data={byCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80}
+                                        label={renderPieLabel} labelLine={{ stroke: '#C49A6C', strokeWidth: 1 }}>
                                         {byCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                                     </Pie>
                                     <Tooltip formatter={(v: any) => FMT(v)} />
-                                    <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -410,13 +424,13 @@ export default function AdminDashboard() {
                     {purchasesByCategory.length > 0 && (
                         <div className="card">
                             <h2 className="text-base font-semibold text-espresso mb-4">Compras por Categoría</h2>
-                            <ResponsiveContainer width="100%" height={280}>
-                                <PieChart>
-                                    <Pie data={purchasesByCategory} dataKey="total" nameKey="category" cx="50%" cy="45%" outerRadius={85}>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <PieChart margin={{ top: 16, right: 60, bottom: 16, left: 60 }}>
+                                    <Pie data={purchasesByCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80}
+                                        label={renderPieLabel} labelLine={{ stroke: '#C49A6C', strokeWidth: 1 }}>
                                         {purchasesByCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                                     </Pie>
                                     <Tooltip formatter={(v: any) => FMT(v)} />
-                                    <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
