@@ -35,8 +35,8 @@ const CHART_COLORS = ['#6B3F1F', '#C49A6C', '#8B5A2B', '#4A2C14', '#D9C9B0']
 
 const RADIAN = Math.PI / 180
 function renderPieLabel({ cx, cy, midAngle, outerRadius, name, percent }: any) {
-    if (percent < 0.04) return null
-    const radius = outerRadius + 44
+    if (percent < 0.005) return null
+    const radius = outerRadius + 50
     const x = cx + radius * Math.cos(-midAngle * RADIAN)
     const y = cy + radius * Math.sin(-midAngle * RADIAN)
     return (
@@ -415,7 +415,6 @@ export default function AdminDashboard() {
                                         label={renderPieLabel} labelLine={{ stroke: '#C49A6C', strokeWidth: 1 }}>
                                         {byCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                                     </Pie>
-                                    <Tooltip formatter={(v: any) => FMT(v)} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -430,7 +429,6 @@ export default function AdminDashboard() {
                                         label={renderPieLabel} labelLine={{ stroke: '#C49A6C', strokeWidth: 1 }}>
                                         {purchasesByCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                                     </Pie>
-                                    <Tooltip formatter={(v: any) => FMT(v)} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
