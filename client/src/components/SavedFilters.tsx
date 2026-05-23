@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Bookmark, Save, Trash2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Bookmark, Save, Trash2, Pencil, Check, X } from 'lucide-react'
 
 export interface SavedFiltersProps {
     storageKey: string
@@ -17,6 +17,9 @@ export function SavedFilters({ storageKey, currentFilters, onLoadFilters }: Save
     const [views, setViews] = useState<SavedView[]>([])
     const [showSave, setShowSave] = useState(false)
     const [viewName, setViewName] = useState('')
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [editingName, setEditingName] = useState('')
+    const editInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const stored = localStorage.getItem(storageKey)
@@ -25,21 +28,44 @@ export function SavedFilters({ storageKey, currentFilters, onLoadFilters }: Save
         }
     }, [storageKey])
 
+    useEffect(() => {
+        if (editingId) editInputRef.current?.focus()
+    }, [editingId])
+
+    const persist = (updated: SavedView[]) => {
+        setViews(updated)
+        localStorage.setItem(storageKey, JSON.stringify(updated))
+    }
+
     const saveView = () => {
         if (!viewName.trim()) return
         const newView: SavedView = { id: Date.now().toString(), name: viewName, filters: currentFilters }
-        const newViews = [...views, newView]
-        setViews(newViews)
-        localStorage.setItem(storageKey, JSON.stringify(newViews))
+        persist([...views, newView])
         setViewName('')
         setShowSave(false)
     }
 
     const deleteView = (e: React.MouseEvent, id: string) => {
         e.stopPropagation()
-        const newViews = views.filter(v => v.id !== id)
-        setViews(newViews)
-        localStorage.setItem(storageKey, JSON.stringify(newViews))
+        persist(views.filter(v => v.id !== id))
+    }
+
+    const startEdit = (e: React.MouseEvent, v: SavedView) => {
+        e.stopPropagation()
+        setEditingId(v.id)
+        setEditingName(v.name)
+    }
+
+    const confirmEdit = (e?: React.MouseEvent) => {
+        e?.stopPropagation()
+        if (!editingName.trim()) { cancelEdit(); return }
+        persist(views.map(v => v.id === editingId ? { ...v, name: editingName.trim() } : v))
+        setEditingId(null)
+    }
+
+    const cancelEdit = (e?: React.MouseEvent) => {
+        e?.stopPropagation()
+        setEditingId(null)
     }
 
     return (
@@ -49,13 +75,39 @@ export function SavedFilters({ storageKey, currentFilters, onLoadFilters }: Save
                     <button className="text-xs text-primary-600 hover:text-espresso flex items-center gap-1 font-medium bg-primary-100/50 py-1.5 px-3 rounded-lg border border-primary-200">
                         <Bookmark className="w-3.5 h-3.5" /> Vistas guardadas ({views.length})
                     </button>
-                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-muted rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 overflow-hidden">
+                    <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-muted rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 overflow-hidden">
                         {views.map(v => (
-                            <div key={v.id} onClick={() => onLoadFilters(v.filters)} className="px-3 py-2 text-sm hover:bg-warm-50 cursor-pointer flex items-center justify-between group/item">
-                                <span className="truncate">{v.name}</span>
-                                <button onClick={(e) => deleteView(e, v.id)} className="text-red-400 hover:text-red-600 opacity-0 group-hover/item:opacity-100 transition-opacity p-1">
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                            <div key={v.id} className="px-3 py-2 text-sm hover:bg-warm-50 group/item">
+                                {editingId === v.id ? (
+                                    <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                        <input
+                                            ref={editInputRef}
+                                            type="text"
+                                            className="input text-xs py-0.5 px-1.5 flex-1 min-h-0"
+                                            value={editingName}
+                                            onChange={e => setEditingName(e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') cancelEdit() }}
+                                        />
+                                        <button onClick={confirmEdit} className="text-green-500 hover:text-green-700 p-0.5">
+                                            <Check className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button onClick={cancelEdit} className="text-primary-400 hover:text-primary-600 p-0.5">
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between cursor-pointer" onClick={() => onLoadFilters(v.filters)}>
+                                        <span className="truncate flex-1">{v.name}</span>
+                                        <div className="flex items-center gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                            <button onClick={e => startEdit(e, v)} className="text-primary-400 hover:text-espresso p-1">
+                                                <Pencil className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button onClick={e => deleteView(e, v.id)} className="text-red-400 hover:text-red-600 p-1">
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
