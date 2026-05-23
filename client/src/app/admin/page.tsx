@@ -33,19 +33,6 @@ function KpiCard({ icon: Icon, label, value, sub, color }: any) {
 
 const CHART_COLORS = ['#6B3F1F', '#C49A6C', '#8B5A2B', '#4A2C14', '#D9C9B0']
 
-const RADIAN = Math.PI / 180
-function renderPieLabel({ cx, cy, midAngle, outerRadius, name, percent }: any) {
-    if (percent < 0.005) return null
-    const radius = outerRadius + 50
-    const x = cx + radius * Math.cos(-midAngle * RADIAN)
-    const y = cy + radius * Math.sin(-midAngle * RADIAN)
-    return (
-        <text x={x} y={y} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central"
-            fill="#6B3F1F" fontSize={11} fontWeight={500}>
-            {name}
-        </text>
-    )
-}
 
 type Preset = 'all' | 'today' | '7d' | '30d' | 'month' | 'year' | 'custom'
 
@@ -409,28 +396,42 @@ export default function AdminDashboard() {
                     {byCategory.length > 0 && (
                         <div className="card">
                             <h2 className="text-base font-semibold text-espresso mb-4">Ventas por Categoría</h2>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <PieChart margin={{ top: 16, right: 60, bottom: 16, left: 60 }}>
-                                    <Pie data={byCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80}
-                                        label={renderPieLabel} labelLine={{ stroke: '#C49A6C', strokeWidth: 1 }}>
+                            <ResponsiveContainer width="100%" height={220}>
+                                <PieChart>
+                                    <Pie data={byCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={85}>
                                         {byCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                                     </Pie>
                                 </PieChart>
                             </ResponsiveContainer>
+                            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 justify-center">
+                                {byCategory.map((item: any, i: number) => (
+                                    <div key={item.category} className="flex items-center gap-1.5">
+                                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                        <span className="text-xs text-espresso font-medium">{item.category}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
 
                     {purchasesByCategory.length > 0 && (
                         <div className="card">
                             <h2 className="text-base font-semibold text-espresso mb-4">Compras por Categoría</h2>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <PieChart margin={{ top: 16, right: 60, bottom: 16, left: 60 }}>
-                                    <Pie data={purchasesByCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={80}
-                                        label={renderPieLabel} labelLine={{ stroke: '#C49A6C', strokeWidth: 1 }}>
+                            <ResponsiveContainer width="100%" height={220}>
+                                <PieChart>
+                                    <Pie data={purchasesByCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={85}>
                                         {purchasesByCategory.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                                     </Pie>
                                 </PieChart>
                             </ResponsiveContainer>
+                            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 justify-center">
+                                {purchasesByCategory.map((item: any, i: number) => (
+                                    <div key={item.category} className="flex items-center gap-1.5">
+                                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                        <span className="text-xs text-espresso font-medium">{item.category}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
