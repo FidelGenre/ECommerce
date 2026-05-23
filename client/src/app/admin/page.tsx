@@ -404,12 +404,13 @@ export default function AdminDashboard() {
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 justify-center">
-                                {byCategory.map((item: any, i: number) => (
+                                {(() => { const total = byCategory.reduce((s: number, d: any) => s + d.total, 0); return byCategory.map((item: any, i: number) => (
                                     <div key={item.category} className="flex items-center gap-1.5">
                                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
                                         <span className="text-xs text-espresso font-medium">{item.category}</span>
+                                        <span className="text-xs text-primary-400 font-normal">{total > 0 ? `${Math.round((item.total / total) * 100)}%` : '0%'}</span>
                                     </div>
-                                ))}
+                                ))})()}
                             </div>
                         </div>
                     )}
@@ -425,12 +426,13 @@ export default function AdminDashboard() {
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 justify-center">
-                                {purchasesByCategory.map((item: any, i: number) => (
+                                {(() => { const total = purchasesByCategory.reduce((s: number, d: any) => s + d.total, 0); return purchasesByCategory.map((item: any, i: number) => (
                                     <div key={item.category} className="flex items-center gap-1.5">
                                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
                                         <span className="text-xs text-espresso font-medium">{item.category}</span>
+                                        <span className="text-xs text-primary-400 font-normal">{total > 0 ? `${Math.round((item.total / total) * 100)}%` : '0%'}</span>
                                     </div>
-                                ))}
+                                ))})()}
                             </div>
                         </div>
                     )}
