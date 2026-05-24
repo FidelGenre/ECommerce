@@ -119,6 +119,13 @@ public class CashController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @DeleteMapping("/movements/{moveId}")
+    public ResponseEntity<Void> deleteMovement(@PathVariable Long moveId) {
+        if (!movementRepo.existsById(moveId)) return ResponseEntity.notFound().build();
+        movementRepo.deleteById(moveId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}/summary")
     public ResponseEntity<Map<String, Object>> summary(@PathVariable Long id) {
         BigDecimal income = movementRepo.sumByRegisterAndType(id, "INCOME");

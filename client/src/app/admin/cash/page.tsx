@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { CashRegister, CashMovement } from '@/types'
-import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react'
+import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
@@ -21,6 +21,7 @@ export default function CashPage() {
     const [saving, setSaving] = useState(false)
     const [editingMove, setEditingMove] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
+    const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
     const [history, setHistory] = useState<CashRegister[]>([])
     const [fromDate, setFromDate] = useState('')
     const [toDate, setToDate] = useState('')
@@ -117,6 +118,13 @@ export default function CashPage() {
             setShowMove(false); setEditingMove(false); setShowConfirmModal(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); load();
         } finally {
             setSaving(false)
+        }
+    }
+
+    const deleteMovement = async (id: number) => {
+        setSaving(true)
+        try { await api.delete(`/api/admin/cash/movements/${id}`) } finally {
+            setSaving(false); setDeleteConfirmId(null); load()
         }
     }
 
@@ -240,9 +248,10 @@ export default function CashPage() {
                                                 <td className="text-primary-500">{m.description ?? '—'}</td>
                                                 <td className="text-primary-400 text-xs">{new Date(m.createdAt).toLocaleTimeString()}</td>
                                                 <td className="text-right">
-                                                    <button onClick={() => openEditMove(m)} className="btn-ghost p-1 tooltip-left hover:bg-primary-50 hover:text-primary-600">
-                                                        Editar
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <button onClick={() => openEditMove(m)} className="btn-ghost p-1 hover:bg-primary-50 hover:text-primary-600 text-xs">Editar</button>
+                                                        <button onClick={() => setDeleteConfirmId(m.id)} className="btn-ghost p-1 hover:bg-red-50 text-red-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
@@ -399,6 +408,21 @@ export default function CashPage() {
                                 <button type="submit" className="btn-primary flex-1" disabled={saving}>{saving ? 'Guardando…' : 'Agregar'}</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Eliminar Movimiento */}
+            {deleteConfirmId !== null && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 text-center">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 py-8">
+                        <Trash2 className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-espresso mb-2">¿Eliminar movimiento?</h2>
+                        <p className="text-sm text-primary-500 mb-6">Esta acción no se puede deshacer.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setDeleteConfirmId(null)} className="btn-secondary flex-1">Cancelar</button>
+                            <button onClick={() => deleteMovement(deleteConfirmId)} className="btn-danger flex-1" disabled={saving}>{saving ? 'Eliminando…' : 'Eliminar'}</button>
+                        </div>
                     </div>
                 </div>
             )}
