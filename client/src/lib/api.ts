@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { emitForbidden } from '@/lib/events'
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8082',
@@ -22,6 +23,10 @@ api.interceptors.response.use(
             localStorage.removeItem('token')
             localStorage.removeItem('user')
             window.location.href = '/login'
+        }
+        if (err.response?.status === 403) {
+            const msg = err.response.data?.message || 'No tenés permisos para realizar esta acción.'
+            emitForbidden(msg)
         }
         return Promise.reject(err)
     }
