@@ -102,7 +102,10 @@ export default function InventoryPage() {
             else if (sortField === 'id') { av = a.id; bv = b.id }
             else if (sortField === 'minStock') { av = a.minStock; bv = b.minStock }
             else if (sortField === 'supplier') { av = a.supplier?.name ?? ''; bv = b.supplier?.name ?? '' }
-            else if (sortField === 'status') { av = stockStatus(a).key; bv = stockStatus(b).key }
+            else if (sortField === 'status') {
+                const order: Record<string, number> = { out: 0, critical: 1, low: 2, ok: 3 }
+                av = order[stockStatus(a).key] ?? 99; bv = order[stockStatus(b).key] ?? 99
+            }
             else { av = a.category?.name ?? ''; bv = b.category?.name ?? '' }
             if (av < bv) return sortDir === 'asc' ? -1 : 1
             if (av > bv) return sortDir === 'asc' ? 1 : -1
