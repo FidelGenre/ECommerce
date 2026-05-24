@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { CashRegister, CashMovement } from '@/types'
-import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
+import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Trash2, Search } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
@@ -22,6 +22,12 @@ export default function CashPage() {
     const [editingMove, setEditingMove] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
+
+    // Movement filters
+    const [movFilter, setMovFilter] = useState<'all' | 'INCOME' | 'EXPENSE'>('all')
+    const [movSearch, setMovSearch] = useState('')
+    const [movFrom, setMovFrom] = useState('')
+    const [movTo, setMovTo] = useState('')
     const [history, setHistory] = useState<CashRegister[]>([])
     const [fromDate, setFromDate] = useState('')
     const [toDate, setToDate] = useState('')
@@ -227,16 +233,56 @@ export default function CashPage() {
                     )}
 
                     <div className="card p-0 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-muted">
-                            <h2 className="font-semibold text-espresso">Movimientos</h2>
+                        <div className="px-6 py-4 border-b border-muted flex flex-col sm:flex-row sm:items-center gap-3">
+                            <h2 className="font-semibold text-espresso shrink-0">Movimientos</h2>
+                            <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                                {/* Tipo */}
+                                <div className="flex rounded-lg border border-muted overflow-hidden text-xs">
+                                    {(['all', 'INCOME', 'EXPENSE'] as const).map(v => (
+                                        <button key={v} onClick={() => setMovFilter(v)}
+                                            className={`px-2.5 py-1.5 font-medium transition-colors ${movFilter === v ? 'bg-espresso text-white' : 'bg-white text-primary-500 hover:bg-primary-50'}`}>
+                                            {v === 'all' ? 'Todos' : v === 'INCOME' ? 'Ingresos' : 'Egresos'}
+                                        </button>
+                                    ))}
+                                </div>
+                                {/* Hora desde */}
+                                <input type="time" value={movFrom} onChange={e => setMovFrom(e.target.value)}
+                                    className="input !py-1 !px-2 text-xs !w-auto" title="Hora desde" />
+                                <span className="text-primary-400 text-xs">—</span>
+                                <input type="time" value={movTo} onChange={e => setMovTo(e.target.value)}
+                                    className="input !py-1 !px-2 text-xs !w-auto" title="Hora hasta" />
+                                {/* Búsqueda */}
+                                <div className="relative">
+                                    <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-primary-400" />
+                                    <input type="text" placeholder="Buscar descripción…" value={movSearch}
+                                        onChange={e => setMovSearch(e.target.value)}
+                                        className="input !py-1 !pl-7 !pr-2 text-xs !w-40" />
+                                </div>
+                                {(movFilter !== 'all' || movFrom || movTo || movSearch) && (
+                                    <button onClick={() => { setMovFilter('all'); setMovFrom(''); setMovTo(''); setMovSearch('') }}
+                                        className="text-xs text-primary-400 hover:text-espresso flex items-center gap-1">
+                                        <X className="w-3 h-3" /> Limpiar
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <div className="table-wrapper rounded-none border-0">
                             <table className="data-table">
                                 <thead><tr><th>Tipo</th><th>Monto</th><th>Descripción</th><th>Hora</th><th className="text-right">Acción</th></tr></thead>
                                 <tbody>
-                                    {movements.length === 0
-                                        ? <tr><td colSpan={5} className="text-center text-primary-400 py-8">Sin movimientos aún</td></tr>
-                                        : movements.map(m => (
+                                    {(() => {
+                                        const filtered = movements.filter(m => {
+                                            if (movFilter !== 'all' && m.movementType !== movFilter) return false
+                                            if (movSearch && !m.description?.toLowerCase().includes(movSearch.toLowerCase())) return false
+                                            if (movFrom || movTo) {
+                                                const hhmm = new Date(m.createdAt).toTimeString().slice(0, 5)
+                                                if (movFrom && hhmm < movFrom) return false
+                                                if (movTo && hhmm > movTo) return false
+                                            }
+                                            return true
+                                        })
+                                        if (filtered.length === 0) return <tr><td colSpan={5} className="text-center text-primary-400 py-8">{movements.length === 0 ? 'Sin movimientos aún' : 'Sin resultados para los filtros aplicados'}</td></tr>
+                                        return filtered.map(m => (
                                             <tr key={m.id}>
                                                 <td>
                                                     <span className={m.movementType === 'INCOME' ? 'badge-green' : 'badge-red'}>
@@ -255,7 +301,7 @@ export default function CashPage() {
                                                 </td>
                                             </tr>
                                         ))
-                                    }
+                                    })()}
                                 </tbody>
                             </table>
                         </div>
