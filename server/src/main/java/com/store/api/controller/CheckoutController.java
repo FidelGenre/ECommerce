@@ -94,12 +94,10 @@ public class CheckoutController {
     @PostMapping("/preference")
     public ResponseEntity<?> createPreference(jakarta.servlet.http.HttpServletRequest httpRequest, @RequestBody OrderRequest req, Authentication auth) {
         try {
-            if (auth != null) {
-                User user = userRepo.findByUsername(auth.getName()).orElse(null);
-                if (user != null && "NONE".equals(user.getRole())) {
-                    return ResponseEntity.status(403)
-                            .body(Map.of("error", "Su cuenta está suspendida. No tiene permisos para comprar."));
-                }
+            User checkoutUser = auth != null ? userRepo.findByUsername(auth.getName()).orElse(null) : null;
+            if (checkoutUser != null && "NONE".equals(checkoutUser.getRole())) {
+                return ResponseEntity.status(403)
+                        .body(Map.of("error", "Su cuenta está suspendida. No tiene permisos para comprar."));
             }
             List<PreferenceItemRequest> mpItems = new ArrayList<>();
             List<Item> resolvedItems = new ArrayList<>();
@@ -194,7 +192,7 @@ public class CheckoutController {
             // Reserva de stock inmediata al momento del checkout (queda Pendiente)
             // El stock queda reservado hasta por 4 horas
             order.setReservedUntil(java.time.LocalDateTime.now().plusHours(4));
-            stockService.deductStockForSale(order, "Checkout online iniciado");
+            stockService.deductStockForSale(order, "Checkout online iniciado", checkoutUser);
             saleOrderRepo.save(order);
 
             PreferenceRequest preferenceRequest = PreferenceRequest.builder()
@@ -273,7 +271,8 @@ public class CheckoutController {
             order.setMpPaymentId(null);
 
             // Return the reserved stock
-            stockService.returnStockForSale(order, "Checkout abandonado por el usuario");
+            User cancelUser = auth != null ? userRepo.findByUsername(auth.getName()).orElse(null) : null;
+            stockService.returnStockForSale(order, "Checkout abandonado por el usuario", cancelUser);
 
             saleOrderRepo.save(order);
             System.out.println("Checkout cancelled: order " + order.getId() + " abandoned, stock returned.");

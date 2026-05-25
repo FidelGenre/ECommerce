@@ -67,6 +67,7 @@ public class SupplierController {
             s.setName(req.getName());
             s.setLegalName(req.getLegalName());
             s.setTaxId(req.getTaxId());
+            s.setDocumentType(req.getDocumentType());
             s.setAlias(req.getAlias());
             s.setPhone(req.getPhone());
             s.setEmail(req.getEmail());

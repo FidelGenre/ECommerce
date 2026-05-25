@@ -22,6 +22,9 @@ public class Supplier {
     @Column(name = "tax_id", length = 20)
     private String taxId;
 
+    @Column(name = "document_type", length = 20)
+    private String documentType;
+
     @Column(length = 40)
     private String alias;
 

@@ -111,9 +111,8 @@ public class SaleController {
             org.springframework.security.core.Authentication auth) {
         SaleOrder order = new SaleOrder();
 
-        if (auth != null) {
-            userRepo.findByUsername(auth.getName()).ifPresent(order::setCreatedBy);
-        }
+        com.store.api.entity.User createdBy = auth != null ? userRepo.findByUsername(auth.getName()).orElse(null) : null;
+        if (createdBy != null) order.setCreatedBy(createdBy);
 
         if (req.getCustomerId() != null)
             customerRepo.findById(req.getCustomerId()).ifPresent(order::setCustomer);
@@ -181,7 +180,7 @@ public class SaleController {
             if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)
                     || "Reservado".equalsIgnoreCase(statusName) || "Pendiente".equalsIgnoreCase(statusName)
                     || "Pending".equalsIgnoreCase(statusName)) {
-                stockService.deductStockForSale(saved, "Manual sale start - Status: " + statusName);
+                stockService.deductStockForSale(saved, "Manual sale start - Status: " + statusName, createdBy);
                 saved = saleRepo.save(saved);
             }
         }
@@ -198,7 +197,9 @@ public class SaleController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<SaleOrder> updateStatus(@PathVariable Long id, @RequestParam Long statusId) {
+    public ResponseEntity<SaleOrder> updateStatus(@PathVariable Long id, @RequestParam Long statusId,
+            org.springframework.security.core.Authentication auth) {
+        com.store.api.entity.User updatedBy = auth != null ? userRepo.findByUsername(auth.getName()).orElse(null) : null;
         return saleRepo.findById(id).map(order -> {
             statusRepo.findById(statusId).ifPresent(order::setStatus);
             if (order.getStatus() != null) {
@@ -206,7 +207,7 @@ public class SaleController {
 
                 // Return stock if cancelled
                 if ("Cancelado".equalsIgnoreCase(statusName) || "Cancelled".equalsIgnoreCase(statusName)) {
-                    stockService.returnStockForSale(order, "Cancelación de venta");
+                    stockService.returnStockForSale(order, "Cancelación de venta", updatedBy);
                 }
                 // Deduct stock if now completed or reserved or pending
                 else if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)
@@ -219,7 +220,7 @@ public class SaleController {
                             throw new RuntimeException("No se puede actualizar el estado: " + e.getMessage());
                         }
                     }
-                    stockService.deductStockForSale(order, "Sale status updated to " + statusName);
+                    stockService.deductStockForSale(order, "Sale status updated to " + statusName, updatedBy);
                 }
 
                 if (("Completed".equals(statusName) || "Completado".equals(statusName))

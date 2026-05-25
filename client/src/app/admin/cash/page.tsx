@@ -5,10 +5,12 @@ import { toast } from '@/lib/toast'
 import { CashRegister, CashMovement } from '@/types'
 import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Trash2, Search } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { useAuth } from '@/lib/auth'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
 export default function CashPage() {
+    const { canWrite } = useAuth()
     const [register, setRegister] = useState<CashRegister | null>(null)
     const [movements, setMovements] = useState<CashMovement[]>([])
     const [summary, setSummary] = useState<any>(null)
@@ -188,12 +190,12 @@ export default function CashPage() {
                     <p className="text-primary-500 text-sm">{register ? 'Sesión abierta' : 'Sin sesión activa'}</p>
                 </div>
                 {!register
-                    ? <button onClick={() => setShowOpen(true)} className="btn-primary flex items-center gap-2"><Unlock className="w-4 h-4" />Abrir caja</button>
+                    ? (canWrite && <button onClick={() => setShowOpen(true)} className="btn-primary flex items-center gap-2"><Unlock className="w-4 h-4" />Abrir caja</button>)
                     : (
                         <div className="flex gap-3">
                             <button onClick={exportCash} className="btn-secondary flex items-center gap-2"><FileSpreadsheet className="w-4 h-4" />Exportar</button>
-                            <button onClick={() => { setEditingMove(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); setShowMove(true) }} className="btn-secondary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar movimiento</button>
-                            <button onClick={() => setShowClose(true)} className="btn-danger flex items-center gap-2"><Lock className="w-4 h-4" />Cerrar caja</button>
+                            {canWrite && <button onClick={() => { setEditingMove(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); setShowMove(true) }} className="btn-secondary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar movimiento</button>}
+                            {canWrite && <button onClick={() => setShowClose(true)} className="btn-danger flex items-center gap-2"><Lock className="w-4 h-4" />Cerrar caja</button>}
                         </div>
                     )
                 }
@@ -306,10 +308,10 @@ export default function CashPage() {
                                                 <td className="text-primary-500">{m.description ?? '—'}</td>
                                                 <td className="text-primary-400 text-xs">{new Date(m.createdAt).toLocaleTimeString()}</td>
                                                 <td className="text-right">
-                                                    <div className="flex items-center justify-end gap-1">
+                                                    {canWrite && <div className="flex items-center justify-end gap-1">
                                                         <button onClick={() => openEditMove(m)} className="btn-ghost p-1 hover:bg-primary-50 hover:text-primary-600 text-xs">Editar</button>
                                                         <button onClick={() => setDeleteConfirmId(m.id)} className="btn-ghost p-1 hover:bg-red-50 text-red-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
-                                                    </div>
+                                                    </div>}
                                                 </td>
                                             </tr>
                                         ))

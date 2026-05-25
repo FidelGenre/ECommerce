@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 import { ConfirmModal } from '@/components/ConfirmModal'
 import { Customer, AccountMovement } from '@/types'
@@ -13,6 +14,9 @@ const FIELD_LABELS: Record<string, string> = {
     phone: 'Teléfono',
     address: 'Dirección',
     taxId: 'CUIT / RUT',
+}
+const FIELD_MAX: Record<string, number> = {
+    firstName: 40, lastName: 40, email: 50, phone: 20, address: 50, taxId: 20,
 }
 
 export default function CustomersPage() {
@@ -27,6 +31,7 @@ export default function CustomersPage() {
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
     // Edit Modal
+    const { canWrite } = useAuth()
     const [showModal, setShowModal] = useState(false)
     const [editing, setEditing] = useState<Customer | null>(null)
     const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', address: '', taxId: '', notes: '' })
@@ -151,13 +156,13 @@ export default function CustomersPage() {
             <div className="flex items-center justify-between">
                 <div><h1 className="text-2xl font-bold text-espresso">Clientes</h1><p className="text-primary-500 text-sm">{total} clientes</p></div>
                 <div className="flex items-center gap-2">
-                    {selected.size > 0 && (
+                    {canWrite && selected.size > 0 && (
                         <button onClick={() => setPendingDelete([...selected])} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
                     )}
-                    <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar cliente</button>
+                    {canWrite && <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar cliente</button>}
                 </div>
             </div>
             <div className="card p-0 overflow-hidden">
@@ -195,11 +200,13 @@ export default function CustomersPage() {
                                             <button onClick={() => openAccount(c)} className="btn-ghost py-1 px-2 text-xs flex items-center gap-1" title="Cuenta Corriente">
                                                 <History className="w-3.5 h-3.5" /> Cuenta
                                             </button>
-                                            <button onClick={() => { setPointsModal(c); setPointsAdj('') }} className="btn-ghost py-1 px-2 text-xs flex items-center gap-1 text-amber-600 hover:text-amber-800" title="Ajustar Puntos">
-                                                <Star className="w-3.5 h-3.5" /> Puntos
-                                            </button>
-                                            <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">Editar</button>
-                                            <button onClick={() => setPendingDelete([c.id])} className="text-red-500 hover:text-red-700 text-xs px-2 py-1">Eliminar</button>
+                                            {canWrite && (
+                                                <button onClick={() => { setPointsModal(c); setPointsAdj('') }} className="btn-ghost py-1 px-2 text-xs flex items-center gap-1 text-amber-600 hover:text-amber-800" title="Ajustar Puntos">
+                                                    <Star className="w-3.5 h-3.5" /> Puntos
+                                                </button>
+                                            )}
+                                            {canWrite && <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">Editar</button>}
+                                            {canWrite && <button onClick={() => setPendingDelete([c.id])} className="text-red-500 hover:text-red-700 text-xs px-2 py-1">Eliminar</button>}
                                         </td>
                                     </tr>
                                 ))}
@@ -229,7 +236,7 @@ export default function CustomersPage() {
                                 {(['firstName', 'lastName', 'email', 'phone', 'address', 'taxId'] as const).map(k => (
                                     <div key={k}>
                                         <label className="block text-sm font-medium text-primary-700 mb-1">{FIELD_LABELS[k] ?? k}</label>
-                                        <input className="input" value={(form as any)[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} required={k === 'firstName'} />
+                                        <input className="input" maxLength={FIELD_MAX[k]} value={(form as any)[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} required={k === 'firstName'} />
                                     </div>
                                 ))}
                             </div>
@@ -239,7 +246,7 @@ export default function CustomersPage() {
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancelar</button>
-                                <button type="submit" className="btn-primary flex-1" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
+                                {canWrite && <button type="submit" className="btn-primary flex-1" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>}
                             </div>
                         </form>
                     </div>

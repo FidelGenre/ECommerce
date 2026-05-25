@@ -5,6 +5,7 @@ import { toast } from '@/lib/toast'
 import { Item } from '@/types'
 import { AlertTriangle, RotateCcw, Plus, X, Search, Download, FileSpreadsheet, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { useAuth } from '@/lib/auth'
 
 
 type StockStatus = 'all' | 'ok' | 'low' | 'critical' | 'out'
@@ -12,6 +13,7 @@ type SortField = 'name' | 'stock' | 'category' | 'id' | 'minStock' | 'supplier' 
 type SortDir = 'asc' | 'desc'
 
 export default function InventoryPage() {
+    const { canWrite } = useAuth()
     const [items, setItems] = useState<Item[]>([])
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState<string | null>(null)
@@ -250,9 +252,9 @@ export default function InventoryPage() {
                                             <td className="text-primary-400">{item.supplier?.name ?? '—'}</td>
                                             <td><span className={st.cls}>{st.label}</span></td>
                                             <td className="space-x-1">
-                                                <button onClick={() => setModal(item)} className="btn-ghost py-1 px-2 text-xs">
+                                                {canWrite && <button onClick={() => setModal(item)} className="btn-ghost py-1 px-2 text-xs">
                                                     <Plus className="w-3.5 h-3.5 inline mr-1" />Ajustar
-                                                </button>
+                                                </button>}
                                                 <button onClick={() => setLabelModal(item)} className="btn-ghost py-1 px-2 text-xs" title="Imprimir Etiqueta">
                                                     <Printer className="w-3.5 h-3.5 inline" />
                                                 </button>
@@ -295,7 +297,7 @@ export default function InventoryPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Detalle del motivo <span className="text-primary-400 font-normal">(opcional)</span></label>
-                                <input className="input" placeholder="Ej: se rompió al trasladar" value={adjReasonDetail} onChange={e => setAdjReasonDetail(e.target.value)} />
+                                <input className="input" maxLength={85} placeholder="Ej: se rompió al trasladar" value={adjReasonDetail} onChange={e => setAdjReasonDetail(e.target.value)} />
                             </div>
                             <div className="flex gap-3">
                                 <button type="button" onClick={() => setModal(null)} className="btn-secondary flex-1">Cancelar</button>

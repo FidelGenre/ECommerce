@@ -32,6 +32,7 @@ export interface Supplier {
     name: string
     legalName?: string
     taxId?: string
+    documentType?: string
     alias?: string
     phone?: string
     email?: string

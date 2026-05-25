@@ -7,6 +7,7 @@ import { Plus, Search, ChevronLeft, ChevronRight, X, Trash2, Download, FileSprea
 
 import * as XLSX from 'xlsx'
 import { SavedFilters } from '@/components/SavedFilters'
+import { useAuth } from '@/lib/auth'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
@@ -14,6 +15,7 @@ type SortField = 'id' | 'total' | 'createdAt' | 'supplier' | 'createdBy' | 'stat
 type SortDir = 'asc' | 'desc'
 
 export default function PurchasesPage() {
+    const { canWrite } = useAuth()
     const [data, setData] = useState<PurchaseOrder[]>([])
     const [total, setTotal] = useState(0)
     const [page, setPage] = useState(0)
@@ -206,7 +208,7 @@ export default function PurchasesPage() {
                 <div className="flex items-center gap-2">
                     <button onClick={exportCSV} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3"><Download className="w-4 h-4" /> CSV</button>
                     <button onClick={exportExcel} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3"><FileSpreadsheet className="w-4 h-4" /> Excel</button>
-                    <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" /> Nueva compra</button>
+                    {canWrite && <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" /> Nueva compra</button>}
                 </div>
             </div>
 

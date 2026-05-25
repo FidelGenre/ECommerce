@@ -16,6 +16,7 @@ interface AuthCtx {
     login: (username: string, password: string) => Promise<void>
     logout: () => void
     loading: boolean
+    canWrite: boolean
 }
 
 const Context = createContext<AuthCtx>({} as AuthCtx)
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem('token', data.token)
             localStorage.setItem('user', JSON.stringify(data))
             setUser(data)
-            router.push(data.role === 'ADMIN' ? '/admin' : '/')
+            router.push(data.role !== 'CLIENTE' ? '/admin' : '/')
         } catch (e: any) {
             const msg = e.response?.data || 'Error al iniciar sesión'
             throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg))
@@ -69,7 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/login')
     }
 
-    return <Context.Provider value={{ user, login, logout, loading }}>{children}</Context.Provider>
+    const canWrite = user?.role !== 'CONSULTA'
+
+    return <Context.Provider value={{ user, login, logout, loading, canWrite }}>{children}</Context.Provider>
 }
 
 export const useAuth = () => useContext(Context)

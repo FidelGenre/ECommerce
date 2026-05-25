@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 import { ConfirmModal } from '@/components/ConfirmModal'
 import { Item, Category, Supplier } from '@/types'
@@ -29,6 +30,7 @@ function ProductCard({ item, onEdit, onToggle, onDelete, selected, onSelect }: {
     selected: boolean
     onSelect: () => void
 }) {
+    const { canWrite } = useAuth()
     const stockBad = item.stock <= item.minStock
     return (
         <div className={`card p-0 overflow-hidden flex flex-col transition-shadow hover:shadow-lg ${!item.visible ? 'opacity-60' : ''}`}>
@@ -87,18 +89,19 @@ function ProductCard({ item, onEdit, onToggle, onDelete, selected, onSelect }: {
             </div>
 
             {/* Actions */}
-            <div className="border-t border-muted p-2 flex items-center justify-between gap-1">
-                <button onClick={onEdit} className="btn-ghost flex items-center gap-1.5 text-xs px-3 py-1.5 flex-1 justify-center">
-                    <Edit className="w-3.5 h-3.5" /> Editar
-                </button>
-                <button onClick={onToggle} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
-                    {item.visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-
-                <button onClick={onDelete} className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-1.5 transition-colors" title="Eliminar">
-                    <Trash2 className="w-4 h-4" />
-                </button>
-            </div>
+            {canWrite && (
+                <div className="border-t border-muted p-2 flex items-center justify-between gap-1">
+                    <button onClick={onEdit} className="btn-ghost flex items-center gap-1.5 text-xs px-3 py-1.5 flex-1 justify-center">
+                        <Edit className="w-3.5 h-3.5" /> Editar
+                    </button>
+                    <button onClick={onToggle} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
+                        {item.visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                    <button onClick={onDelete} className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-1.5 transition-colors" title="Eliminar">
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
         </div>
     )
 }
@@ -133,6 +136,7 @@ export default function ProductosAdminPage() {
     const [showLabels, setShowLabels] = useState(false)
 
     // Selection
+    const { canWrite } = useAuth()
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
     const toggleSelect = (id: number) => setSelectedIds(prev => {
@@ -294,9 +298,11 @@ export default function ProductosAdminPage() {
                     <a href="/" target="_blank" className="btn-ghost flex items-center gap-2 text-sm">
                         <ExternalLink className="w-4 h-4" /> Ver tienda
                     </a>
-                    <button onClick={openNew} className="btn-primary flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> Nuevo producto
-                    </button>
+                    {canWrite && (
+                        <button onClick={openNew} className="btn-primary flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> Nuevo producto
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -365,9 +371,11 @@ export default function ProductosAdminPage() {
                     <Package className="w-14 h-14 text-primary-300 mb-4" />
                     <p className="font-semibold text-espresso text-lg">Sin productos</p>
                     <p className="text-primary-400 text-sm mt-1">Agregá tu primer producto con el botón de arriba</p>
-                    <button onClick={openNew} className="btn-primary mt-6 flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> Agregar producto
-                    </button>
+                    {canWrite && (
+                        <button onClick={openNew} className="btn-primary mt-6 flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> Agregar producto
+                        </button>
+                    )}
                 </div>
             ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -444,17 +452,19 @@ export default function ProductosAdminPage() {
                                             </span>
                                         </td>
                                         <td>
-                                            <div className="flex items-center gap-1">
-                                                <button onClick={() => openEdit(item)} className="btn-ghost p-1.5" title="Editar">
-                                                    <Edit className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button onClick={() => toggleVisibility(item)} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
-                                                    {item.visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                                                </button>
-                                                <button onClick={() => setPendingDelete([item.id])} className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50 transition-colors" title="Eliminar">
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
+                                            {canWrite && (
+                                                <div className="flex items-center gap-1">
+                                                    <button onClick={() => openEdit(item)} className="btn-ghost p-1.5" title="Editar">
+                                                        <Edit className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button onClick={() => toggleVisibility(item)} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
+                                                        {item.visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                                    </button>
+                                                    <button onClick={() => setPendingDelete([item.id])} className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50 transition-colors" title="Eliminar">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -465,7 +475,7 @@ export default function ProductosAdminPage() {
             )}
 
             {/* Floating Action Bar for Selection */}
-            {selectedIds.size > 0 && (
+            {canWrite && selectedIds.size > 0 && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white shadow-xl border border-primary-100 rounded-full px-4 md:px-6 py-3 flex items-center gap-3 md:gap-4 z-40 animate-in slide-in-from-bottom-5 max-w-[95%] overflow-x-auto flex-nowrap whitespace-nowrap hide-scrollbar">
                     <span className="font-bold text-espresso text-sm bg-primary-50 px-3 py-1 rounded-full">{selectedIds.size} seleccionados</span>
                     <div className="w-px h-6 bg-muted"></div>

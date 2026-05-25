@@ -1,10 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 import { ConfirmModal } from '@/components/ConfirmModal'
 import { Supplier, Category, AccountMovement } from '@/types'
-import { Plus, X, Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, History, ArrowDownRight, ArrowUpRight, Trash2 } from 'lucide-react'
+import { Plus, X, Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, History, ArrowDownRight, ArrowUpRight, Trash2, Fingerprint } from 'lucide-react'
 
 const FIELD_LABELS: Record<string, string> = {
     name: 'Nombre',
@@ -14,6 +15,9 @@ const FIELD_LABELS: Record<string, string> = {
     phone: 'Teléfono',
     email: 'Email',
     address: 'Dirección',
+}
+const FIELD_MAX: Record<string, number> = {
+    name: 40, legalName: 40, alias: 40, phone: 20, email: 50, address: 50,
 }
 
 export default function SuppliersPage() {
@@ -31,7 +35,17 @@ export default function SuppliersPage() {
     const [showModal, setShowModal] = useState(false)
     const [editing, setEditing] = useState<Supplier | null>(null)
     const [categories, setCategories] = useState<Category[]>([])
-    const blankForm = { name: '', legalName: '', taxId: '', alias: '', phone: '', email: '', address: '', categoryId: '' }
+    const { canWrite } = useAuth()
+    const blankForm = { name: '', legalName: '', taxId: '', documentType: 'DNI', alias: '', phone: '', email: '', address: '', categoryId: '' }
+
+    const formatDoc = (val: string, type: string) => {
+        let raw = val.replace(/\D/g, '')
+        if (type !== 'CUIT' && type !== 'CUIL') return raw.slice(0, 15)
+        raw = raw.slice(0, 11)
+        if (raw.length <= 2) return raw
+        if (raw.length <= 10) return `${raw.slice(0, 2)}-${raw.slice(2)}`
+        return `${raw.slice(0, 2)}-${raw.slice(2, 10)}-${raw.slice(10)}`
+    }
     const [form, setForm] = useState(blankForm)
     const [saving, setSaving] = useState(false)
     const [newCategoryName, setNewCategoryName] = useState('')
@@ -95,7 +109,7 @@ export default function SuppliersPage() {
     )
 
     const openNew = () => { setEditing(null); setForm(blankForm); setNewCategoryName(''); setShowModal(true) }
-    const openEdit = (s: Supplier) => { setEditing(s); setForm({ name: s.name, legalName: s.legalName ?? '', taxId: s.taxId ?? '', alias: s.alias ?? '', phone: s.phone ?? '', email: s.email ?? '', address: s.address ?? '', categoryId: s.category?.id ? String(s.category.id) : '' }); setNewCategoryName(''); setShowModal(true) }
+    const openEdit = (s: Supplier) => { setEditing(s); setForm({ name: s.name, legalName: s.legalName ?? '', taxId: s.taxId ?? '', documentType: s.documentType ?? 'DNI', alias: s.alias ?? '', phone: s.phone ?? '', email: s.email ?? '', address: s.address ?? '', categoryId: s.category?.id ? String(s.category.id) : '' }); setNewCategoryName(''); setShowModal(true) }
 
     const openAccount = async (s: Supplier) => {
         setAccountModal(s)
@@ -148,13 +162,13 @@ export default function SuppliersPage() {
             <div className="flex items-center justify-between">
                 <div><h1 className="text-2xl font-bold text-espresso">Proveedores</h1><p className="text-primary-500 text-sm">{total} proveedores</p></div>
                 <div className="flex items-center gap-2">
-                    {selected.size > 0 && (
+                    {canWrite && selected.size > 0 && (
                         <button onClick={() => setPendingDelete([...selected])} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
                     )}
-                    <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar proveedor</button>
+                    {canWrite && <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar proveedor</button>}
                 </div>
             </div>
             <div className="card p-0 overflow-hidden">
@@ -201,10 +215,12 @@ export default function SuppliersPage() {
                                             <button onClick={() => openAccount(s)} className="btn-ghost py-1 px-2 text-xs flex items-center gap-1" title="Cuenta Corriente">
                                                 <History className="w-3.5 h-3.5" /> Cuenta
                                             </button>
-                                            <button onClick={() => openEdit(s)} className="btn-ghost py-1 px-2 text-xs">Editar</button>
-                                            <button onClick={() => setPendingDelete([s.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700" title="Eliminar">
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
+                                            {canWrite && <button onClick={() => openEdit(s)} className="btn-ghost py-1 px-2 text-xs">Editar</button>}
+                                            {canWrite && (
+                                                <button onClick={() => setPendingDelete([s.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700" title="Eliminar">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -231,12 +247,30 @@ export default function SuppliersPage() {
                         </div>
                         <form onSubmit={handleSave} className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                {(['name', 'legalName', 'taxId', 'alias', 'phone', 'email', 'address'] as const).map(k => (
+                                {(['name', 'legalName', 'alias', 'phone', 'email', 'address'] as const).map(k => (
                                     <div key={k}>
                                         <label className="block text-sm font-medium text-primary-700 mb-1">{FIELD_LABELS[k] ?? k}</label>
-                                        <input className="input" value={(form as any)[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} required={k === 'name'} />
+                                        <input className="input" maxLength={FIELD_MAX[k]} value={(form as any)[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} required={k === 'name'} />
                                     </div>
                                 ))}
+                                <div>
+                                    <label className="block text-sm font-medium text-primary-700 mb-1">Documento</label>
+                                    <div className="flex gap-2">
+                                        <select className="input w-24 shrink-0 px-2" value={form.documentType} onChange={e => {
+                                            const t = e.target.value
+                                            setForm({ ...form, documentType: t, taxId: formatDoc(form.taxId, t) })
+                                        }}>
+                                            <option value="DNI">DNI</option>
+                                            <option value="CUIT">CUIT</option>
+                                            <option value="CUIL">CUIL</option>
+                                            <option value="Pasaporte">PAS</option>
+                                        </select>
+                                        <div className="relative flex-1">
+                                            <Fingerprint className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
+                                            <input className="input pl-10 font-mono" maxLength={20} value={form.taxId} onChange={e => setForm({ ...form, taxId: formatDoc(e.target.value, form.documentType) })} placeholder={form.documentType === 'DNI' ? '12345678' : '20-XXXXXXXX-X'} />
+                                        </div>
+                                    </div>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-primary-700 mb-1">Categoría</label>
                                     <select className="select" value={form.categoryId} onChange={e => { setForm({ ...form, categoryId: e.target.value }); if (e.target.value !== '__new__') setNewCategoryName('') }}>
@@ -245,7 +279,7 @@ export default function SuppliersPage() {
                                         <option value="__new__">+ Nueva categoría…</option>
                                     </select>
                                     {form.categoryId === '__new__' && (
-                                        <input autoFocus className="input mt-2" placeholder="Nombre de la nueva categoría" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} required />
+                                        <input autoFocus className="input mt-2" maxLength={40} placeholder="Nombre de la nueva categoría" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} required />
                                     )}
                                 </div>
                             </div>
@@ -288,9 +322,11 @@ export default function SuppliersPage() {
                                     <label className="block text-xs font-medium text-primary-700 mb-1">Concepto</label>
                                     <input type="text" className="input text-sm py-1.5" maxLength={100} value={accForm.description} onChange={e => setAccForm({ ...accForm, description: e.target.value })} placeholder="Ej. Pago parcial" />
                                 </div>
-                                <button type="submit" disabled={saving || !accForm.amount} className="btn-primary py-1.5 px-4 text-sm whitespace-nowrap">
-                                    {saving ? '...' : 'Registrar'}
-                                </button>
+                                {canWrite && (
+                                    <button type="submit" disabled={saving || !accForm.amount} className="btn-primary py-1.5 px-4 text-sm whitespace-nowrap">
+                                        {saving ? '...' : 'Registrar'}
+                                    </button>
+                                )}
                             </form>
 
                             {/* Movements Ledger */}

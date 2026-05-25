@@ -5,6 +5,7 @@ import com.store.api.entity.SaleLine;
 import com.store.api.entity.SaleOrder;
 import com.store.api.entity.StockMovement;
 import com.store.api.entity.Notification;
+import com.store.api.entity.User;
 import com.store.api.repository.ItemRepository;
 import com.store.api.repository.StockMovementRepository;
 import com.store.api.repository.NotificationRepository;
@@ -51,7 +52,7 @@ public class StockService {
     }
 
     @Transactional
-    public void deductStockForSale(SaleOrder order, String reasonStr) {
+    public void deductStockForSale(SaleOrder order, String reasonStr, User user) {
         if (Boolean.TRUE.equals(order.getStockDeducted())) {
             return; // Ya descontado
         }
@@ -73,6 +74,7 @@ public class StockService {
             movement.setReason(reasonStr);
             movement.setReferenceId(order.getId());
             movement.setReferenceType("SALE");
+            movement.setCreatedBy(user);
             stockMovementRepo.save(movement);
 
             // Recipe / Insumos
@@ -89,6 +91,7 @@ public class StockService {
                     subMovement.setMovementType("OUT");
                     subMovement.setQuantity(totalDeduction);
                     subMovement.setReason("Componente de receta para " + item.getName() + " (Venta #" + order.getId() + ")");
+                    subMovement.setCreatedBy(user);
                     stockMovementRepo.save(subMovement);
                 }
             }
@@ -119,6 +122,7 @@ public class StockService {
                 bagMovement.setReason("Bolsa/empaque por Venta #" + order.getId());
                 bagMovement.setReferenceId(order.getId());
                 bagMovement.setReferenceType("SALE");
+                bagMovement.setCreatedBy(user);
                 stockMovementRepo.save(bagMovement);
             });
         } catch (Exception e) {
@@ -129,7 +133,7 @@ public class StockService {
     }
 
     @Transactional
-    public void returnStockForSale(SaleOrder order, String reasonStr) {
+    public void returnStockForSale(SaleOrder order, String reasonStr, User user) {
         if (!Boolean.TRUE.equals(order.getStockDeducted())) {
             return; // No hay stock que devolver
         }
@@ -151,6 +155,7 @@ public class StockService {
             movement.setReason(reasonStr);
             movement.setReferenceId(order.getId());
             movement.setReferenceType("SALE_CANCEL");
+            movement.setCreatedBy(user);
             stockMovementRepo.save(movement);
 
             // Recipe / Insumos
@@ -168,6 +173,7 @@ public class StockService {
                     subMovement.setQuantity(totalReturn);
                     subMovement.setReason(
                             "Devolución componente de receta para " + item.getName() + " (Venta #" + order.getId() + ")");
+                    subMovement.setCreatedBy(user);
                     stockMovementRepo.save(subMovement);
                 }
             }
@@ -190,6 +196,7 @@ public class StockService {
                 bagMovement.setReason("Devolución bolsa/empaque por Venta cancelada #" + order.getId());
                 bagMovement.setReferenceId(order.getId());
                 bagMovement.setReferenceType("SALE_CANCEL");
+                bagMovement.setCreatedBy(user);
                 stockMovementRepo.save(bagMovement);
             });
         } catch (Exception e) {

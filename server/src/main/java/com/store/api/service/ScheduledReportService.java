@@ -79,7 +79,7 @@ public class ScheduledReportService {
                                                                 order.getId(), order.getReservedUntil());
                                                 order.setStatus(cancelledStatus);
                                                 stockService.returnStockForSale(order,
-                                                                "Caducó la reserva de stock (4h sin pago)");
+                                                                "Caducó la reserva de stock (4h sin pago)", null);
                                                 saleRepo.save(order);
                                         }
                                 });

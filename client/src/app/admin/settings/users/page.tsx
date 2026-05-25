@@ -42,7 +42,7 @@ interface UserRow {
 }
 
 export default function UsersSettingsPage() {
-    const { user: authUser, logout } = useAuth()
+    const { user: authUser, logout, canWrite } = useAuth()
     const [activeTab, setActiveTab] = useState<'USERS' | 'ROLES'>('USERS')
     const [data, setData] = useState<UserRow[]>([])
     const [roles, setRoles] = useState<Role[]>([])
@@ -235,14 +235,14 @@ export default function UsersSettingsPage() {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-espresso">Usuarios y Permisos</h1>
                 <div className="flex items-center gap-2">
-                    {activeTab === 'USERS' && selected.size > 0 && (
+                    {canWrite && activeTab === 'USERS' && selected.size > 0 && (
                         <button onClick={() => setPendingDeleteIds([...selected])} disabled={deleting !== ""}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
                     )}
-                    {activeTab === 'USERS' && <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar usuario</button>}
-                    {activeTab === 'ROLES' && <button onClick={openNewRole} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Nuevo Rol</button>}
+                    {canWrite && activeTab === 'USERS' && <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar usuario</button>}
+                    {canWrite && activeTab === 'ROLES' && <button onClick={openNewRole} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Nuevo Rol</button>}
                 </div>
             </div>
 
@@ -327,12 +327,12 @@ export default function UsersSettingsPage() {
                                         <td className="text-right font-semibold text-espresso">{u.accountBalance !== undefined ? formatCurrency(u.accountBalance) : '—'}</td>
                                         <td className="text-right font-medium text-amber-600">{typeof u.loyaltyPoints === 'number' ? u.loyaltyPoints + ' pts' : <span className="text-primary-300 font-normal">Sin puntos</span>}</td>
                                         <td>
-                                            <button onClick={() => toggle(u.id)} className="text-primary-500 hover:text-primary-700 transition-colors">
+                                            {canWrite && <button onClick={() => toggle(u.id)} className="text-primary-500 hover:text-primary-700 transition-colors">
                                                 {u.active ? <ToggleRight className="w-6 h-6 text-emerald-600" /> : <ToggleLeft className="w-6 h-6 text-red-400" />}
-                                            </button>
+                                            </button>}
                                         </td>
                                         <td>
-                                            <div className="flex justify-end gap-1">
+                                            {canWrite && <div className="flex justify-end gap-1">
                                                 <button onClick={() => openEdit(u)} title="Editar login" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400">
                                                     <Edit className="w-4 h-4" />
                                                 </button>
@@ -341,7 +341,7 @@ export default function UsersSettingsPage() {
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
-                                            </div>
+                                            </div>}
                                         </td>
                                     </tr>
                                 ))}
@@ -382,7 +382,7 @@ export default function UsersSettingsPage() {
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="flex justify-end gap-1">
+                                            {canWrite && <div className="flex justify-end gap-1">
                                                 <button onClick={() => openEditRole(r)} title="Editar permisos" className="btn-ghost px-2 py-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-500 font-medium text-xs flex items-center gap-1.5">
                                                     <Edit className="w-3.5 h-3.5" /> Editar
                                                 </button>
@@ -391,7 +391,7 @@ export default function UsersSettingsPage() {
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
-                                            </div>
+                                            </div>}
                                         </td>
                                     </tr>
                                 ))}

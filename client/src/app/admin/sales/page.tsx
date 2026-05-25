@@ -7,6 +7,7 @@ import { Plus, X, Search, FileSpreadsheet, Download, ChevronLeft, ChevronRight, 
 import * as XLSX from 'xlsx'
 
 import { SavedFilters } from '@/components/SavedFilters'
+import { useAuth } from '@/lib/auth'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
@@ -14,6 +15,7 @@ type SortField = 'id' | 'total' | 'createdAt' | 'paymentMethod' | 'customer' | '
 type SortDir = 'asc' | 'desc'
 
 export default function SalesPage() {
+    const { canWrite } = useAuth()
     const [data, setData] = useState<SaleOrder[]>([])
     const [total, setTotal] = useState(0)
     const [page, setPage] = useState(0)
@@ -250,9 +252,9 @@ export default function SalesPage() {
                     <button onClick={exportExcel} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3">
                         <FileSpreadsheet className="w-4 h-4" /> Excel
                     </button>
-                    <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
+                    {canWrite && <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
                         <Plus className="w-4 h-4" /> Nueva venta
-                    </button>
+                    </button>}
                 </div>
             </div>
 

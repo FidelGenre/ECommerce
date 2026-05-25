@@ -4,10 +4,12 @@ import api from '@/lib/api'
 import { Plus, X, Edit2, Trash2, Tag } from 'lucide-react'
 import { toast } from '@/lib/toast'
 import { ConfirmModal } from '@/components/ConfirmModal'
+import { useAuth } from '@/lib/auth'
 
 type SupplierCategory = { id: number; name: string; description?: string; type: string }
 
 export default function SupplierCategoriesPage() {
+    const { canWrite } = useAuth()
     const [cats, setCats] = useState<SupplierCategory[]>([])
     const [form, setForm] = useState<Partial<SupplierCategory>>({ type: 'SUPPLIER' })
     const [editing, setEditing] = useState<number | null>(null)
@@ -79,15 +81,15 @@ export default function SupplierCategoriesPage() {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-espresso">Categorías de Proveedores</h1>
                 <div className="flex items-center gap-2">
-                    {selected.size > 0 && (
+                    {canWrite && selected.size > 0 && (
                         <button onClick={() => setPendingDelete([...selected])} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
                     )}
-                    <button onClick={openNew} className="btn-primary flex items-center gap-2">
+                    {canWrite && <button onClick={openNew} className="btn-primary flex items-center gap-2">
                         <Plus className="w-4 h-4" /> Nueva Categoría
-                    </button>
+                    </button>}
                 </div>
             </div>
 
@@ -128,14 +130,14 @@ export default function SupplierCategoriesPage() {
                                     <td className="py-3 font-medium text-espresso">{c.name}</td>
                                     <td className="py-3 text-primary-500">{c.description || '—'}</td>
                                     <td className="py-3">
-                                        <div className="flex items-center gap-2">
+                                        {canWrite && <div className="flex items-center gap-2">
                                             <button onClick={() => openEdit(c)} className="w-8 h-8 rounded-lg bg-primary-100 hover:bg-primary-200 flex items-center justify-center text-primary-700 transition-colors">
                                                 <Edit2 className="w-3.5 h-3.5" />
                                             </button>
                                             <button onClick={() => setPendingDelete([c.id])} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors">
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
-                                        </div>
+                                        </div>}
                                     </td>
                                 </tr>
                             ))}
@@ -157,11 +159,11 @@ export default function SupplierCategoriesPage() {
                         <form onSubmit={handleSave} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Nombre *</label>
-                                <input className="input" value={form.name ?? ''} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
+                                <input className="input" maxLength={40} value={form.name ?? ''} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Descripción</label>
-                                <textarea className="input min-h-[80px]" value={form.description ?? ''} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+                                <textarea className="input min-h-[80px]" maxLength={100} value={form.description ?? ''} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
                             </div>
                             {msg && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{msg}</p>}
                             <div className="flex gap-3 pt-1">

@@ -4,6 +4,7 @@ import api from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { Plus, X, Pencil, Trash2, Download, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, CheckCircle, Circle, CheckCheck } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { useAuth } from '@/lib/auth'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
@@ -18,6 +19,7 @@ const CATEGORIES = ['Servicios', 'Gastos imprevistos', 'Mantenimiento', 'Utiliti
 const emptyForm = { description: '', amount: '', category: '', costDate: new Date().toISOString().slice(0, 10), status: 'PENDING' }
 
 export default function CostsPage() {
+    const { canWrite } = useAuth()
     const [data, setData] = useState<InternalCost[]>([])
     const [total, setTotal] = useState(0)
     const [page, setPage] = useState(0)
@@ -167,7 +169,7 @@ export default function CostsPage() {
                     <p className="text-primary-500 text-sm">{total} registros · Total: {FMT(totalAmount)} · <span className="text-green-600">Pagado: {FMT(totalPaid)}</span> · <span className="text-blue-600">Completado: {FMT(totalCompleted)}</span> · <span className="text-red-600">Pendiente: {FMT(totalUnpaid)}</span></p>
                 </div>
                 <div className="flex items-center gap-2">
-                    {selected.size > 0 && (
+                    {canWrite && selected.size > 0 && (
                         <button onClick={() => setDeleteId([...selected])} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
@@ -176,9 +178,9 @@ export default function CostsPage() {
                     <button onClick={exportExcel} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3">
                         <Download className="w-4 h-4" /> Excel
                     </button>
-                    <button onClick={openCreate} className="btn-primary flex items-center gap-2">
+                    {canWrite && <button onClick={openCreate} className="btn-primary flex items-center gap-2">
                         <Plus className="w-4 h-4" /> Nuevo costo
-                    </button>
+                    </button>}
                 </div>
             </div>
 
@@ -243,7 +245,7 @@ export default function CostsPage() {
                                         <td className="text-primary-400 text-xs">{new Date(c.costDate + 'T00:00:00').toLocaleDateString('es-AR')}</td>
                                         <td className="text-primary-400 text-xs">{c.createdBy?.username ?? '—'}</td>
                                         <td>
-                                            <div className="flex gap-1 items-center">
+                                            {canWrite && <div className="flex gap-1 items-center">
                                                 <button
                                                     onClick={() => togglePaid(c)}
                                                     className={`py-1 px-2 rounded text-xs font-medium transition-colors ${getStatus(c) !== 'PENDING' ? 'bg-primary-100 text-primary-600 hover:bg-primary-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
@@ -257,7 +259,7 @@ export default function CostsPage() {
                                                 <button onClick={() => setDeleteId([c.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700">
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
-                                            </div>
+                                            </div>}
                                         </td>
                                     </tr>
                                 ))}

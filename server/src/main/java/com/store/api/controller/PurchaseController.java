@@ -89,9 +89,8 @@ public class PurchaseController {
             org.springframework.security.core.Authentication auth) {
         PurchaseOrder order = new PurchaseOrder();
 
-        if (auth != null) {
-            userRepo.findByUsername(auth.getName()).ifPresent(order::setCreatedBy);
-        }
+        com.store.api.entity.User createdBy = auth != null ? userRepo.findByUsername(auth.getName()).orElse(null) : null;
+        if (createdBy != null) order.setCreatedBy(createdBy);
 
         if (req.getSupplierId() != null)
             supplierRepo.findById(req.getSupplierId()).ifPresent(order::setSupplier);
@@ -127,6 +126,7 @@ public class PurchaseController {
                 movement.setMovementType("IN");
                 movement.setQuantity(addedStock);
                 movement.setReason("Purchase order");
+                movement.setCreatedBy(createdBy);
                 stockMovementRepo.save(movement);
 
                 // Dismiss low-stock notifications for this item if stock now OK
