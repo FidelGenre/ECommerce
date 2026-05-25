@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { PaymentMethod } from '@/types'
 import { Plus, X, Edit, Trash2 } from 'lucide-react'
+import { toast } from '@/lib/toast'
+import { ConfirmModal } from '@/components/ConfirmModal'
 
 export default function PaymentsSettingsPage() {
     const [data, setData] = useState<PaymentMethod[]>([])
@@ -12,9 +14,9 @@ export default function PaymentsSettingsPage() {
     const [form, setForm] = useState({ name: '', description: '' })
     const [saving, setSaving] = useState(false)
 
-    // Selection
     const [selected, setSelected] = useState<Set<number>>(new Set())
     const [deleting, setDeleting] = useState(false)
+    const [pendingDelete, setPendingDelete] = useState<number[] | null>(null)
 
     const toggleSelect = (id: number) => setSelected(prev => {
         const next = new Set(prev)
@@ -30,13 +32,18 @@ export default function PaymentsSettingsPage() {
     const openEdit = (p: PaymentMethod) => { setEditing(p); setForm({ name: p.name, description: p.description ?? '' }); setShowModal(true) }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
-        try { if (editing) await api.put(`/api/admin/settings/payment-methods/${editing.id}`, form); else await api.post('/api/admin/settings/payment-methods', form); setShowModal(false); load() } finally { setSaving(false) }
+        try {
+            if (editing) { await api.put(`/api/admin/settings/payment-methods/${editing.id}`, form); toast.success('Forma de pago actualizada') }
+            else { await api.post('/api/admin/settings/payment-methods', form); toast.success('Forma de pago creada') }
+            setShowModal(false); load()
+        } catch { toast.error('No se pudo guardar') } finally { setSaving(false) }
     }
-    const handleDelete = async (ids: number[]) => {
-        if (!confirm(`¿Eliminar ${ids.length === 1 ? 'esta forma' : `estas ${ids.length} formas`} de pago?`)) return
+
+    const executeDelete = async () => {
+        if (!pendingDelete) return
         setDeleting(true)
         const errors: string[] = []
-        for (const id of ids) {
+        for (const id of pendingDelete) {
             try { await api.delete(`/api/admin/settings/payment-methods/${id}`) }
             catch (e: any) {
                 const name = data.find(p => p.id === id)?.name ?? id
@@ -44,8 +51,10 @@ export default function PaymentsSettingsPage() {
             }
         }
         setDeleting(false)
+        setPendingDelete(null)
         setSelected(new Set())
-        if (errors.length) alert(errors.join('\n'))
+        if (errors.length) toast.error(errors.join('\n'))
+        else toast.success('Eliminado correctamente')
         load()
     }
 
@@ -55,7 +64,7 @@ export default function PaymentsSettingsPage() {
                 <h1 className="text-2xl font-bold text-espresso">Formas de Pago</h1>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
-                        <button onClick={() => handleDelete([...selected])} disabled={deleting}
+                        <button onClick={() => setPendingDelete([...selected])} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -71,7 +80,7 @@ export default function PaymentsSettingsPage() {
                                 <td className="pl-4"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
                                 <td className="font-medium">{p.name}</td><td className="text-primary-500">{p.description ?? '—'}</td>
                                 <td>{p.createdBy ? <span className="text-primary-600 font-medium">{p.createdBy.username ?? p.createdBy.email}</span> : <span className="text-primary-300">Sistema</span>}</td>
-                                <td className="space-x-1"><button onClick={() => openEdit(p)} className="btn-ghost p-1.5"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => handleDelete([p.id])} className="text-red-500 hover:text-red-700 p-1.5"><Trash2 className="w-3.5 h-3.5" /></button></td></tr>
+                                <td className="space-x-1"><button onClick={() => openEdit(p)} className="btn-ghost p-1.5"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => setPendingDelete([p.id])} className="text-red-500 hover:text-red-700 p-1.5"><Trash2 className="w-3.5 h-3.5" /></button></td></tr>
                         ))}</tbody></table>
                 )}
             </div>
@@ -86,6 +95,14 @@ export default function PaymentsSettingsPage() {
                         </form>
                     </div>
                 </div>
+            )}
+            {pendingDelete && (
+                <ConfirmModal
+                    message={`¿Eliminar ${pendingDelete.length === 1 ? 'esta forma de pago' : `estas ${pendingDelete.length} formas de pago`}?`}
+                    onConfirm={executeDelete}
+                    onCancel={() => setPendingDelete(null)}
+                    loading={deleting}
+                />
             )}
         </div>
     )

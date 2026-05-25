@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import api from '@/lib/api'
+import { toast } from '@/lib/toast'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { Customer, SaleOrder, AccountMovement } from '@/types'
 import {
     Plus, X, Search, Edit, Trash2, Eye, EyeOff,
@@ -68,6 +70,7 @@ export default function ClientesPage() {
     const [form, setForm] = useState(blank)
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
     const formatDoc = (val: string, type: string) => {
         let raw = val.replace(/\D/g, '')
@@ -137,14 +140,16 @@ export default function ClientesPage() {
         } finally { setSaving(false) }
     }
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('¿Eliminar este cliente?')) return
+    const executeDelete = async () => {
+        if (!pendingDeleteId) return
         setDeleting(true)
         try {
-            await api.delete(`/api/admin/customers/${id}`)
+            await api.delete(`/api/admin/customers/${pendingDeleteId}`)
+            toast.success('Cliente eliminado')
+            setPendingDeleteId(null)
             load()
         } catch (err: any) {
-            alert(err.response?.data || 'Error al eliminar')
+            toast.error(err.response?.data || 'Error al eliminar')
         } finally { setDeleting(false) }
     }
 
@@ -152,21 +157,23 @@ export default function ClientesPage() {
         if (!editing) return
         try {
             await api.patch(`/api/admin/customers/${editing.id}/balance`, { amount, description })
+            toast.success('Saldo ajustado')
             loadDetail(editing.id)
             const updated = await api.get(`/api/admin/customers/${editing.id}`)
             setEditing(updated.data)
             load()
-        } catch (e) { alert('Error al ajustar saldo') }
+        } catch { toast.error('Error al ajustar saldo') }
     }
 
     const adjustPoints = async (points: number) => {
         if (!editing) return
         try {
             await api.patch(`/api/admin/customers/${editing.id}/loyalty`, { points })
+            toast.success('Puntos ajustados')
             const updated = await api.get(`/api/admin/customers/${editing.id}`)
             setEditing(updated.data)
             load()
-        } catch (e) { alert('Error al ajustar puntos') }
+        } catch { toast.error('Error al ajustar puntos') }
     }
 
     return (
@@ -243,7 +250,7 @@ export default function ClientesPage() {
                                                 <button onClick={() => openDetail(c)} className="btn-ghost p-2 text-primary-500 hover:text-primary-700" title="Ver detalle">
                                                     <Eye className="w-4 h-4" />
                                                 </button>
-                                                <button onClick={() => handleDelete(c.id)} className="btn-ghost p-2 text-red-500 hover:text-red-700" title="Eliminar">
+                                                <button onClick={() => setPendingDeleteId(c.id)} className="btn-ghost p-2 text-red-500 hover:text-red-700" title="Eliminar">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
@@ -481,6 +488,14 @@ export default function ClientesPage() {
                         </div>
                     </div>
                 </div>
+            )}
+            {pendingDeleteId !== null && (
+                <ConfirmModal
+                    message="¿Eliminar este cliente? Esta acción no se puede deshacer."
+                    onConfirm={executeDelete}
+                    onCancel={() => setPendingDeleteId(null)}
+                    loading={deleting}
+                />
             )}
         </div>
     )

@@ -4,6 +4,8 @@ import api from '@/lib/api'
 import { OperationStatus } from '@/types'
 import { X, Trash2, Search } from 'lucide-react'
 import { SavedFilters } from '@/components/SavedFilters'
+import { toast } from '@/lib/toast'
+import { ConfirmModal } from '@/components/ConfirmModal'
 
 export default function StatusesSettingsPage() {
     const [data, setData] = useState<OperationStatus[]>([])
@@ -32,6 +34,7 @@ export default function StatusesSettingsPage() {
     // Selection
     const [selected, setSelected] = useState<Set<number>>(new Set())
     const [deleting, setDeleting] = useState(false)
+    const [pendingDelete, setPendingDelete] = useState<number[] | null>(null)
 
     const toggleSelect = (id: number) => setSelected(prev => {
         const next = new Set(prev)
@@ -54,11 +57,11 @@ export default function StatusesSettingsPage() {
     useEffect(() => { load() }, [])
 
 
-    const handleDelete = async (ids: number[]) => {
-        if (!confirm(`¿Eliminar ${ids.length === 1 ? 'este estado' : `estos ${ids.length} estados`}?`)) return
+    const executeDelete = async () => {
+        if (!pendingDelete) return
         setDeleting(true)
         const errors: string[] = []
-        for (const id of ids) {
+        for (const id of pendingDelete) {
             try { await api.delete(`/api/admin/settings/statuses/${id}`) }
             catch (e: any) {
                 const name = data.find(s => s.id === id)?.name ?? id
@@ -66,8 +69,10 @@ export default function StatusesSettingsPage() {
             }
         }
         setDeleting(false)
+        setPendingDelete(null)
         setSelected(new Set())
-        if (errors.length) alert(errors.join('\n'))
+        if (errors.length) toast.error(errors.join('\n'))
+        else toast.success('Eliminado correctamente')
         load()
     }
 
@@ -91,9 +96,7 @@ export default function StatusesSettingsPage() {
                     
                     const r = await api.get(url)
                     setUsage(prev => ({ ...prev, [s.id]: r.data.ids || [] }))
-                } catch (e) {
-                    console.error("Error fetching usage for status", s.id, e)
-                }
+                } catch { }
             })
         }, [statuses, fromDate, toDate, searchQ])
 
@@ -144,7 +147,7 @@ export default function StatusesSettingsPage() {
                                 </div>
                                 <div className="flex gap-1">
                                     {sortedIds.length === 0 && normName(s) !== 'Pendiente' && (
-                                        <button onClick={() => handleDelete([s.id])} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
+                                        <button onClick={() => setPendingDelete([s.id])} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     )}
@@ -226,6 +229,14 @@ export default function StatusesSettingsPage() {
             )}
 
 
+            {pendingDelete && (
+                <ConfirmModal
+                    message={`¿Eliminar ${pendingDelete.length === 1 ? 'este estado' : `estos ${pendingDelete.length} estados`}?`}
+                    onConfirm={executeDelete}
+                    onCancel={() => setPendingDelete(null)}
+                    loading={deleting}
+                />
+            )}
         </div>
     )
 }

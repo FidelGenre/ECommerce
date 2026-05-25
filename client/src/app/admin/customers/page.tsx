@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import { toast } from '@/lib/toast'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { Customer, AccountMovement } from '@/types'
 import { Plus, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, History, ArrowDownRight, ArrowUpRight, Star, Trash2 } from 'lucide-react'
 
@@ -85,15 +87,18 @@ export default function CustomersPage() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
         try {
-            if (editing) await api.put(`/api/admin/customers/${editing.id}`, form)
-            else await api.post('/api/admin/customers', form)
+            if (editing) { await api.put(`/api/admin/customers/${editing.id}`, form); toast.success('Cliente actualizado') }
+            else { await api.post('/api/admin/customers', form); toast.success('Cliente creado') }
             setShowModal(false); load()
-        } finally { setSaving(false) }
+        } catch { toast.error('No se pudo guardar el cliente') } finally { setSaving(false) }
     }
 
-    const handleDelete = async (ids: number[]) => {
-        if (!confirm(`¿Eliminar ${ids.length === 1 ? 'este cliente' : `estos ${ids.length} clientes`}?`)) return
+    const [pendingDelete, setPendingDelete] = useState<number[] | null>(null)
+
+    const executeDelete = async () => {
+        if (!pendingDelete) return
         setDeleting(true)
+        const ids = pendingDelete
         const errors: string[] = []
         for (const id of ids) {
             try { await api.delete(`/api/admin/customers/${id}`) }
@@ -103,8 +108,10 @@ export default function CustomersPage() {
             }
         }
         setDeleting(false)
+        setPendingDelete(null)
         setSelected(new Set())
-        if (errors.length) alert(errors.join('\n'))
+        if (errors.length) toast.error(errors.join('\n'))
+        else toast.success(`${ids.length === 1 ? 'Cliente eliminado' : `${ids.length} clientes eliminados`}`)
         load()
     }
 
@@ -118,11 +125,12 @@ export default function CustomersPage() {
                 amount: amt,
                 description: accForm.description || (accForm.type === 'PAYMENT' ? 'Cobro registrado' : 'Cargo manual')
             })
+            toast.success(accForm.type === 'PAYMENT' ? 'Cobro registrado' : 'Cargo registrado')
             setAccForm({ amount: '', description: '', type: 'PAYMENT' })
             const r = await api.get(`/api/admin/customers/${accountModal.id}/movements`)
             setMovements(r.data)
-            load() // Reload to update accountBalance in background
-        } finally { setSaving(false) }
+            load()
+        } catch { toast.error('No se pudo registrar el movimiento') } finally { setSaving(false) }
     }
 
     const handleAdjustPoints = async (e: React.FormEvent) => {
@@ -131,10 +139,11 @@ export default function CustomersPage() {
         setSaving(true)
         try {
             await api.patch(`/api/admin/customers/${pointsModal.id}/loyalty`, { points: Number(pointsAdj) })
+            toast.success('Puntos actualizados')
             setPointsModal(null)
             setPointsAdj('')
             load()
-        } finally { setSaving(false) }
+        } catch { toast.error('No se pudo actualizar los puntos') } finally { setSaving(false) }
     }
 
     return (
@@ -143,7 +152,7 @@ export default function CustomersPage() {
                 <div><h1 className="text-2xl font-bold text-espresso">Clientes</h1><p className="text-primary-500 text-sm">{total} clientes</p></div>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
-                        <button onClick={() => handleDelete([...selected])} disabled={deleting}
+                        <button onClick={() => setPendingDelete([...selected])} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -190,7 +199,7 @@ export default function CustomersPage() {
                                                 <Star className="w-3.5 h-3.5" /> Puntos
                                             </button>
                                             <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">Editar</button>
-                                            <button onClick={() => handleDelete([c.id])} className="text-red-500 hover:text-red-700 text-xs px-2 py-1">Eliminar</button>
+                                            <button onClick={() => setPendingDelete([c.id])} className="text-red-500 hover:text-red-700 text-xs px-2 py-1">Eliminar</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -331,6 +340,14 @@ export default function CustomersPage() {
                         </form>
                     </div>
                 </div>
+            )}
+            {pendingDelete && (
+                <ConfirmModal
+                    message={`¿Eliminar ${pendingDelete.length === 1 ? 'este cliente' : `estos ${pendingDelete.length} clientes`}?`}
+                    onConfirm={executeDelete}
+                    onCancel={() => setPendingDelete(null)}
+                    loading={deleting}
+                />
             )}
         </div>
     )

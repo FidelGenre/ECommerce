@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import { toast } from '@/lib/toast'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { Supplier, Category, AccountMovement } from '@/types'
 import { Plus, X, Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, History, ArrowDownRight, ArrowUpRight, Trash2 } from 'lucide-react'
 
@@ -51,8 +53,11 @@ export default function SuppliersPage() {
     })
     const toggleAll = () => setSelected(prev => prev.size === data.length ? new Set() : new Set(data.map(s => s.id)))
 
-    const handleDelete = async (ids: number[]) => {
-        if (!confirm(`¿Eliminar ${ids.length === 1 ? 'este proveedor' : `${ids.length} proveedores`}? Solo se pueden eliminar proveedores con saldo $0.`)) return
+    const [pendingDelete, setPendingDelete] = useState<number[] | null>(null)
+
+    const executeDelete = async () => {
+        if (!pendingDelete) return
+        const ids = pendingDelete
         setDeleting(true)
         const errors: string[] = []
         for (const id of ids) {
@@ -63,8 +68,10 @@ export default function SuppliersPage() {
             }
         }
         setDeleting(false)
+        setPendingDelete(null)
         setSelected(new Set())
-        if (errors.length) alert(errors.join('\n'))
+        if (errors.length) toast.error(errors.join('\n'))
+        else toast.success(`${ids.length === 1 ? 'Proveedor eliminado' : `${ids.length} proveedores eliminados`}`)
         load()
     }
 
@@ -112,10 +119,10 @@ export default function SuppliersPage() {
                 setNewCategoryName('')
             }
             const payload = { ...form, category: categoryId ? { id: categoryId } : null }
-            if (editing) await api.put(`/api/admin/suppliers/${editing.id}`, payload)
-            else await api.post('/api/admin/suppliers', payload)
+            if (editing) { await api.put(`/api/admin/suppliers/${editing.id}`, payload); toast.success('Proveedor actualizado') }
+            else { await api.post('/api/admin/suppliers', payload); toast.success('Proveedor creado') }
             setShowModal(false); load()
-        } finally { setSaving(false) }
+        } catch { toast.error('No se pudo guardar el proveedor') } finally { setSaving(false) }
     }
 
     const handleAddMovement = async (e: React.FormEvent) => {
@@ -128,11 +135,12 @@ export default function SuppliersPage() {
                 amount: amt,
                 description: accForm.description || (accForm.type === 'PAYMENT' ? 'Pago registrado' : 'Cargo manual')
             })
+            toast.success(accForm.type === 'PAYMENT' ? 'Pago registrado' : 'Cargo registrado')
             setAccForm({ amount: '', description: '', type: 'PAYMENT' })
             const r = await api.get(`/api/admin/suppliers/${accountModal.id}/movements`)
             setMovements(r.data)
-            load() // Reload to update accountBalance in background
-        } finally { setSaving(false) }
+            load()
+        } catch { toast.error('No se pudo registrar el movimiento') } finally { setSaving(false) }
     }
 
     return (
@@ -141,7 +149,7 @@ export default function SuppliersPage() {
                 <div><h1 className="text-2xl font-bold text-espresso">Proveedores</h1><p className="text-primary-500 text-sm">{total} proveedores</p></div>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
-                        <button onClick={() => handleDelete([...selected])} disabled={deleting}
+                        <button onClick={() => setPendingDelete([...selected])} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -194,7 +202,7 @@ export default function SuppliersPage() {
                                                 <History className="w-3.5 h-3.5" /> Cuenta
                                             </button>
                                             <button onClick={() => openEdit(s)} className="btn-ghost py-1 px-2 text-xs">Editar</button>
-                                            <button onClick={() => handleDelete([s.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700" title="Eliminar">
+                                            <button onClick={() => setPendingDelete([s.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700" title="Eliminar">
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </td>
@@ -318,6 +326,14 @@ export default function SuppliersPage() {
                         </div>
                     </div>
                 </div>
+            )}
+            {pendingDelete && (
+                <ConfirmModal
+                    message={`¿Eliminar ${pendingDelete.length === 1 ? 'este proveedor' : `${pendingDelete.length} proveedores`}? Solo se pueden eliminar proveedores con saldo $0.`}
+                    onConfirm={executeDelete}
+                    onCancel={() => setPendingDelete(null)}
+                    loading={deleting}
+                />
             )}
         </div>
     )

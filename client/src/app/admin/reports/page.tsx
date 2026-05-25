@@ -60,7 +60,7 @@ export default function ReportsPage() {
             setMarginEvolution(getData(results[5]))
             const itemsData = results[6].status === 'fulfilled' ? results[6].value.data?.content ?? results[6].value.data ?? [] : []
             setAllItems(itemsData)
-        } catch (e) { console.error(e) }
+        } catch { }
         setLoading(false)
     }
 

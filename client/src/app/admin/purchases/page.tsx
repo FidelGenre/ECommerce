@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState, useCallback } from 'react'
 import api from '@/lib/api'
+import { toast } from '@/lib/toast'
 import { PurchaseOrder, OperationStatus, Supplier, PaymentMethod, Item } from '@/types'
 import { Plus, Search, ChevronLeft, ChevronRight, X, Trash2, Download, FileSpreadsheet, ChevronUp, ChevronDown, CheckCircle, XCircle, Printer } from 'lucide-react'
 
@@ -153,8 +154,9 @@ export default function PurchasesPage() {
                 notes: form.notes,
                 lines: lines.map(l => ({ itemId: Number(l.itemId), quantity: Number(l.quantity), unitCost: Number(l.unitCost) })),
             })
+            toast.success('Compra registrada')
             setShowModal(false); load()
-        } finally { setSaving(false) }
+        } catch { toast.error('No se pudo registrar la compra') } finally { setSaving(false) }
     }
 
     const STATUS_COLORS: any = {
@@ -177,8 +179,8 @@ export default function PurchasesPage() {
         try {
             await api.patch(`/api/admin/purchases/${id}/status?statusId=${statusId}`)
             load()
-        } catch (error) {
-            console.error(error)
+        } catch {
+            toast.error('No se pudo actualizar el estado')
         }
     }
 

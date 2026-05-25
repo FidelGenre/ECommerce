@@ -32,6 +32,9 @@ public class InternalCost {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
+    @Column(name = "status", length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'PENDING'")
+    private String status = "PENDING";
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "passwordHash" })

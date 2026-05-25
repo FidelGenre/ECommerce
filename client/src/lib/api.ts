@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { emitForbidden } from '@/lib/events'
+import { emitForbidden, emitToast } from '@/lib/events'
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8082',
@@ -27,6 +27,8 @@ api.interceptors.response.use(
         if (err.response?.status === 403) {
             const msg = err.response.data?.message || 'No tenés permisos para realizar esta acción.'
             emitForbidden(msg)
+        } else if (err.response?.status >= 500) {
+            emitToast('Error del servidor. Intentá de nuevo.', 'error')
         }
         return Promise.reject(err)
     }

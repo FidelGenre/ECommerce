@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState, useCallback } from 'react'
 import api from '@/lib/api'
+import { toast } from '@/lib/toast'
 import { SaleOrder, OperationStatus, Customer, PaymentMethod, Item } from '@/types'
 import { Plus, X, Search, FileSpreadsheet, Download, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Trash2, Printer, Eye } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -95,7 +96,7 @@ export default function SalesPage() {
             setItems(it.data.content)
             setCategories(cats.data)
             setUsers(u.data?.content || [])
-        }).catch(err => console.error('Error loading sales reference data:', err))
+        }).catch(() => toast.error('Error al cargar datos de referencia'))
     }, [])
 
     const resetFilters = () => {
@@ -175,8 +176,8 @@ export default function SalesPage() {
         try {
             await api.patch(`/api/admin/sales/${id}/status?statusId=${statusId}`)
             load()
-        } catch (error) {
-            console.error(error)
+        } catch {
+            toast.error('No se pudo actualizar el estado')
         }
     }
 
@@ -191,8 +192,9 @@ export default function SalesPage() {
                 pointsUsed: form.pointsUsed ? Number(form.pointsUsed) : 0,
                 lines: lines.map(l => ({ itemId: Number(l.itemId), quantity: Number(l.quantity), unitPrice: Number(l.unitPrice) })),
             })
+            toast.success('Venta registrada')
             setShowModal(false); load()
-        } finally { setSaving(false) }
+        } catch { toast.error('No se pudo registrar la venta') } finally { setSaving(false) }
     }
 
     const STATUS_COLORS: any = {

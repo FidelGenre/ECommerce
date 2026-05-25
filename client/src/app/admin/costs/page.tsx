@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import api from '@/lib/api'
-import { Plus, X, Pencil, Trash2, Download, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, CheckCircle, Circle } from 'lucide-react'
+import { toast } from '@/lib/toast'
+import { Plus, X, Pencil, Trash2, Download, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, CheckCircle, Circle, CheckCheck } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
@@ -9,12 +10,12 @@ const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 interface InternalCost {
     id: number; description: string; amount: number
     category: string; costDate: string; createdBy?: { username: string }
-    paid: boolean; paidAt?: string
+    paid: boolean; paidAt?: string; status?: string
 }
 
 const CATEGORIES = ['Servicios', 'Gastos imprevistos', 'Mantenimiento', 'Utilities', 'Sueldos', 'Marketing', 'Otros']
 
-const emptyForm = { description: '', amount: '', category: '', costDate: new Date().toISOString().slice(0, 10) }
+const emptyForm = { description: '', amount: '', category: '', costDate: new Date().toISOString().slice(0, 10), status: 'PENDING' }
 
 export default function CostsPage() {
     const [data, setData] = useState<InternalCost[]>([])
@@ -82,21 +83,38 @@ export default function CostsPage() {
         </span>
     )
 
-    const openCreate = () => { setEditItem(null); setForm(emptyForm); setShowModal(true) }
-    const openEdit = (item: InternalCost) => {
-        setEditItem(item)
-        setForm({ description: item.description, amount: String(item.amount), category: item.category ?? '', costDate: item.costDate })
+    const [lines, setLines] = useState([{ ...emptyForm }])
+
+    const openCreate = () => {
+        setEditItem(null)
+        setLines([{ ...emptyForm }])
         setShowModal(true)
     }
+    const openEdit = (item: InternalCost) => {
+        setEditItem(item)
+        setForm({ description: item.description, amount: String(item.amount), category: item.category ?? '', costDate: item.costDate, status: item.status ?? 'PENDING' })
+        setShowModal(true)
+    }
+
+    const addLine = () => setLines(prev => [...prev, { ...emptyForm, costDate: prev[prev.length - 1].costDate, status: prev[prev.length - 1].status }])
+    const removeLine = (i: number) => setLines(prev => prev.filter((_, j) => j !== i))
+    const updateLine = (i: number, k: string, v: string) => setLines(prev => { const n = [...prev]; (n[i] as any)[k] = v; return n })
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
         try {
-            const body = { ...form, amount: Number(form.amount) }
-            if (editItem) await api.put(`/api/admin/costs/${editItem.id}`, body)
-            else await api.post('/api/admin/costs', body)
+            if (editItem) {
+                const body = { ...form, amount: Number(form.amount) }
+                await api.put(`/api/admin/costs/${editItem.id}`, body)
+                toast.success('Costo actualizado')
+            } else {
+                const valid = lines.filter(l => l.description.trim() && l.amount)
+                if (valid.length === 0) { toast.error('Completá al menos una línea'); return }
+                await Promise.all(valid.map(l => api.post('/api/admin/costs', { ...l, amount: Number(l.amount) })))
+                toast.success(valid.length === 1 ? 'Costo creado' : `${valid.length} costos creados`)
+            }
             setShowModal(false); load()
-        } finally { setSaving(false) }
+        } catch { toast.error('No se pudo guardar') } finally { setSaving(false) }
     }
 
     const handleDelete = async () => {
@@ -110,7 +128,8 @@ export default function CostsPage() {
         setDeleting(false)
         setDeleteId(null)
         setSelected(new Set())
-        if (errors.length) alert(errors.join('\n'))
+        if (errors.length) toast.error(errors.join('\n'))
+        else toast.success('Eliminado correctamente')
         load()
     }
 
@@ -120,8 +139,10 @@ export default function CostsPage() {
     }
 
     const totalAmount = data.reduce((acc, c) => acc + Number(c.amount), 0)
-    const totalPaid = data.filter(c => c.paid).reduce((acc, c) => acc + Number(c.amount), 0)
-    const totalUnpaid = totalAmount - totalPaid
+    const getStatus = (c: InternalCost) => c.status ?? (c.paid ? 'PAID' : 'PENDING')
+    const totalPaid = data.filter(c => getStatus(c) === 'PAID').reduce((acc, c) => acc + Number(c.amount), 0)
+    const totalCompleted = data.filter(c => getStatus(c) === 'COMPLETED').reduce((acc, c) => acc + Number(c.amount), 0)
+    const totalUnpaid = data.filter(c => getStatus(c) === 'PENDING').reduce((acc, c) => acc + Number(c.amount), 0)
 
     const exportExcel = () => {
         const rows = data.map(c => ({
@@ -143,7 +164,7 @@ export default function CostsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-espresso">Costos Internos</h1>
-                    <p className="text-primary-500 text-sm">{total} registros · Total: {FMT(totalAmount)} · <span className="text-green-600">Pagado: {FMT(totalPaid)}</span> · <span className="text-red-600">Pendiente: {FMT(totalUnpaid)}</span></p>
+                    <p className="text-primary-500 text-sm">{total} registros · Total: {FMT(totalAmount)} · <span className="text-green-600">Pagado: {FMT(totalPaid)}</span> · <span className="text-blue-600">Completado: {FMT(totalCompleted)}</span> · <span className="text-red-600">Pendiente: {FMT(totalUnpaid)}</span></p>
                 </div>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
@@ -212,10 +233,12 @@ export default function CostsPage() {
                                         </td>
                                         <td className={`text-right font-semibold ${c.paid ? 'text-primary-400 line-through' : 'text-red-600'}`}>{FMT(c.amount)}</td>
                                         <td>
-                                            {c.paid
-                                                ? <span className="badge-green flex items-center gap-1 w-fit"><CheckCircle className="w-3 h-3" /> Pagado</span>
-                                                : <span className="badge-yellow flex items-center gap-1 w-fit"><Circle className="w-3 h-3" /> Pendiente</span>
-                                            }
+                                            {(() => {
+                                                const s = c.status ?? (c.paid ? 'PAID' : 'PENDING')
+                                                if (s === 'PAID') return <span className="badge-green flex items-center gap-1 w-fit"><CheckCircle className="w-3 h-3" /> Pagado</span>
+                                                if (s === 'COMPLETED') return <span className="flex items-center gap-1 w-fit px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold"><CheckCheck className="w-3 h-3" /> Completado</span>
+                                                return <span className="badge-yellow flex items-center gap-1 w-fit"><Circle className="w-3 h-3" /> Pendiente</span>
+                                            })()}
                                         </td>
                                         <td className="text-primary-400 text-xs">{new Date(c.costDate + 'T00:00:00').toLocaleDateString('es-AR')}</td>
                                         <td className="text-primary-400 text-xs">{c.createdBy?.username ?? '—'}</td>
@@ -223,21 +246,17 @@ export default function CostsPage() {
                                             <div className="flex gap-1 items-center">
                                                 <button
                                                     onClick={() => togglePaid(c)}
-                                                    className={`py-1 px-2 rounded text-xs font-medium transition-colors ${c.paid ? 'bg-primary-100 text-primary-600 hover:bg-primary-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
-                                                    title={c.paid ? 'Marcar como pendiente' : 'Marcar como pagado'}
+                                                    className={`py-1 px-2 rounded text-xs font-medium transition-colors ${getStatus(c) !== 'PENDING' ? 'bg-primary-100 text-primary-600 hover:bg-primary-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                                                    title={getStatus(c) !== 'PENDING' ? 'Marcar como pendiente' : 'Marcar como pagado'}
                                                 >
-                                                    {c.paid ? 'Deshacer' : 'Pagar'}
+                                                    {getStatus(c) !== 'PENDING' ? 'Deshacer' : 'Pagar'}
                                                 </button>
-                                                {!c.paid && (
-                                                    <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">
-                                                        <Pencil className="w-3.5 h-3.5" />
-                                                    </button>
-                                                )}
-                                                {!c.paid && (
-                                                    <button onClick={() => setDeleteId([c.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700">
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </button>
-                                                )}
+                                                <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button onClick={() => setDeleteId([c.id])} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -258,37 +277,114 @@ export default function CostsPage() {
             {/* Create/Edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+                    <div className={`bg-white rounded-2xl w-full shadow-2xl ${editItem ? 'max-w-md' : 'max-w-4xl'}`}>
                         <div className="flex items-center justify-between p-6 border-b border-muted">
-                            <h2 className="text-lg font-bold text-espresso">{editItem ? 'Editar costo' : 'Nuevo costo'}</h2>
+                            <h2 className="text-lg font-bold text-espresso">{editItem ? 'Editar costo' : 'Nuevos costos'}</h2>
                             <button onClick={() => setShowModal(false)} className="btn-ghost p-1.5"><X className="w-5 h-5" /></button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-primary-700 mb-1">Descripción</label>
-                                <input className="input" maxLength={100} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} required />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-primary-700 mb-1">Monto</label>
-                                    <input type="number" min="0" step="0.01" className="input" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} required />
+                        <form onSubmit={handleSubmit}>
+                            {editItem ? (
+                                /* ── Single edit form ── */
+                                <div className="p-6 space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-primary-700 mb-1">Descripción</label>
+                                        <input className="input" maxLength={100} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} required />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-primary-700 mb-1">Monto</label>
+                                            <input type="number" min="0" step="0.01" className="input" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-primary-700 mb-1">Fecha</label>
+                                            <input type="date" className="input" value={form.costDate} onChange={e => setForm({ ...form, costDate: e.target.value })} required />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-primary-700 mb-1">Categoría</label>
+                                            <select className="select" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+                                                <option value="">Sin categoría</option>
+                                                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-primary-700 mb-1">Estado</label>
+                                            <select className="select" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+                                                <option value="PENDING">Pendiente</option>
+                                                <option value="PAID">Pagado</option>
+                                                <option value="COMPLETED">Completado</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3 pt-2">
+                                        <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancelar</button>
+                                        <button type="submit" className="btn-primary flex-1" disabled={saving}>{saving ? 'Guardando…' : 'Guardar cambios'}</button>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-primary-700 mb-1">Fecha</label>
-                                    <input type="date" className="input" value={form.costDate} onChange={e => setForm({ ...form, costDate: e.target.value })} required />
+                            ) : (
+                                /* ── Multi-line create form ── */
+                                <div className="p-6 space-y-4">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="text-left text-xs font-semibold text-primary-500 border-b border-muted">
+                                                    <th className="pb-2 pr-2 min-w-[220px]">Descripción</th>
+                                                    <th className="pb-2 pr-2 w-28">Monto</th>
+                                                    <th className="pb-2 pr-2 w-36">Fecha</th>
+                                                    <th className="pb-2 pr-2 w-36">Categoría</th>
+                                                    <th className="pb-2 pr-2 w-32">Estado</th>
+                                                    <th className="pb-2 w-8"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-muted">
+                                                {lines.map((line, i) => (
+                                                    <tr key={i}>
+                                                        <td className="py-2 pr-2">
+                                                            <input className="input !py-1.5 text-sm" maxLength={100} placeholder="Descripción…" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} />
+                                                        </td>
+                                                        <td className="py-2 pr-2">
+                                                            <input type="number" min="0" step="0.01" className="input !py-1.5 text-sm" placeholder="0" value={line.amount} onChange={e => updateLine(i, 'amount', e.target.value)} />
+                                                        </td>
+                                                        <td className="py-2 pr-2">
+                                                            <input type="date" className="input !py-1.5 text-sm" value={line.costDate} onChange={e => updateLine(i, 'costDate', e.target.value)} />
+                                                        </td>
+                                                        <td className="py-2 pr-2">
+                                                            <select className="select !py-1.5 text-sm" value={line.category} onChange={e => updateLine(i, 'category', e.target.value)}>
+                                                                <option value="">Sin categoría</option>
+                                                                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                                            </select>
+                                                        </td>
+                                                        <td className="py-2 pr-2">
+                                                            <select className="select !py-1.5 text-sm" value={line.status} onChange={e => updateLine(i, 'status', e.target.value)}>
+                                                                <option value="PENDING">Pendiente</option>
+                                                                <option value="PAID">Pagado</option>
+                                                                <option value="COMPLETED">Completado</option>
+                                                            </select>
+                                                        </td>
+                                                        <td className="py-2">
+                                                            {lines.length > 1 && (
+                                                                <button type="button" onClick={() => removeLine(i)} className="btn-ghost p-1 text-red-400 hover:text-red-600">
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <button type="button" onClick={addLine} className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-espresso font-medium">
+                                        <Plus className="w-4 h-4" /> Agregar línea
+                                    </button>
+                                    <div className="flex gap-3 pt-2 border-t border-muted">
+                                        <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancelar</button>
+                                        <button type="submit" className="btn-primary flex-1" disabled={saving}>
+                                            {saving ? 'Guardando…' : lines.length === 1 ? 'Crear costo' : `Crear ${lines.filter(l => l.description.trim() && l.amount).length} costos`}
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-primary-700 mb-1">Categoría</label>
-                                <select className="select" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-                                    <option value="">Sin categoría</option>
-                                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                            </div>
-                            <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancelar</button>
-                                <button type="submit" className="btn-primary flex-1" disabled={saving}>{saving ? 'Guardando…' : editItem ? 'Guardar cambios' : 'Crear'}</button>
-                            </div>
+                            )}
                         </form>
                     </div>
                 </div>

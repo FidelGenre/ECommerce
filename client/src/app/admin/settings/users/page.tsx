@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import api from '@/lib/api'
+import { toast } from '@/lib/toast'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { useAuth } from '@/lib/auth'
 import { Plus, X, Edit, ToggleLeft, ToggleRight, Search, Filter, Trash2, Eye, EyeOff, ShieldCheck, Users as UsersIcon, CheckSquare, Square } from 'lucide-react'
 
@@ -167,30 +169,38 @@ export default function UsersSettingsPage() {
 
     const openNewRole = () => { setEditingRole(null); setRoleForm({ code: '', name: '', permissions: [] }); setShowRoleModal(true) }
     const openEditRole = (r: Role) => { setEditingRole(r); setRoleForm({ ...r }); setShowRoleModal(true) }
+    const [pendingDeleteRole, setPendingDeleteRole] = useState<string | null>(null)
+    const [pendingDeleteIds, setPendingDeleteIds] = useState<number[] | null>(null)
+
     const handleSaveRole = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
         try {
-            if (editingRole) await api.put(`/api/admin/roles/${editingRole.code}`, roleForm)
-            else await api.post('/api/admin/roles', roleForm)
-            setShowRoleModal(false);
-            load()
+            if (editingRole) { await api.put(`/api/admin/roles/${editingRole.code}`, roleForm); toast.success('Rol actualizado') }
+            else { await api.post('/api/admin/roles', roleForm); toast.success('Rol creado') }
+            setShowRoleModal(false); load()
         } catch (e: any) {
-            alert(e.response?.data?.message || e.response?.data || 'Error al guardar el rol. Verifica que el código no exista ya.');
+            toast.error(e.response?.data?.message || e.response?.data || 'Error al guardar el rol. Verificá que el código no exista ya.')
         } finally { setSaving(false) }
     }
-    const handleDeleteRole = async (code: string) => {
-        if (!confirm(`¿Eliminar permanentemente el rol ${code}?`)) return;
+
+    const executeDeleteRole = async () => {
+        if (!pendingDeleteRole) return
         try {
-            await api.delete(`/api/admin/roles/${code}`);
-            load();
+            await api.delete(`/api/admin/roles/${pendingDeleteRole}`)
+            toast.success('Rol eliminado')
+            setPendingDeleteRole(null)
+            load()
         } catch (error: any) {
-             alert(error.response?.data || error.response?.data?.message || 'Error al eliminar rol');
+            toast.error(error.response?.data || error.response?.data?.message || 'Error al eliminar rol')
+            setPendingDeleteRole(null)
         }
     }
 
     const toggle = async (id: number) => { await api.patch(`/api/admin/users/${id}/toggle`); load() }
-    const handleDelete = async (ids: number[]) => {
-        if (!confirm(`¿Eliminar permanentemente ${ids.length === 1 ? 'este usuario' : `estos ${ids.length} usuarios`}?`)) return
+
+    const executeDeleteUsers = async () => {
+        if (!pendingDeleteIds) return
+        const ids = pendingDeleteIds
         setDeleting("bulk")
         const errors: string[] = []
         let ownDeleted = false
@@ -209,8 +219,10 @@ export default function UsersSettingsPage() {
             }
         }
         setDeleting("")
+        setPendingDeleteIds(null)
         setSelected(new Set())
-        if (errors.length) alert(errors.join('\n'))
+        if (errors.length) toast.error(errors.join('\n'))
+        else toast.success(`${ids.length === 1 ? 'Usuario eliminado' : `${ids.length} usuarios eliminados`}`)
         if (ownDeleted) { logout(); return }
         load()
     }
@@ -224,7 +236,7 @@ export default function UsersSettingsPage() {
                 <h1 className="text-2xl font-bold text-espresso">Usuarios y Permisos</h1>
                 <div className="flex items-center gap-2">
                     {activeTab === 'USERS' && selected.size > 0 && (
-                        <button onClick={() => handleDelete([...selected])} disabled={deleting !== ""}
+                        <button onClick={() => setPendingDeleteIds([...selected])} disabled={deleting !== ""}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -325,7 +337,7 @@ export default function UsersSettingsPage() {
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 {u.username !== 'admin' && (
-                                                    <button onClick={() => handleDelete([u.id])} title="Eliminar definitivamente" disabled={deleting !== ""} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
+                                                    <button onClick={() => setPendingDeleteIds([u.id])} title="Eliminar definitivamente" disabled={deleting !== ""} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
@@ -375,7 +387,7 @@ export default function UsersSettingsPage() {
                                                     <Edit className="w-3.5 h-3.5" /> Editar
                                                 </button>
                                                 {r.code !== 'ADMIN' && r.code !== 'CLIENTE' && (
-                                                    <button onClick={() => handleDeleteRole(r.code)} title="Eliminar rol" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
+                                                    <button onClick={() => setPendingDeleteRole(r.code)} title="Eliminar rol" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
@@ -560,6 +572,21 @@ export default function UsersSettingsPage() {
                         </form>
                     </div>
                 </div>
+            )}
+            {pendingDeleteIds && (
+                <ConfirmModal
+                    message={`¿Eliminar permanentemente ${pendingDeleteIds.length === 1 ? 'este usuario' : `estos ${pendingDeleteIds.length} usuarios`}?`}
+                    onConfirm={executeDeleteUsers}
+                    onCancel={() => setPendingDeleteIds(null)}
+                    loading={deleting !== ""}
+                />
+            )}
+            {pendingDeleteRole && (
+                <ConfirmModal
+                    message={`¿Eliminar permanentemente el rol "${pendingDeleteRole}"?`}
+                    onConfirm={executeDeleteRole}
+                    onCancel={() => setPendingDeleteRole(null)}
+                />
             )}
         </div>
     )

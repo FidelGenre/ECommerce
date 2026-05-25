@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import { toast } from '@/lib/toast'
 import { Item } from '@/types'
 import { AlertTriangle, RotateCcw, Plus, X, Search, Download, FileSpreadsheet, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -43,7 +44,6 @@ export default function InventoryPage() {
             const r = await api.get('/api/admin/items', { params: { page: 0, size: 500 } })
             setItems(r.data?.content ?? [])
         } catch (e: any) {
-            console.error('Failed to load inventory', e)
             setItems([])
             const status = e.response?.status
             if (status === 403) {
@@ -144,6 +144,7 @@ export default function InventoryPage() {
         try {
             const reason = adjReasonDetail ? `${adjReasonType}: ${adjReasonDetail}` : adjReasonType
             await api.post('/api/admin/stock/adjust', { itemId: modal!.id, quantity: Number(adjQty), reason })
+            toast.success('Stock ajustado')
             setModal(null); setAdjQty(''); setAdjReasonType('Merma'); setAdjReasonDetail(''); load()
         } finally { setSaving(false) }
     }

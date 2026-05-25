@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import { toast } from '@/lib/toast'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { Item, Category, Supplier } from '@/types'
 import {
     Plus, X, Search, Eye, EyeOff, Edit, Trash2,
@@ -215,14 +217,17 @@ export default function ProductosAdminPage() {
                 purchaseConversion: form.purchaseConversion ? Number(form.purchaseConversion) : null,
                 components: form.components.map((c: any) => ({ componentItemId: Number(c.componentItemId), quantity: Number(c.quantity) }))
             }
-            if (editing) await api.put(`/api/admin/items/${editing.id}`, payload)
-            else await api.post('/api/admin/items', payload)
+            if (editing) { await api.put(`/api/admin/items/${editing.id}`, payload); toast.success('Producto actualizado') }
+            else { await api.post('/api/admin/items', payload); toast.success('Producto creado') }
             setShowModal(false); load()
-        } finally { setSaving(false) }
+        } catch { toast.error('No se pudo guardar el producto') } finally { setSaving(false) }
     }
 
-    const handleDelete = async (ids: number[]) => {
-        if (!confirm(`¿Eliminar ${ids.length === 1 ? 'este producto' : `estos ${ids.length} productos`}? Esta acción no se puede deshacer.`)) return
+    const [pendingDelete, setPendingDelete] = useState<number[] | null>(null)
+
+    const executeDelete = async () => {
+        if (!pendingDelete) return
+        const ids = pendingDelete
         setDeleting(true)
         const errors: string[] = []
         for (const id of ids) {
@@ -233,8 +238,10 @@ export default function ProductosAdminPage() {
             }
         }
         setDeleting(false)
+        setPendingDelete(null)
         setSelectedIds(new Set())
-        if (errors.length) alert(errors.join('\n'))
+        if (errors.length) toast.error(errors.join('\n'))
+        else toast.success(`${ids.length === 1 ? 'Producto eliminado' : `${ids.length} productos eliminados`}`)
         load()
     }
 
@@ -254,7 +261,8 @@ export default function ProductosAdminPage() {
         }
         setSaving(false)
         setSelectedIds(new Set())
-        if (errors.length) alert(errors.join('\n'))
+        if (errors.length) toast.error(errors.join('\n'))
+        else toast.success(makeVisible ? 'Productos activados' : 'Productos ocultados')
         load()
     }
 
@@ -369,7 +377,7 @@ export default function ProductosAdminPage() {
                             item={item}
                             onEdit={() => openEdit(item)}
                             onToggle={() => toggleVisibility(item)}
-                            onDelete={() => handleDelete([item.id])}
+                            onDelete={() => setPendingDelete([item.id])}
 
                             selected={selectedIds.has(item.id)}
                             onSelect={() => toggleSelect(item.id)}
@@ -443,7 +451,7 @@ export default function ProductosAdminPage() {
                                                 <button onClick={() => toggleVisibility(item)} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
                                                     {item.visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                                 </button>
-                                                <button onClick={() => handleDelete([item.id])} className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50 transition-colors" title="Eliminar">
+                                                <button onClick={() => setPendingDelete([item.id])} className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50 transition-colors" title="Eliminar">
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
@@ -468,7 +476,7 @@ export default function ProductosAdminPage() {
                         <EyeOff className="w-4 h-4" /> Ocultar
                     </button>
                     <div className="w-px h-6 bg-muted"></div>
-                    <button onClick={() => handleDelete(Array.from(selectedIds))} className="text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
+                    <button onClick={() => setPendingDelete(Array.from(selectedIds))} className="text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
                         <Trash2 className="w-4 h-4" /> Eliminar
                     </button>
                     <button onClick={() => setSelectedIds(new Set())} className="ml-2 btn-ghost p-1.5 rounded-full" title="Cancelar selección">
@@ -741,6 +749,14 @@ export default function ProductosAdminPage() {
                         </div>
                     </div>
                 </div>
+            )}
+            {pendingDelete && (
+                <ConfirmModal
+                    message={`¿Eliminar ${pendingDelete.length === 1 ? 'este producto' : `estos ${pendingDelete.length} productos`}? Esta acción no se puede deshacer.`}
+                    onConfirm={executeDelete}
+                    onCancel={() => setPendingDelete(null)}
+                    loading={deleting}
+                />
             )}
         </div>
     )

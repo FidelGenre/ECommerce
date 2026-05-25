@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import { ForbiddenToast } from '@/components/ForbiddenToast'
+import { Toast } from '@/components/Toast'
 import { ShieldX } from 'lucide-react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {children}
             </main>
             <ForbiddenToast />
+            <Toast />
         </div>
     )
 }

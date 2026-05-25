@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { Plus, X, Edit2, Trash2, Tag } from 'lucide-react'
+import { toast } from '@/lib/toast'
+import { ConfirmModal } from '@/components/ConfirmModal'
 
 type SupplierCategory = { id: number; name: string; description?: string; type: string }
 
@@ -17,6 +19,7 @@ export default function SupplierCategoriesPage() {
     // Selection
     const [selected, setSelected] = useState<Set<number>>(new Set())
     const [deleting, setDeleting] = useState(false)
+    const [pendingDelete, setPendingDelete] = useState<number[] | null>(null)
 
     const toggleSelect = (id: number) => setSelected(prev => {
         const next = new Set(prev)
@@ -47,11 +50,11 @@ export default function SupplierCategoriesPage() {
         } catch { setMsg('No se pudo guardar.') } finally { setSaving(false) }
     }
 
-    const handleDelete = async (ids: number[]) => {
-        if (!confirm(`¿Eliminar ${ids.length === 1 ? 'esta categoría' : `estas ${ids.length} categorías`} de proveedor?`)) return
+    const executeDelete = async () => {
+        if (!pendingDelete) return
         setDeleting(true)
         const errors: string[] = []
-        for (const id of ids) {
+        for (const id of pendingDelete) {
             try { await api.delete(`/api/admin/categories/${id}`) }
             catch (e: any) {
                 const name = cats.find(c => c.id === id)?.name ?? id
@@ -59,8 +62,10 @@ export default function SupplierCategoriesPage() {
             }
         }
         setDeleting(false)
+        setPendingDelete(null)
         setSelected(new Set())
-        if (errors.length) alert(errors.join('\n'))
+        if (errors.length) toast.error(errors.join('\n'))
+        else toast.success('Eliminado correctamente')
         load()
     }
 
@@ -75,7 +80,7 @@ export default function SupplierCategoriesPage() {
                 <h1 className="text-2xl font-bold text-espresso">Categorías de Proveedores</h1>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
-                        <button onClick={() => handleDelete([...selected])} disabled={deleting}
+                        <button onClick={() => setPendingDelete([...selected])} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -127,7 +132,7 @@ export default function SupplierCategoriesPage() {
                                             <button onClick={() => openEdit(c)} className="w-8 h-8 rounded-lg bg-primary-100 hover:bg-primary-200 flex items-center justify-center text-primary-700 transition-colors">
                                                 <Edit2 className="w-3.5 h-3.5" />
                                             </button>
-                                            <button onClick={() => handleDelete([c.id])} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors">
+                                            <button onClick={() => setPendingDelete([c.id])} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors">
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
@@ -166,6 +171,14 @@ export default function SupplierCategoriesPage() {
                         </form>
                     </div>
                 </div>
+            )}
+            {pendingDelete && (
+                <ConfirmModal
+                    message={`¿Eliminar ${pendingDelete.length === 1 ? 'esta categoría de proveedor' : `estas ${pendingDelete.length} categorías`}?`}
+                    onConfirm={executeDelete}
+                    onCancel={() => setPendingDelete(null)}
+                    loading={deleting}
+                />
             )}
         </div>
     )

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import { toast } from '@/lib/toast'
 import { CashRegister, CashMovement } from '@/types'
 import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Trash2, Search } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -90,13 +91,19 @@ export default function CashPage() {
 
     const openRegister = async () => {
         setSaving(true)
-        await api.post('/api/admin/cash/open', { amount: Number(openAmt) })
-        setShowOpen(false); load(); setSaving(false)
+        try {
+            await api.post('/api/admin/cash/open', { amount: Number(openAmt) })
+            setShowOpen(false); load()
+            toast.success('Caja abierta')
+        } catch { toast.error('No se pudo abrir la caja') } finally { setSaving(false) }
     }
     const closeRegister = async () => {
         if (!register) return; setSaving(true)
-        await api.post(`/api/admin/cash/${register.id}/close`, { amount: Number(closeAmt) })
-        setShowClose(false); load(); setSaving(false)
+        try {
+            await api.post(`/api/admin/cash/${register.id}/close`, { amount: Number(closeAmt) })
+            setShowClose(false); load()
+            toast.success('Caja cerrada')
+        } catch { toast.error('No se pudo cerrar la caja') } finally { setSaving(false) }
     }
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -114,12 +121,14 @@ export default function CashPage() {
                     amount: Number(moveForm.amount),
                     description: moveForm.description,
                 })
+                toast.success('Movimiento actualizado')
             } else {
                 await api.post(`/api/admin/cash/${register.id}/movements`, {
                     movementType: moveForm.movementType,
                     amount: Number(moveForm.amount),
                     description: moveForm.description,
                 })
+                toast.success('Movimiento agregado')
             }
             setShowMove(false); setEditingMove(false); setShowConfirmModal(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); load();
         } finally {
@@ -129,7 +138,10 @@ export default function CashPage() {
 
     const deleteMovement = async (id: number) => {
         setSaving(true)
-        try { await api.delete(`/api/admin/cash/movements/${id}`) } finally {
+        try {
+            await api.delete(`/api/admin/cash/movements/${id}`)
+            toast.success('Movimiento eliminado')
+        } catch { toast.error('No se pudo eliminar el movimiento') } finally {
             setSaving(false); setDeleteConfirmId(null); load()
         }
     }

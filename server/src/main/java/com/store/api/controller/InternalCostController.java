@@ -66,6 +66,14 @@ public class InternalCostController {
         cost.setCostDate(LocalDate.parse((String) body.get("costDate")));
         cost.setCreatedAt(LocalDateTime.now());
 
+        String status = body.containsKey("status") ? (String) body.get("status") : "PENDING";
+        if (status == null || status.isBlank()) status = "PENDING";
+        cost.setStatus(status);
+        if ("PAID".equals(status) || "COMPLETED".equals(status)) {
+            cost.setPaid(true);
+            cost.setPaidAt(LocalDateTime.now());
+        }
+
         if (auth != null) {
             userRepo.findByUsername(auth.getName()).ifPresent(cost::setCreatedBy);
         }
@@ -76,13 +84,18 @@ public class InternalCostController {
     public ResponseEntity<?> update(@PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         return costRepo.findById(id).map(cost -> {
-            if (cost.isPaid()) {
-                return ResponseEntity.badRequest().body((Object) "No se puede editar un costo que ya fue pagado.");
-            }
             cost.setDescription((String) body.get("description"));
             cost.setAmount(new java.math.BigDecimal(body.get("amount").toString()));
             cost.setCategory((String) body.get("category"));
             cost.setCostDate(LocalDate.parse((String) body.get("costDate")));
+            if (body.containsKey("status")) {
+                String st = (String) body.get("status");
+                if (st != null && !st.isBlank()) {
+                    cost.setStatus(st);
+                    cost.setPaid("PAID".equals(st) || "COMPLETED".equals(st));
+                    cost.setPaidAt(cost.isPaid() ? LocalDateTime.now() : null);
+                }
+            }
             return ResponseEntity.ok((Object) costRepo.save(cost));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -105,6 +118,7 @@ public class InternalCostController {
                     : !cost.isPaid();
             cost.setPaid(targetPaid);
             cost.setPaidAt(targetPaid ? LocalDateTime.now() : null);
+            cost.setStatus(targetPaid ? "PAID" : "PENDING");
             InternalCost saved = costRepo.save(cost);
             // Register cash outflow only when transitioning to paid
             if (targetPaid && !wasPaid) {
