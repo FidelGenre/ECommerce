@@ -38,15 +38,15 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
     return (
         <>
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 px-6 py-5 border-b border-primary-800 hover:bg-primary-800/40 transition-colors group">
+            <div className="flex items-center gap-3 px-6 py-5 border-b border-primary-800">
                 <div className="w-9 h-9 bg-caramel rounded-lg flex items-center justify-center">
                     <Coffee className="w-5 h-5 text-espresso" />
                 </div>
                 <div>
                     <h1 className="text-white font-bold text-base leading-tight">Coffee Beans</h1>
-                    <p className="text-white/60 text-xs group-hover:text-white/80 transition-colors">← Ir al inicio</p>
+                    <p className="text-white/60 text-xs">Panel de Administrador</p>
                 </div>
-            </Link>
+            </div>
 
             {/* Nav */}
             <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5 sidebar-scroll">

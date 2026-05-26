@@ -23,7 +23,7 @@
                 fontSize: '20px'
             },
             flowchart: {
-                useMaxWidth: false,
+                useMaxWidth: true,
                 htmlLabels: true,
                 curve: 'basis'
             },
@@ -137,6 +137,7 @@
             height: auto !important;
         }
 
+
         .img-container {
             text-align: center;
             margin: 40px 0;
@@ -232,6 +233,51 @@
             color: #27ae60;
             font-weight: bold;
             text-transform: uppercase;
+        }
+        @media print {
+            body {
+                max-width: 100%;
+                padding: 0 15px;
+            }
+
+            .mermaid {
+                page-break-inside: avoid;
+                overflow: visible;
+                border: none;
+                box-shadow: none;
+                padding: 10px 0;
+                margin: 15px 0;
+            }
+
+            .mermaid svg {
+                max-width: 100% !important;
+                width: 100% !important;
+                height: auto !important;
+            }
+
+            .usecase-diagram,
+            .class-diagram,
+            .er-diagram {
+                max-width: 100% !important;
+            }
+
+            .uc-block {
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+
+            .img-container {
+                margin: 15px 0;
+            }
+
+            .img-container img {
+                max-width: 100%;
+                box-shadow: none;
+            }
+
+            h2, h3, h4 {
+                page-break-after: avoid;
+            }
         }
     </style>
 </head>
@@ -350,15 +396,15 @@
         Q((Consulta))
 
         subgraph Sistema ["Portal Coffee Beans"]
-        UC1(["Añadir/Eliminar del Carrito"])
+        UC1(["Añadir/Eliminar Carrito"])
         UC2(["Registro / Login"])
         UC3(["Completar Pago"])
-        UC4(["Gestionar Inventario / Stock"])
+        UC4(["Gestionar Inventario"])
         UC5(["Modificar Productos"])
         UC6(["Login Panel Admin"])
         UC7(["Gestionar Usuarios"])
         UC8(["Gestionar Pedidos"])
-        UC9(["Consultar Reportes / Dashboard"])
+        UC9(["Consultar Reportes"])
         UC10(["Visualizar Listados"])
         end
 
@@ -366,18 +412,18 @@
         C --- UC2
         UC2 -. extend .-> UC3
 
-        UC1 --- A
-        UC2 --- A
-        UC4 --- A
-        UC5 --- A
-        UC6 --- A
-        UC7 --- A
-        UC8 --- A
-        UC9 --- A
+        A --- UC1
+        A --- UC2
+        A --- UC4
+        A --- UC5
+        A --- UC6
+        A --- UC7
+        A --- UC8
+        A --- UC9
 
-        UC6 --- Q
-        UC9 --- Q
-        UC10 --- Q
+        Q --- UC6
+        Q --- UC9
+        Q --- UC10
     </div>
 
     <h3>2.2. Especificación de Casos de Uso e Interfaces</h3>
