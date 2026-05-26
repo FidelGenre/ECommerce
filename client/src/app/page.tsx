@@ -188,7 +188,9 @@ export default function StorefrontPage() {
                     <User className="w-4 h-4" />
                   </Link>
                   {((user.permissions && user.permissions.length > 0) || user.role === 'ADMIN') && (
-                    <Link href="/admin" className="hidden md:block text-caramel hover:text-amber-300 text-xs font-medium ml-1">Panel de Administración</Link>
+                    <Link href="/admin" className="hidden md:flex w-9 h-9 bg-primary-700/60 hover:bg-primary-800 rounded-lg items-center justify-center text-caramel font-semibold text-xs transition-colors" title="Panel de Administración">
+                      P
+                    </Link>
                   )}
                 </>
               ) : (
