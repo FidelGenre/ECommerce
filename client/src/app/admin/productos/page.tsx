@@ -89,19 +89,17 @@ function ProductCard({ item, onEdit, onToggle, onDelete, selected, onSelect }: {
             </div>
 
             {/* Actions */}
-            {canWrite && (
-                <div className="border-t border-muted p-2 flex items-center justify-between gap-1">
-                    <button onClick={onEdit} className="btn-ghost flex items-center gap-1.5 text-xs px-3 py-1.5 flex-1 justify-center">
-                        <Edit className="w-3.5 h-3.5" /> Editar
-                    </button>
-                    <button onClick={onToggle} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
-                        {item.visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                    <button onClick={onDelete} className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-1.5 transition-colors" title="Eliminar">
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                </div>
-            )}
+            <div className="border-t border-muted p-2 flex items-center justify-between gap-1">
+                <button onClick={onEdit} className="btn-ghost flex items-center gap-1.5 text-xs px-3 py-1.5 flex-1 justify-center">
+                    <Edit className="w-3.5 h-3.5" /> Editar
+                </button>
+                <button onClick={onToggle} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
+                    {item.visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+                <button onClick={onDelete} className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-1.5 transition-colors" title="Eliminar">
+                    <Trash2 className="w-4 h-4" />
+                </button>
+            </div>
         </div>
     )
 }
@@ -171,8 +169,12 @@ export default function ProductosAdminPage() {
 
     const [newCategoryName, setNewCategoryName] = useState('')
 
-    const openNew = () => { setEditing(null); setForm({ ...blank, visible: true, components: [] }); setNewCategoryName(''); setShowModal(true) }
+    const openNew = () => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        setEditing(null); setForm({ ...blank, visible: true, components: [] }); setNewCategoryName(''); setShowModal(true)
+    }
     const openEdit = (item: Item) => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         setEditing(item)
         setForm({
             name: item.name,
@@ -197,7 +199,9 @@ export default function ProductosAdminPage() {
     }
 
     const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault(); setSaving(true)
+        e.preventDefault()
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        setSaving(true)
         try {
             let categoryId = form.categoryId ? Number(form.categoryId) : null
             // Auto-create new category if user typed one
@@ -230,6 +234,7 @@ export default function ProductosAdminPage() {
     const [pendingDelete, setPendingDelete] = useState<number[] | null>(null)
 
     const executeDelete = async () => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         if (!pendingDelete) return
         const ids = pendingDelete
         setDeleting(true)
@@ -250,10 +255,12 @@ export default function ProductosAdminPage() {
     }
 
     const toggleVisibility = async (item: Item) => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         await api.patch(`/api/admin/items/${item.id}/visibility`); load()
     }
 
     const handleBatchVisibility = async (ids: number[], makeVisible: boolean) => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         setSaving(true)
         const errors: string[] = []
         for (const id of ids) {
@@ -298,11 +305,9 @@ export default function ProductosAdminPage() {
                     <a href="/" target="_blank" className="btn-ghost flex items-center gap-2 text-sm">
                         <ExternalLink className="w-4 h-4" /> Ver tienda
                     </a>
-                    {canWrite && (
-                        <button onClick={openNew} className="btn-primary flex items-center gap-2">
-                            <Plus className="w-4 h-4" /> Nuevo producto
-                        </button>
-                    )}
+                    <button onClick={openNew} className="btn-primary flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Nuevo producto
+                    </button>
                 </div>
             </div>
 
@@ -371,11 +376,9 @@ export default function ProductosAdminPage() {
                     <Package className="w-14 h-14 text-primary-300 mb-4" />
                     <p className="font-semibold text-espresso text-lg">Sin productos</p>
                     <p className="text-primary-400 text-sm mt-1">Agregá tu primer producto con el botón de arriba</p>
-                    {canWrite && (
-                        <button onClick={openNew} className="btn-primary mt-6 flex items-center gap-2">
-                            <Plus className="w-4 h-4" /> Agregar producto
-                        </button>
-                    )}
+                    <button onClick={openNew} className="btn-primary mt-6 flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Agregar producto
+                    </button>
                 </div>
             ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -452,19 +455,17 @@ export default function ProductosAdminPage() {
                                             </span>
                                         </td>
                                         <td>
-                                            {canWrite && (
-                                                <div className="flex items-center gap-1">
-                                                    <button onClick={() => openEdit(item)} className="btn-ghost p-1.5" title="Editar">
-                                                        <Edit className="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <button onClick={() => toggleVisibility(item)} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
-                                                        {item.visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                                                    </button>
-                                                    <button onClick={() => setPendingDelete([item.id])} className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50 transition-colors" title="Eliminar">
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </div>
-                                            )}
+                                            <div className="flex items-center gap-1">
+                                                <button onClick={() => openEdit(item)} className="btn-ghost p-1.5" title="Editar">
+                                                    <Edit className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button onClick={() => toggleVisibility(item)} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
+                                                    {item.visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                                </button>
+                                                <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete([item.id]) }} className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50 transition-colors" title="Eliminar">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -475,18 +476,18 @@ export default function ProductosAdminPage() {
             )}
 
             {/* Floating Action Bar for Selection */}
-            {canWrite && selectedIds.size > 0 && (
+            {selectedIds.size > 0 && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white shadow-xl border border-primary-100 rounded-full px-4 md:px-6 py-3 flex items-center gap-3 md:gap-4 z-40 animate-in slide-in-from-bottom-5 max-w-[95%] overflow-x-auto flex-nowrap whitespace-nowrap hide-scrollbar">
                     <span className="font-bold text-espresso text-sm bg-primary-50 px-3 py-1 rounded-full">{selectedIds.size} seleccionados</span>
                     <div className="w-px h-6 bg-muted"></div>
-                    <button onClick={() => handleBatchVisibility(Array.from(selectedIds), true)} className="btn-ghost text-sm flex items-center gap-2">
+                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } handleBatchVisibility(Array.from(selectedIds), true) }} className="btn-ghost text-sm flex items-center gap-2">
                         <Eye className="w-4 h-4" /> Mostrar
                     </button>
-                    <button onClick={() => handleBatchVisibility(Array.from(selectedIds), false)} className="btn-ghost text-sm flex items-center gap-2">
+                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } handleBatchVisibility(Array.from(selectedIds), false) }} className="btn-ghost text-sm flex items-center gap-2">
                         <EyeOff className="w-4 h-4" /> Ocultar
                     </button>
                     <div className="w-px h-6 bg-muted"></div>
-                    <button onClick={() => setPendingDelete(Array.from(selectedIds))} className="text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
+                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete(Array.from(selectedIds)) }} className="text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
                         <Trash2 className="w-4 h-4" /> Eliminar
                     </button>
                     <button onClick={() => setSelectedIds(new Set())} className="ml-2 btn-ghost p-1.5 rounded-full" title="Cancelar selección">

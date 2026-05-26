@@ -147,7 +147,9 @@ export default function PurchasesPage() {
     const updateLine = (i: number, k: string, v: string) => setLines(l => { const n = [...l]; (n[i] as any)[k] = v; return n })
 
     const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault(); setSaving(true)
+        e.preventDefault()
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        setSaving(true)
         try {
             await api.post('/api/admin/purchases', {
                 supplierId: form.supplierId ? Number(form.supplierId) : null,
@@ -208,7 +210,7 @@ export default function PurchasesPage() {
                 <div className="flex items-center gap-2">
                     <button onClick={exportCSV} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3"><Download className="w-4 h-4" /> CSV</button>
                     <button onClick={exportExcel} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3"><FileSpreadsheet className="w-4 h-4" /> Excel</button>
-                    {canWrite && <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" /> Nueva compra</button>}
+                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setShowModal(true) }} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" /> Nueva compra</button>
                 </div>
             </div>
 

@@ -60,6 +60,7 @@ export default function StatusesSettingsPage() {
 
 
     const executeDelete = async () => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         if (!pendingDelete) return
         setDeleting(true)
         const errors: string[] = []
@@ -148,8 +149,8 @@ export default function StatusesSettingsPage() {
                                     </span>
                                 </div>
                                 <div className="flex gap-1">
-                                    {canWrite && sortedIds.length === 0 && normName(s) !== 'Pendiente' && (
-                                        <button onClick={() => setPendingDelete([s.id])} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
+                                    {sortedIds.length === 0 && normName(s) !== 'Pendiente' && (
+                                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete([s.id]) }} title="Eliminar etiqueta" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-500 text-primary-400 transition-colors">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     )}

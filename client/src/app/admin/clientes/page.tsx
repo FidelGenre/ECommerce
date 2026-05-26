@@ -97,6 +97,7 @@ export default function ClientesPage() {
     useEffect(() => { load() }, [page, q])
 
     const openNew = () => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         setEditing(null)
         setForm(blank)
         setActiveTab('profile')
@@ -134,6 +135,7 @@ export default function ClientesPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         setSaving(true)
         try {
             if (editing) await api.put(`/api/admin/customers/${editing.id}`, form)
@@ -157,6 +159,7 @@ export default function ClientesPage() {
     }
 
     const adjustBalance = async (amount: number, description: string) => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         if (!editing) return
         try {
             await api.patch(`/api/admin/customers/${editing.id}/balance`, { amount, description })
@@ -169,6 +172,7 @@ export default function ClientesPage() {
     }
 
     const adjustPoints = async (points: number) => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         if (!editing) return
         try {
             await api.patch(`/api/admin/customers/${editing.id}/loyalty`, { points })
@@ -186,11 +190,9 @@ export default function ClientesPage() {
                     <h1 className="text-2xl font-bold text-espresso">Gestión de Clientes</h1>
                     <p className="text-primary-500 text-sm">{total} clientes registrados</p>
                 </div>
-                {canWrite && (
-                    <button onClick={openNew} className="btn-primary flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> Nuevo cliente
-                    </button>
-                )}
+                <button onClick={openNew} className="btn-primary flex items-center gap-2">
+                    <Plus className="w-4 h-4" /> Nuevo cliente
+                </button>
             </div>
 
             {/* Search */}
@@ -255,11 +257,9 @@ export default function ClientesPage() {
                                                 <button onClick={() => openDetail(c)} className="btn-ghost p-2 text-primary-500 hover:text-primary-700" title="Ver detalle">
                                                     <Eye className="w-4 h-4" />
                                                 </button>
-                                                {canWrite && (
-                                                <button onClick={() => setPendingDeleteId(c.id)} className="btn-ghost p-2 text-red-500 hover:text-red-700" title="Eliminar">
+                                                <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDeleteId(c.id) }} className="btn-ghost p-2 text-red-500 hover:text-red-700" title="Eliminar">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
-                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -395,11 +395,9 @@ export default function ClientesPage() {
                                     </div>
                                     <div className="flex gap-3 pt-4 border-t border-muted">
                                         <button type="button" onClick={() => setShowModal(false)} className="btn-ghost flex-1">Cerrar</button>
-                                        {canWrite && (
-                                            <button type="submit" disabled={saving} className="btn-primary flex-1 shadow-md active:scale-95 transition-transform">
-                                                {saving ? 'Guardando...' : editing ? 'Actualizar Datos' : 'Registrar Cliente'}
-                                            </button>
-                                        )}
+                                        <button type="submit" disabled={saving} className="btn-primary flex-1 shadow-md active:scale-95 transition-transform">
+                                            {saving ? 'Guardando...' : editing ? 'Actualizar Datos' : 'Registrar Cliente'}
+                                        </button>
                                     </div>
                                 </form>
                             )}
@@ -413,21 +411,21 @@ export default function ClientesPage() {
                                                 {FMT_CUR(editing.accountBalance)}
                                             </p>
                                         </div>
-                                        {canWrite && (
-                                            <div className="card border-dashed p-4 flex flex-col justify-center">
-                                                <p className="text-xs font-bold text-primary-400 uppercase tracking-widest mb-2">Acción Rápida</p>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => {
-                                                        const amt = prompt('Monto a cargar (aumenta el saldo):')
-                                                        if (amt) adjustBalance(Math.abs(parseFloat(amt)), 'Ajuste manual')
-                                                    }} className="btn-primary py-1.5 text-xs flex-1">Cargar Saldo</button>
-                                                    <button onClick={() => {
-                                                        const amt = prompt('Monto del pago (disminuye el saldo):')
-                                                        if (amt) adjustBalance(-Math.abs(parseFloat(amt)), 'Cobro de cuenta corriente')
-                                                    }} className="btn-secondary py-1.5 text-xs flex-1">Registrar Pago</button>
-                                                </div>
+                                        <div className="card border-dashed p-4 flex flex-col justify-center">
+                                            <p className="text-xs font-bold text-primary-400 uppercase tracking-widest mb-2">Acción Rápida</p>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => {
+                                                    if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+                                                    const amt = prompt('Monto a cargar (aumenta el saldo):')
+                                                    if (amt) adjustBalance(Math.abs(parseFloat(amt)), 'Ajuste manual')
+                                                }} className="btn-primary py-1.5 text-xs flex-1">Cargar Saldo</button>
+                                                <button onClick={() => {
+                                                    if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+                                                    const amt = prompt('Monto del pago (disminuye el saldo):')
+                                                    if (amt) adjustBalance(-Math.abs(parseFloat(amt)), 'Cobro de cuenta corriente')
+                                                }} className="btn-secondary py-1.5 text-xs flex-1">Registrar Pago</button>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-3">
@@ -475,27 +473,27 @@ export default function ClientesPage() {
                                         <p className="text-sm font-bold text-amber-600 uppercase tracking-widest">Puntos de Fidelización</p>
                                     </div>
 
-                                    {canWrite && (
-                                        <div className="card p-6 border-amber-100 bg-amber-50/20 space-y-4 shadow-sm">
-                                            <p className="text-sm text-primary-600 text-center font-medium italic">¿Querés ajustar los puntos manualmente?</p>
-                                            <div className="flex gap-3">
-                                                <button onClick={() => {
-                                                    const p = prompt('Puntos a sumar:')
-                                                    if (p) adjustPoints(parseInt(p))
-                                                }} className="btn-primary bg-amber-600 border-amber-700 hover:bg-amber-700 flex-1 flex flex-col items-center py-3">
-                                                    <Plus className="w-5 h-5 mb-1" />
-                                                    <span className="text-xs uppercase font-bold">Sumar</span>
-                                                </button>
-                                                <button onClick={() => {
-                                                    const p = prompt('Puntos a restar:')
-                                                    if (p) adjustPoints(-parseInt(p))
-                                                }} className="btn-secondary border-amber-200 text-amber-700 hover:bg-amber-100 flex-1 flex flex-col items-center py-3">
-                                                    <Trash2 className="w-5 h-5 mb-1" />
-                                                    <span className="text-xs uppercase font-bold">Restar</span>
-                                                </button>
-                                            </div>
+                                    <div className="card p-6 border-amber-100 bg-amber-50/20 space-y-4 shadow-sm">
+                                        <p className="text-sm text-primary-600 text-center font-medium italic">¿Querés ajustar los puntos manualmente?</p>
+                                        <div className="flex gap-3">
+                                            <button onClick={() => {
+                                                if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+                                                const p = prompt('Puntos a sumar:')
+                                                if (p) adjustPoints(parseInt(p))
+                                            }} className="btn-primary bg-amber-600 border-amber-700 hover:bg-amber-700 flex-1 flex flex-col items-center py-3">
+                                                <Plus className="w-5 h-5 mb-1" />
+                                                <span className="text-xs uppercase font-bold">Sumar</span>
+                                            </button>
+                                            <button onClick={() => {
+                                                if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+                                                const p = prompt('Puntos a restar:')
+                                                if (p) adjustPoints(-parseInt(p))
+                                            }} className="btn-secondary border-amber-200 text-amber-700 hover:bg-amber-100 flex-1 flex flex-col items-center py-3">
+                                                <Trash2 className="w-5 h-5 mb-1" />
+                                                <span className="text-xs uppercase font-bold">Restar</span>
+                                            </button>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             )}
                         </div>

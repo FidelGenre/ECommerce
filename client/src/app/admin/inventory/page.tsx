@@ -142,7 +142,9 @@ export default function InventoryPage() {
     }
 
     const handleAdjust = async (e: React.FormEvent) => {
-        e.preventDefault(); setSaving(true)
+        e.preventDefault()
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        setSaving(true)
         try {
             const reason = adjReasonDetail ? `${adjReasonType}: ${adjReasonDetail}` : adjReasonType
             await api.post('/api/admin/stock/adjust', { itemId: modal!.id, quantity: Number(adjQty), reason })
@@ -252,9 +254,9 @@ export default function InventoryPage() {
                                             <td className="text-primary-400">{item.supplier?.name ?? '—'}</td>
                                             <td><span className={st.cls}>{st.label}</span></td>
                                             <td className="space-x-1">
-                                                {canWrite && <button onClick={() => setModal(item)} className="btn-ghost py-1 px-2 text-xs">
+                                                <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setModal(item) }} className="btn-ghost py-1 px-2 text-xs">
                                                     <Plus className="w-3.5 h-3.5 inline mr-1" />Ajustar
-                                                </button>}
+                                                </button>
                                                 <button onClick={() => setLabelModal(item)} className="btn-ghost py-1 px-2 text-xs" title="Imprimir Etiqueta">
                                                     <Printer className="w-3.5 h-3.5 inline" />
                                                 </button>

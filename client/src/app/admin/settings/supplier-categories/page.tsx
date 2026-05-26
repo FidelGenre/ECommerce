@@ -37,12 +37,19 @@ export default function SupplierCategoriesPage() {
 
     useEffect(() => { load() }, [])
 
-    const openNew = () => { setForm({ type: 'SUPPLIER', name: '', description: '' }); setEditing(null); setOpen(true); setMsg(null) }
-    const openEdit = (c: SupplierCategory) => { setForm({ ...c }); setEditing(c.id); setOpen(true); setMsg(null) }
+    const openNew = () => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        setForm({ type: 'SUPPLIER', name: '', description: '' }); setEditing(null); setOpen(true); setMsg(null)
+    }
+    const openEdit = (c: SupplierCategory) => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        setForm({ ...c }); setEditing(c.id); setOpen(true); setMsg(null)
+    }
     const close = () => { setOpen(false); setMsg(null) }
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         if (!form.name?.trim()) { setMsg('El nombre es requerido'); return }
         setSaving(true)
         try {
@@ -53,6 +60,7 @@ export default function SupplierCategoriesPage() {
     }
 
     const executeDelete = async () => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
         if (!pendingDelete) return
         setDeleting(true)
         const errors: string[] = []
@@ -81,15 +89,15 @@ export default function SupplierCategoriesPage() {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-espresso">Categorías de Proveedores</h1>
                 <div className="flex items-center gap-2">
-                    {canWrite && selected.size > 0 && (
-                        <button onClick={() => setPendingDelete([...selected])} disabled={deleting}
+                    {selected.size > 0 && (
+                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete([...selected]) }} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
                     )}
-                    {canWrite && <button onClick={openNew} className="btn-primary flex items-center gap-2">
+                    <button onClick={openNew} className="btn-primary flex items-center gap-2">
                         <Plus className="w-4 h-4" /> Nueva Categoría
-                    </button>}
+                    </button>
                 </div>
             </div>
 
@@ -130,14 +138,14 @@ export default function SupplierCategoriesPage() {
                                     <td className="py-3 font-medium text-espresso">{c.name}</td>
                                     <td className="py-3 text-primary-500">{c.description || '—'}</td>
                                     <td className="py-3">
-                                        {canWrite && <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2">
                                             <button onClick={() => openEdit(c)} className="w-8 h-8 rounded-lg bg-primary-100 hover:bg-primary-200 flex items-center justify-center text-primary-700 transition-colors">
                                                 <Edit2 className="w-3.5 h-3.5" />
                                             </button>
-                                            <button onClick={() => setPendingDelete([c.id])} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors">
+                                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete([c.id]) }} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors">
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
-                                        </div>}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

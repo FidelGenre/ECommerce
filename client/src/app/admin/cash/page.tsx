@@ -92,6 +92,7 @@ export default function CashPage() {
     )
 
     const openRegister = async () => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
         setSaving(true)
         try {
             await api.post('/api/admin/cash/open', { amount: Number(openAmt) })
@@ -100,6 +101,7 @@ export default function CashPage() {
         } catch { toast.error('No se pudo abrir la caja') } finally { setSaving(false) }
     }
     const closeRegister = async () => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
         if (!register) return; setSaving(true)
         try {
             await api.post(`/api/admin/cash/${register.id}/close`, { amount: Number(closeAmt) })
@@ -114,6 +116,7 @@ export default function CashPage() {
     }
 
     const processMovement = async () => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
         if (!register) return
         setSaving(true)
         try {
@@ -139,6 +142,7 @@ export default function CashPage() {
     }
 
     const deleteMovement = async (id: number) => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
         setSaving(true)
         try {
             await api.delete(`/api/admin/cash/movements/${id}`)
@@ -149,6 +153,7 @@ export default function CashPage() {
     }
 
     const openEditMove = (m: CashMovement) => {
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
         setMoveForm({
             id: m.id,
             movementType: m.movementType,
@@ -190,12 +195,12 @@ export default function CashPage() {
                     <p className="text-primary-500 text-sm">{register ? 'Sesión abierta' : 'Sin sesión activa'}</p>
                 </div>
                 {!register
-                    ? (canWrite && <button onClick={() => setShowOpen(true)} className="btn-primary flex items-center gap-2"><Unlock className="w-4 h-4" />Abrir caja</button>)
+                    ? (<button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setShowOpen(true) }} className="btn-primary flex items-center gap-2"><Unlock className="w-4 h-4" />Abrir caja</button>)
                     : (
                         <div className="flex gap-3">
                             <button onClick={exportCash} className="btn-secondary flex items-center gap-2"><FileSpreadsheet className="w-4 h-4" />Exportar</button>
-                            {canWrite && <button onClick={() => { setEditingMove(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); setShowMove(true) }} className="btn-secondary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar movimiento</button>}
-                            {canWrite && <button onClick={() => setShowClose(true)} className="btn-danger flex items-center gap-2"><Lock className="w-4 h-4" />Cerrar caja</button>}
+                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditingMove(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); setShowMove(true) }} className="btn-secondary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar movimiento</button>
+                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setShowClose(true) }} className="btn-danger flex items-center gap-2"><Lock className="w-4 h-4" />Cerrar caja</button>
                         </div>
                     )
                 }
@@ -308,10 +313,10 @@ export default function CashPage() {
                                                 <td className="text-primary-500">{m.description ?? '—'}</td>
                                                 <td className="text-primary-400 text-xs">{new Date(m.createdAt).toLocaleTimeString()}</td>
                                                 <td className="text-right">
-                                                    {canWrite && <div className="flex items-center justify-end gap-1">
+                                                    <div className="flex items-center justify-end gap-1">
                                                         <button onClick={() => openEditMove(m)} className="btn-ghost p-1 hover:bg-primary-50 hover:text-primary-600 text-xs">Editar</button>
-                                                        <button onClick={() => setDeleteConfirmId(m.id)} className="btn-ghost p-1 hover:bg-red-50 text-red-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
-                                                    </div>}
+                                                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setDeleteConfirmId(m.id) }} className="btn-ghost p-1 hover:bg-red-50 text-red-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))

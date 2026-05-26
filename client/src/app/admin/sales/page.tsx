@@ -184,7 +184,9 @@ export default function SalesPage() {
     }
 
     const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault(); setSaving(true)
+        e.preventDefault()
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        setSaving(true)
         try {
             await api.post('/api/admin/sales', {
                 customerId: form.customerId ? Number(form.customerId) : null,
@@ -252,9 +254,9 @@ export default function SalesPage() {
                     <button onClick={exportExcel} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3">
                         <FileSpreadsheet className="w-4 h-4" /> Excel
                     </button>
-                    {canWrite && <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
+                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setShowModal(true) }} className="btn-primary flex items-center gap-2">
                         <Plus className="w-4 h-4" /> Nueva venta
-                    </button>}
+                    </button>
                 </div>
             </div>
 

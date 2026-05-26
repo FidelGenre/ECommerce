@@ -33,8 +33,8 @@ export default function CategoriesPage() {
     const load = async () => { setLoading(true); const r = await api.get('/api/admin/categories?type=PRODUCT'); setData(r.data); setLoading(false) }
     useEffect(() => { load() }, [])
 
-    const openNew = () => { setEditing(null); setForm({ name: '', description: '', type: 'PRODUCT' }); setShowModal(true) }
-    const openEdit = (c: Category) => { setEditing(c); setForm({ name: c.name, description: c.description ?? '', type: c.type }); setShowModal(true) }
+    const openNew = () => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditing(null); setForm({ name: '', description: '', type: 'PRODUCT' }); setShowModal(true) }
+    const openEdit = (c: Category) => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditing(c); setForm({ name: c.name, description: c.description ?? '', type: c.type }); setShowModal(true) }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true)
         try {
@@ -74,13 +74,13 @@ export default function CategoriesPage() {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-espresso">Categorías de Productos</h1>
                 <div className="flex items-center gap-2">
-                    {canWrite && selected.size > 0 && (
-                        <button onClick={() => setPendingDelete([...selected])} disabled={deleting}
+                    {selected.size > 0 && (
+                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDelete([...selected]) }} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
                     )}
-                    {canWrite && <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar</button>}
+                    <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar</button>
                 </div>
             </div>
 
@@ -104,10 +104,10 @@ export default function CategoriesPage() {
                                 <td className="pl-4"><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
                                 <td className="font-medium text-espresso">{c.name}</td><td className="text-primary-500">{c.description ?? '—'}</td>
                                 <td>
-                                    {canWrite && <div className="flex justify-end gap-1">
+                                    <div className="flex justify-end gap-1">
                                         <button onClick={() => openEdit(c)} className="btn-ghost p-1.5 hover:text-primary-700 hover:bg-primary-50 text-primary-400"><Edit className="w-4 h-4" /></button>
-                                        <button onClick={() => setPendingDelete([c.id])} className="text-primary-400 hover:bg-red-50 hover:text-red-500 p-1.5 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                                    </div>}
+                                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDelete([c.id]) }} className="text-primary-400 hover:bg-red-50 hover:text-red-500 p-1.5 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
