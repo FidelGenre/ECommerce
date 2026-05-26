@@ -155,10 +155,12 @@ export default function UsersSettingsPage() {
         return `${raw.slice(0, 2)}-${raw.slice(2, 10)}-${raw.slice(10)}`
     }
 
-    const openNew = () => { setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE', firstName: '', lastName: '', phone: '', address: '', taxId: '', documentType: 'DNI', loyaltyPoints: 0 }); setShowModal(true) }
-    const openEdit = (u: UserRow) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role, firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', address: u.address || '', taxId: u.taxId || '', documentType: u.documentType || 'DNI', loyaltyPoints: u.loyaltyPoints || 0 }); setShowModal(true) }
+    const openNew = () => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE', firstName: '', lastName: '', phone: '', address: '', taxId: '', documentType: 'DNI', loyaltyPoints: 0 }); setShowModal(true) }
+    const openEdit = (u: UserRow) => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role, firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', address: u.address || '', taxId: u.taxId || '', documentType: u.documentType || 'DNI', loyaltyPoints: u.loyaltyPoints || 0 }); setShowModal(true) }
     const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault(); setSaving(true)
+        e.preventDefault()
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        setSaving(true)
         try {
             if (editing) await api.put(`/api/admin/users/${editing.id}`, form)
             else await api.post('/api/admin/users', form)
@@ -167,13 +169,15 @@ export default function UsersSettingsPage() {
         } finally { setSaving(false) }
     }
 
-    const openNewRole = () => { setEditingRole(null); setRoleForm({ code: '', name: '', permissions: [] }); setShowRoleModal(true) }
-    const openEditRole = (r: Role) => { setEditingRole(r); setRoleForm({ ...r }); setShowRoleModal(true) }
+    const openNewRole = () => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditingRole(null); setRoleForm({ code: '', name: '', permissions: [] }); setShowRoleModal(true) }
+    const openEditRole = (r: Role) => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditingRole(r); setRoleForm({ ...r }); setShowRoleModal(true) }
     const [pendingDeleteRole, setPendingDeleteRole] = useState<string | null>(null)
     const [pendingDeleteIds, setPendingDeleteIds] = useState<number[] | null>(null)
 
     const handleSaveRole = async (e: React.FormEvent) => {
-        e.preventDefault(); setSaving(true)
+        e.preventDefault()
+        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        setSaving(true)
         try {
             if (editingRole) { await api.put(`/api/admin/roles/${editingRole.code}`, roleForm); toast.success('Rol actualizado') }
             else { await api.post('/api/admin/roles', roleForm); toast.success('Rol creado') }
@@ -196,7 +200,7 @@ export default function UsersSettingsPage() {
         }
     }
 
-    const toggle = async (id: number) => { await api.patch(`/api/admin/users/${id}/toggle`); load() }
+    const toggle = async (id: number) => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } await api.patch(`/api/admin/users/${id}/toggle`); load() }
 
     const executeDeleteUsers = async () => {
         if (!pendingDeleteIds) return
@@ -235,14 +239,14 @@ export default function UsersSettingsPage() {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-espresso">Usuarios y Permisos</h1>
                 <div className="flex items-center gap-2">
-                    {canWrite && activeTab === 'USERS' && selected.size > 0 && (
-                        <button onClick={() => setPendingDeleteIds([...selected])} disabled={deleting !== ""}
+                    {activeTab === 'USERS' && selected.size > 0 && (
+                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDeleteIds([...selected]) }} disabled={deleting !== ""}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
                     )}
-                    {canWrite && activeTab === 'USERS' && <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar usuario</button>}
-                    {canWrite && activeTab === 'ROLES' && <button onClick={openNewRole} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Nuevo Rol</button>}
+                    {activeTab === 'USERS' && <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar usuario</button>}
+                    {activeTab === 'ROLES' && <button onClick={openNewRole} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Nuevo Rol</button>}
                 </div>
             </div>
 
@@ -327,21 +331,21 @@ export default function UsersSettingsPage() {
                                         <td className="text-right font-semibold text-espresso">{u.accountBalance !== undefined ? formatCurrency(u.accountBalance) : '—'}</td>
                                         <td className="text-right font-medium text-amber-600">{typeof u.loyaltyPoints === 'number' ? u.loyaltyPoints + ' pts' : <span className="text-primary-300 font-normal">Sin puntos</span>}</td>
                                         <td>
-                                            {canWrite && <button onClick={() => toggle(u.id)} className="text-primary-500 hover:text-primary-700 transition-colors">
+                                            <button onClick={() => toggle(u.id)} className="text-primary-500 hover:text-primary-700 transition-colors">
                                                 {u.active ? <ToggleRight className="w-6 h-6 text-emerald-600" /> : <ToggleLeft className="w-6 h-6 text-red-400" />}
-                                            </button>}
+                                            </button>
                                         </td>
                                         <td>
-                                            {canWrite && <div className="flex justify-end gap-1">
+                                            <div className="flex justify-end gap-1">
                                                 <button onClick={() => openEdit(u)} title="Editar login" className="btn-ghost p-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-400">
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 {u.username !== 'admin' && (
-                                                    <button onClick={() => setPendingDeleteIds([u.id])} title="Eliminar definitivamente" disabled={deleting !== ""} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
+                                                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDeleteIds([u.id]) }} title="Eliminar definitivamente" disabled={deleting !== ""} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
-                                            </div>}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -382,16 +386,16 @@ export default function UsersSettingsPage() {
                                             </div>
                                         </td>
                                         <td>
-                                            {canWrite && <div className="flex justify-end gap-1">
+                                            <div className="flex justify-end gap-1">
                                                 <button onClick={() => openEditRole(r)} title="Editar permisos" className="btn-ghost px-2 py-1.5 hover:bg-primary-50 hover:text-primary-700 text-primary-500 font-medium text-xs flex items-center gap-1.5">
                                                     <Edit className="w-3.5 h-3.5" /> Editar
                                                 </button>
                                                 {r.code !== 'ADMIN' && r.code !== 'CLIENTE' && (
-                                                    <button onClick={() => setPendingDeleteRole(r.code)} title="Eliminar rol" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
+                                                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDeleteRole(r.code) }} title="Eliminar rol" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
-                                            </div>}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
