@@ -17,9 +17,10 @@ export default function LoginPage() {
         try {
             await login(username, password)
         } catch (e: any) {
-            setError(e.message || 'Usuario o contraseña incorrectos.')
-        } finally {
+            const errorMsg = e.message || 'Usuario o contraseña incorrectos.'
+            setError(errorMsg)
             setLoading(false)
+            setTimeout(() => setError(''), 3000)
         }
     }
 
