@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import {
     LayoutDashboard, ShoppingCart, Package2, Users, Truck,
     BarChart3, Boxes, Banknote, Bell, ClipboardList,
-    Settings, LogOut, ChevronRight, Coffee, Package, Menu, X, Store
+    Settings, LogOut, ChevronRight, Coffee, Package, Menu, X, Store, ChevronLeft
 } from 'lucide-react'
 
 const NAV = [
@@ -38,11 +38,16 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
     return (
         <>
             {/* Logo */}
-            <div className="flex items-center gap-3 px-6 py-5 border-b border-primary-800">
-                <div className="w-9 h-9 bg-caramel rounded-lg flex items-center justify-center">
-                    <Coffee className="w-5 h-5 text-espresso" />
+            <div className="px-6 py-5 border-b border-primary-800 space-y-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-caramel rounded-lg flex items-center justify-center">
+                        <Coffee className="w-5 h-5 text-espresso" />
+                    </div>
+                    <h1 className="text-white font-bold text-base leading-tight">Coffee Beans</h1>
                 </div>
-                <h1 className="text-white font-bold text-base leading-tight">Coffee Beans</h1>
+                <Link href="/" onClick={onNav} className="flex items-center gap-2 text-primary-300 hover:text-caramel transition-colors text-xs font-medium">
+                    <ChevronLeft className="w-3.5 h-3.5" /> Volver a la Tienda
+                </Link>
             </div>
 
             {/* Nav */}

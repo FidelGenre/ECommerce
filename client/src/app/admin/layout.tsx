@@ -5,8 +5,7 @@ import { useAuth } from '@/lib/auth'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import { ForbiddenToast } from '@/components/ForbiddenToast'
 import { Toast } from '@/components/Toast'
-import { ShieldX, ChevronLeft } from 'lucide-react'
-import Link from 'next/link'
+import { ShieldX } from 'lucide-react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth()
@@ -32,11 +31,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex min-h-screen bg-surface">
             <AdminSidebar />
             <main className="flex-1 lg:ml-60 xl:ml-64 pt-16 lg:pt-0 p-4 sm:p-6 lg:p-8 overflow-auto min-w-0">
-                <div className="mb-6 flex items-center">
-                    <Link href="/" className="flex items-center gap-1.5 text-primary-500 hover:text-caramel transition-colors text-sm font-medium">
-                        <ChevronLeft className="w-4 h-4" /> Volver a la Tienda
-                    </Link>
-                </div>
                 {isConsulta && (
                     <div className="mb-4 flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-2.5 rounded-xl">
                         <ShieldX className="w-4 h-4 shrink-0" />
