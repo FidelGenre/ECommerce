@@ -107,7 +107,10 @@ export default function CashPage() {
             await api.post(`/api/admin/cash/${register.id}/close`, { amount: Number(closeAmt) })
             setShowClose(false); load()
             toast.success('Caja cerrada')
-        } catch { toast.error('No se pudo cerrar la caja') } finally { setSaving(false) }
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.message || err.response?.data?.error || 'No se pudo cerrar la caja'
+            toast.error(errorMsg)
+        } finally { setSaving(false) }
     }
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -136,6 +139,9 @@ export default function CashPage() {
                 toast.success('Movimiento agregado')
             }
             setShowMove(false); setEditingMove(false); setShowConfirmModal(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); load();
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.message || err.message || 'Error al procesar el movimiento'
+            toast.error(errorMsg)
         } finally {
             setSaving(false)
         }
