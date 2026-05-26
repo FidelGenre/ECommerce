@@ -87,8 +87,33 @@ public class CashController {
     }
 
     @PostMapping("/{id}/close")
-    public ResponseEntity<CashRegister> close(@PathVariable Long id, @RequestBody OpenRequest req) {
+    public ResponseEntity<?> close(@PathVariable Long id, @RequestBody OpenRequest req) {
         return registerRepo.findById(id).map(r -> {
+            // Calculate income and expense totals
+            BigDecimal income = movementRepo.sumByRegisterAndType(id, "INCOME");
+            BigDecimal expense = movementRepo.sumByRegisterAndType(id, "EXPENSE");
+            if (income == null) income = BigDecimal.ZERO;
+            if (expense == null) expense = BigDecimal.ZERO;
+
+            // Calculate expected balance: opening + income - expense
+            BigDecimal expectedBalance = (r.getOpeningAmount() != null ? r.getOpeningAmount() : BigDecimal.ZERO)
+                    .add(income)
+                    .subtract(expense);
+
+            // Validate closing amount matches expected balance
+            if (req.getAmount().compareTo(expectedBalance) != 0) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Discrepancia en el cierre de caja",
+                        "message", "El monto ingresado no coincide con el balance esperado",
+                        "expected", expectedBalance,
+                        "provided", req.getAmount(),
+                        "difference", req.getAmount().subtract(expectedBalance),
+                        "opening", r.getOpeningAmount(),
+                        "income", income,
+                        "expense", expense
+                ));
+            }
+
             r.setClosingAmount(req.getAmount());
             r.setClosedAt(LocalDateTime.now());
             r.setNotes(req.getNotes());
