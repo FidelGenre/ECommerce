@@ -255,7 +255,9 @@ export default function AccountPage() {
                             </div>
                             <div>
                                 <p className="font-bold text-espresso text-lg leading-tight">{fullName}</p>
-                                <span className="badge-brown capitalize text-xs">{user.role.toLowerCase() === 'admin' ? 'Administrador' : 'Cliente'}</span>
+                                <span className="badge-brown capitalize text-xs">
+                                  {user.role.toLowerCase() === 'admin' ? 'Administrador' : user.role.toLowerCase() === 'consulta' ? 'Consulta' : 'Cliente'}
+                                </span>
                             </div>
                             {!editMode && (
                                 <button onClick={openEdit} className="btn-ghost text-xs flex items-center gap-1.5 py-1.5 ml-auto">
