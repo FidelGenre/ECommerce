@@ -257,7 +257,7 @@ export default function UsersSettingsPage() {
                     onClick={() => setActiveTab('ROLES')} 
                     className={`flex items-center gap-2 px-6 py-3 font-medium text-sm transition-colors ${activeTab === 'ROLES' ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-600' : 'text-primary-400 hover:bg-primary-50/50 hover:text-primary-600'}`}
                 >
-                    <ShieldCheck className="w-4 h-4" /> Roles y Permisos (RBAC)
+                    <ShieldCheck className="w-4 h-4" /> Roles y Permisos
                 </button>
             </div>
 
