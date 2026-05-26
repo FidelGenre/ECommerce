@@ -485,7 +485,6 @@ export default function UsersSettingsPage() {
                                             <option value="DNI">DNI</option>
                                             <option value="CUIT">CUIT</option>
                                             <option value="CUIL">CUIL</option>
-                                            <option value="Pasaporte">PAS</option>
                                         </select>
                                         <input className="input font-mono flex-1" maxLength={20} value={form.taxId} onChange={e => setForm({ ...form, taxId: formatDoc(e.target.value, form.documentType) })} placeholder={form.documentType === 'DNI' ? '12345678' : '20-XXXXXXXX-X'} />
                                     </div>

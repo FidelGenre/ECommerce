@@ -12,6 +12,15 @@ import Link from 'next/link'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
+const formatDoc = (val: string, type: string) => {
+    let raw = val.replace(/\D/g, '')
+    if (type !== 'CUIT' && type !== 'CUIL') return raw.slice(0, 15)
+    raw = raw.slice(0, 11)
+    if (raw.length <= 2) return raw
+    if (raw.length <= 10) return `${raw.slice(0, 2)}-${raw.slice(2)}`
+    return `${raw.slice(0, 2)}-${raw.slice(2, 10)}-${raw.slice(10)}`
+}
+
 const STATUS_COLORS: Record<string, string> = {
     Completado: 'badge-green',
     Pendiente: 'badge-yellow',
@@ -111,6 +120,7 @@ type CustomerProfile = {
     phone?: string
     address?: string
     taxId?: string
+    documentType?: string
     loyaltyPoints?: number
 }
 
@@ -169,6 +179,7 @@ export default function AccountPage() {
             phone: profile.phone ?? '',
             address: profile.address ?? '',
             taxId: profile.taxId ?? '',
+            documentType: profile.documentType ?? 'DNI',
             password: '', confirmPassword: '',
         })
         setSaveMsg(null)
@@ -189,6 +200,7 @@ export default function AccountPage() {
             if (editForm.phone !== undefined) body.phone = editForm.phone
             if (editForm.address !== undefined) body.address = editForm.address
             if (editForm.taxId !== undefined) body.taxId = editForm.taxId
+            if (editForm.documentType !== undefined) body.documentType = editForm.documentType
             if (editForm.password) body.password = editForm.password
             const r = await api.patch('/api/auth/me', body)
             setProfile(r.data)
@@ -304,8 +316,18 @@ export default function AccountPage() {
                                     <input className="input text-sm" value={editForm.address ?? ''} onChange={e => setEditForm(f => ({ ...f, address: e.target.value }))} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-primary-700 mb-1"><CreditCard className="w-3 h-3 inline mr-1" />DNI / CUIT</label>
-                                    <input className="input text-sm" value={editForm.taxId ?? ''} onChange={e => setEditForm(f => ({ ...f, taxId: e.target.value }))} />
+                                    <label className="block text-xs font-medium text-primary-700 mb-1"><CreditCard className="w-3 h-3 inline mr-1" />Documento</label>
+                                    <div className="flex gap-2">
+                                        <select className="input w-24 shrink-0 px-2 text-sm" value={editForm.documentType ?? 'DNI'} onChange={e => {
+                                            const t = e.target.value
+                                            setEditForm(f => ({ ...f, documentType: t, taxId: formatDoc(f.taxId ?? '', t) }))
+                                        }}>
+                                            <option value="DNI">DNI</option>
+                                            <option value="CUIT">CUIT</option>
+                                            <option value="CUIL">CUIL</option>
+                                        </select>
+                                        <input className="input text-sm flex-1 font-mono" maxLength={20} value={editForm.taxId ?? ''} onChange={e => setEditForm(f => ({ ...f, taxId: formatDoc(e.target.value, f.documentType ?? 'DNI') }))} placeholder={editForm.documentType === 'DNI' ? '12345678' : '20-XXXXXXXX-X'} />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-primary-700 mb-1"><Lock className="w-3 h-3 inline mr-1" />Nueva contraseña</label>

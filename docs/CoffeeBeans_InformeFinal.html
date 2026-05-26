@@ -287,7 +287,8 @@
     <h3>Requerimientos Funcionales</h3>
     <ul>
         <li><strong>Autenticación y Perfiles:</strong>Registro e inicio de sesión con
-            roles dinámicos (Cliente, Administrador) y perfiles detallados</li>
+            roles dinámicos (Cliente, Administrador, Consulta) y perfiles detallados. El rol Consulta
+            permite acceso de solo lectura al panel administrativo.</li>
         <li><strong>Catálogo y Carrito:</strong> Navegación de productos con filtros avanzados y gestión de pedidos
             dinámica con retiro en local.
         </li>
@@ -346,6 +347,7 @@
         graph LR
         C((Cliente))
         A((Administrador))
+        Q((Consulta))
 
         subgraph Sistema ["Portal Coffee Beans"]
         UC1(["Añadir/Eliminar del Carrito"])
@@ -356,6 +358,8 @@
         UC6(["Login Panel Admin"])
         UC7(["Gestionar Usuarios"])
         UC8(["Gestionar Pedidos"])
+        UC9(["Consultar Reportes / Dashboard"])
+        UC10(["Visualizar Listados"])
         end
 
         C --- UC1
@@ -369,6 +373,11 @@
         UC6 --- A
         UC7 --- A
         UC8 --- A
+        UC9 --- A
+
+        UC6 --- Q
+        UC9 --- Q
+        UC10 --- Q
     </div>
 
     <h3>2.2. Especificación de Casos de Uso e Interfaces</h3>
@@ -769,11 +778,12 @@
         classDiagram
         direction TB
         class rol {
-        idRol: cliente, administrador
+        idRol: cliente, administrador, consulta
         gestionarUsuarios()
         gestionarPedidos()
         gestionarInventario()
         emitirCompras()
+        soloLectura()
         }
         class usuario {
         id, nombre, email, contraseña
@@ -936,7 +946,7 @@
         USUARIOS {
         Long id PK
         String nombre_usuario
-        String rol "Admin, Cliente"
+        String rol "Admin, Cliente, Consulta"
         Boolean activo
         }
         CLIENTES {

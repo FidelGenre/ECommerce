@@ -262,7 +262,6 @@ export default function SuppliersPage() {
                                             <option value="DNI">DNI</option>
                                             <option value="CUIT">CUIT</option>
                                             <option value="CUIL">CUIL</option>
-                                            <option value="Pasaporte">PAS</option>
                                         </select>
                                         <div className="relative flex-1">
                                             <Fingerprint className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
