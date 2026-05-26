@@ -42,10 +42,7 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
                 <div className="w-9 h-9 bg-caramel rounded-lg flex items-center justify-center">
                     <Coffee className="w-5 h-5 text-espresso" />
                 </div>
-                <div>
-                    <h1 className="text-white font-bold text-base leading-tight">Coffee Beans</h1>
-                    <p className="text-white/60 text-xs">Panel de Administrador</p>
-                </div>
+                <h1 className="text-white font-bold text-base leading-tight">Coffee Beans</h1>
             </div>
 
             {/* Nav */}
@@ -121,10 +118,11 @@ export default function AdminSidebar() {
                     <div className="w-8 h-8 bg-caramel rounded-lg flex items-center justify-center">
                         <Coffee className="w-4 h-4 text-espresso" />
                     </div>
-                    <span className="text-white font-bold">Coffee Beans</span>
+                    <span className="text-white font-bold text-sm">Coffee Beans</span>
                 </div>
-                <button onClick={() => setMobileOpen(true)} className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center text-white">
-                    <Menu className="w-5 h-5" />
+                <button onClick={() => setMobileOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors text-sm">
+                    <span>Panel de Administrador</span>
+                    <Menu className="w-4 h-4" />
                 </button>
             </div>
 
