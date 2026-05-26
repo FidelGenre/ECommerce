@@ -125,7 +125,7 @@ public class PurchaseController {
                 movement.setItem(item);
                 movement.setMovementType("IN");
                 movement.setQuantity(addedStock);
-                movement.setReason("Purchase order");
+                movement.setReason("Orden de compra");
                 movement.setCreatedBy(createdBy);
                 stockMovementRepo.save(movement);
 

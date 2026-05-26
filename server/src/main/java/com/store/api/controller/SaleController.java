@@ -180,7 +180,7 @@ public class SaleController {
             if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)
                     || "Reservado".equalsIgnoreCase(statusName) || "Pendiente".equalsIgnoreCase(statusName)
                     || "Pending".equalsIgnoreCase(statusName)) {
-                stockService.deductStockForSale(saved, "Manual sale start - Status: " + statusName, createdBy);
+                stockService.deductStockForSale(saved, "Venta manual creada - Estado: " + statusName, createdBy);
                 saved = saleRepo.save(saved);
             }
         }
@@ -220,7 +220,7 @@ public class SaleController {
                             throw new RuntimeException("No se puede actualizar el estado: " + e.getMessage());
                         }
                     }
-                    stockService.deductStockForSale(order, "Sale status updated to " + statusName, updatedBy);
+                    stockService.deductStockForSale(order, "Estado de venta actualizado a " + statusName, updatedBy);
                 }
 
                 if (("Completed".equals(statusName) || "Completado".equals(statusName))
