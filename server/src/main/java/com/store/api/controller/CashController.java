@@ -83,6 +83,13 @@ public class CashController {
     @PostMapping("/open")
     public ResponseEntity<?> open(@RequestBody OpenRequest req,
             org.springframework.security.core.Authentication auth) {
+        if (registerRepo.findFirstByClosedAtIsNullOrderByOpenedAtDesc().isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Caja ya abierta",
+                    "message", "No podés abrir una caja nueva porque ya hay una sesión de caja abierta. Cerrala primero."
+            ));
+        }
+
         BigDecimal lastClosing = registerRepo.findFirstByClosedAtIsNotNullOrderByClosedAtDesc()
                 .map(CashRegister::getClosingAmount)
                 .orElse(null);
