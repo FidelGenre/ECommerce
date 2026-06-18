@@ -151,7 +151,10 @@ export default function CashPage() {
             toast.success('Movimiento agregado')
             setShowMove(false); setShowConfirmModal(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); load();
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Error al procesar el movimiento')
+            const data = err.response?.data
+            const msg = data?.message || (typeof data === 'string' ? data : 'Error al procesar el movimiento')
+            toast.error(msg)
+            setShowConfirmModal(false)
         } finally {
             setSaving(false)
         }

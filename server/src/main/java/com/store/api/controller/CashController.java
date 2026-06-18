@@ -168,10 +168,10 @@ public class CashController {
     @PostMapping("/{id}/movements")
     public ResponseEntity<?> addMovement(@PathVariable Long id, @RequestBody CashMovement req, org.springframework.security.core.Authentication auth) {
         if (req.getAmount() == null || req.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            return ResponseEntity.badRequest().body("El monto debe ser mayor a 0.");
+            return ResponseEntity.badRequest().body(Map.of("message", "El monto debe ser mayor a 0."));
         }
         if (req.getDescription() == null || req.getDescription().trim().isBlank()) {
-            return ResponseEntity.badRequest().body("El motivo o descripción es obligatorio.");
+            return ResponseEntity.badRequest().body(Map.of("message", "El motivo o descripción es obligatorio."));
         }
         return registerRepo.findById(id).map(register -> {
             req.setRegister(register);
