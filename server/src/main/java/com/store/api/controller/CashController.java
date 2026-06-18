@@ -140,25 +140,19 @@ public class CashController {
 
             boolean hasDiscrepancy = req.getAmount().compareTo(expectedBalance) != 0;
 
-            if (hasDiscrepancy && (req.getDiscrepancyReason() == null || req.getDiscrepancyReason().isBlank())) {
+            if (hasDiscrepancy) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "error", "Discrepancia en el cierre de caja",
-                        "message", "El monto declarado no coincide con el balance esperado. Ingresá un motivo para continuar.",
+                        "message", "El monto declarado no coincide con el balance esperado (" + expectedBalance + "). Por favor, registrá los ingresos o egresos correspondientes para cuadrar la caja antes de cerrar.",
                         "expected", expectedBalance,
                         "provided", req.getAmount(),
-                        "difference", req.getAmount().subtract(expectedBalance),
-                        "opening", r.getOpeningAmount(),
-                        "income", income,
-                        "expense", expense
+                        "difference", req.getAmount().subtract(expectedBalance)
                 ));
             }
 
             r.setClosingAmount(req.getAmount());
             r.setClosedAt(LocalDateTime.now());
             r.setNotes(req.getNotes());
-            if (hasDiscrepancy) {
-                r.setDiscrepancyReason(req.getDiscrepancyReason());
-            }
             if (auth != null) {
                 userRepo.findByUsername(auth.getName()).ifPresent(r::setClosedBy);
             }
@@ -175,6 +169,9 @@ public class CashController {
     public ResponseEntity<?> addMovement(@PathVariable Long id, @RequestBody CashMovement req, org.springframework.security.core.Authentication auth) {
         if (req.getAmount() == null || req.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             return ResponseEntity.badRequest().body("El monto debe ser mayor a 0.");
+        }
+        if (req.getDescription() == null || req.getDescription().trim().isBlank()) {
+            return ResponseEntity.badRequest().body("El motivo o descripción es obligatorio.");
         }
         return registerRepo.findById(id).map(register -> {
             req.setRegister(register);

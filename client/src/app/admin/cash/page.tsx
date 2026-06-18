@@ -25,7 +25,6 @@ export default function CashPage() {
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
     const [closeDiscrepancy, setCloseDiscrepancy] = useState<any>(null)
-    const [closeDiscrepancyReason, setCloseDiscrepancyReason] = useState('')
     const [openDiscrepancy, setOpenDiscrepancy] = useState<any>(null)
     const [openDiscrepancyReason, setOpenDiscrepancyReason] = useState('')
     const [detailModal, setDetailModal] = useState<{ register: CashRegister; movements: CashMovement[]; summary: any } | null>(null)
@@ -120,10 +119,9 @@ export default function CashPage() {
         if (!register) return; setSaving(true)
         try {
             await api.post(`/api/admin/cash/${register.id}/close`, {
-                amount: Number(closeAmt),
-                discrepancyReason: closeDiscrepancyReason || undefined
+                amount: Number(closeAmt)
             })
-            setShowClose(false); setCloseDiscrepancy(null); setCloseDiscrepancyReason(''); load()
+            setShowClose(false); setCloseDiscrepancy(null); load()
             toast.success('Caja cerrada')
         } catch (err: any) {
             const data = err.response?.data
@@ -513,26 +511,23 @@ export default function CashPage() {
                         )}
                         <div>
                             <label className="block text-sm font-medium text-primary-700 mb-1">Monto declarado (efectivo contado)</label>
-                            <input type="number" min="0" step="0.01" className="input" value={closeAmt} onChange={e => { setCloseAmt(e.target.value); setCloseDiscrepancy(null); setCloseDiscrepancyReason('') }} />
+                            <input type="number" min="0" step="0.01" className="input" value={closeAmt} onChange={e => { setCloseAmt(e.target.value); setCloseDiscrepancy(null); }} />
                         </div>
                         {closeDiscrepancy && (
                             <div className="bg-red-50 border border-red-300 rounded-xl p-4 space-y-3">
                                 <div className="flex items-start gap-2">
                                     <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                                     <div>
-                                        <p className="text-sm font-semibold text-red-800">Discrepancia detectada</p>
+                                        <p className="text-sm font-semibold text-red-800">Cierre bloqueado</p>
                                         <p className="text-xs text-red-700 mt-1">Balance esperado: <strong>{FMT(closeDiscrepancy.expected)}</strong>. Declarado: <strong>{FMT(closeDiscrepancy.provided)}</strong>. {closeDiscrepancy.difference < 0 ? <>Falta <strong>{FMT(Math.abs(closeDiscrepancy.difference))}</strong> en caja</> : <>Sobran <strong>{FMT(closeDiscrepancy.difference)}</strong> en caja</>}.</p>
+                                        <p className="text-xs text-red-700 mt-2 font-medium">Cancelá y registrá los movimientos de ingreso o egreso correspondientes para cuadrar la caja.</p>
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-red-800 mb-1">Motivo de la diferencia <span className="text-red-500">*</span></label>
-                                    <textarea className="input text-sm resize-none border-red-300 focus:ring-red-400" rows={2} placeholder="Ej: Falta de cambio, error de cobro..." value={closeDiscrepancyReason} onChange={e => setCloseDiscrepancyReason(e.target.value)} />
                                 </div>
                             </div>
                         )}
                         <div className="flex gap-3">
-                            <button onClick={() => { setShowClose(false); setCloseDiscrepancy(null); setCloseDiscrepancyReason('') }} className="btn-secondary flex-1">Cancelar</button>
-                            <button onClick={closeRegister} className="btn-danger flex-1" disabled={saving || (!!closeDiscrepancy && !closeDiscrepancyReason.trim())}>{saving ? 'Cerrando…' : 'Cerrar'}</button>
+                            <button onClick={() => { setShowClose(false); setCloseDiscrepancy(null); }} className="btn-secondary flex-1">Cancelar</button>
+                            <button onClick={closeRegister} className="btn-danger flex-1" disabled={saving || !!closeDiscrepancy}>{saving ? 'Cerrando…' : 'Cerrar'}</button>
                         </div>
                     </div>
                 </div>
@@ -560,7 +555,7 @@ export default function CashPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Descripción</label>
-                                <input className="input" maxLength={100} value={moveForm.description} onChange={e => setMoveForm({ ...moveForm, description: e.target.value })} />
+                                <input className="input" maxLength={100} value={moveForm.description} onChange={e => setMoveForm({ ...moveForm, description: e.target.value })} required placeholder="Motivo del movimiento..." />
                             </div>
                             <div className="flex gap-3">
                                 <button type="button" onClick={() => setShowMove(false)} className="btn-secondary flex-1">Cancelar</button>
