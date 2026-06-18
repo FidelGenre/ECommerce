@@ -41,20 +41,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const refresh = async () => {
             try {
                 const { data } = await api.get('/api/auth/refresh')
+                const prev = JSON.parse(localStorage.getItem('user') || '{}')
+                const roleChanged = prev.role !== data.role
+                const permsChanged = JSON.stringify(prev.permissions?.sort()) !== JSON.stringify(data.permissions?.sort())
                 localStorage.setItem('token', data.token)
                 localStorage.setItem('user', JSON.stringify(data))
-                setUser(data)
+                if (roleChanged || permsChanged) {
+                    window.location.reload()
+                } else {
+                    setUser(data)
+                }
             } catch {
                 // Silently ignore — user may have been deleted or logged out
             }
         }
-        intervalRef.current = setInterval(refresh, 30_000)
-        const onFocus = () => refresh()
-        window.addEventListener('focus', onFocus)
-        return () => {
-            if (intervalRef.current) clearInterval(intervalRef.current)
-            window.removeEventListener('focus', onFocus)
-        }
+        intervalRef.current = setInterval(refresh, 5_000)
+        return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
     }, [user?.userId])
 
     const login = async (username: string, password: string) => {
