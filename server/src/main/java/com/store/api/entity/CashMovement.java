@@ -30,7 +30,7 @@ public class CashMovement {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "passwordHash" })
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "passwordHash", "email", "documentType", "documentNumber", "active", "createdAt", "customer" })
     private User createdBy;
 
     @Column(name = "created_at", nullable = false, updatable = false)

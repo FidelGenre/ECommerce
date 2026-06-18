@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { CashRegister, CashMovement } from '@/types'
-import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Trash2, Search } from 'lucide-react'
+import { Banknote, Lock, Unlock, Plus, X, TrendingUp, TrendingDown, FileSpreadsheet, Calendar, AlertCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Trash2, Search, Eye } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAuth } from '@/lib/auth'
 
@@ -28,6 +28,8 @@ export default function CashPage() {
     const [closeDiscrepancyReason, setCloseDiscrepancyReason] = useState('')
     const [openDiscrepancy, setOpenDiscrepancy] = useState<any>(null)
     const [openDiscrepancyReason, setOpenDiscrepancyReason] = useState('')
+    const [detailModal, setDetailModal] = useState<{ register: CashRegister; movements: CashMovement[]; summary: any } | null>(null)
+    const [loadingDetail, setLoadingDetail] = useState(false)
 
     // Movement filters
     const [movFilter, setMovFilter] = useState<'all' | 'INCOME' | 'EXPENSE'>('all')
@@ -180,6 +182,23 @@ export default function CashPage() {
         })
         // editing removed — kept for TS compatibility
         setShowMove(true)
+    }
+
+    const openDetail = async (h: CashRegister) => {
+        setLoadingDetail(true)
+        try {
+            const mvRes = await api.get(`/api/admin/cash/${h.id}/movements`)
+            let smData = null
+            try {
+                const smRes = await api.get(`/api/admin/cash/${h.id}/summary`)
+                smData = smRes.data
+            } catch { }
+            setDetailModal({ register: h, movements: mvRes.data, summary: smData })
+        } catch (e: any) {
+            toast.error('No se pudo cargar el detalle: ' + (e?.response?.data || e?.message || 'error'))
+        } finally {
+            setLoadingDetail(false)
+        }
     }
 
     const exportCash = () => {
@@ -389,9 +408,12 @@ export default function CashPage() {
                                 {history.length === 0 ? (
                                     <tr><td colSpan={6} className="text-center text-primary-400 py-8">No hay registros en este rango</td></tr>
                                 ) : history.map(h => (
-                                    <tr key={h.id} className={h.closedAt ? '' : 'bg-primary-50'}>
+                                    <tr key={h.id} onClick={() => openDetail(h)} className={`cursor-pointer hover:bg-caramel/5 transition-colors ${h.closedAt ? '' : 'bg-primary-50'}`}>
                                         <td className="text-sm min-w-[140px]">
-                                            {new Date(h.openedAt).toLocaleString('es-AR')}
+                                            <div className="flex items-center gap-1.5">
+                                                <Eye className="w-3.5 h-3.5 text-primary-300 shrink-0" />
+                                                <span>{new Date(h.openedAt).toLocaleString('es-AR')}</span>
+                                            </div>
                                             {h.openingDiscrepancyReason && (
                                                 <div className="mt-1 text-xs text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 border border-amber-200">
                                                     ⚠ Apertura con diferencia: {h.openingDiscrepancyReason}
@@ -576,6 +598,124 @@ export default function CashPage() {
                         <div className="flex gap-3">
                             <button onClick={() => setShowConfirmModal(false)} className="btn-secondary flex-1">Cancelar</button>
                             <button onClick={processMovement} className="btn-primary flex-1" disabled={saving}>{saving ? 'Procesando…' : 'Sí, continuar'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Detalle de Sesión */}
+            {detailModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-[60] p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl my-8">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100">
+                            <div>
+                                <h2 className="text-lg font-bold text-espresso">Detalle de Sesión de Caja</h2>
+                                <p className="text-xs text-primary-400 mt-0.5">
+                                    Apertura: {new Date(detailModal.register.openedAt).toLocaleString('es-AR')}
+                                    {detailModal.register.closedAt && <> · Cierre: {new Date(detailModal.register.closedAt).toLocaleString('es-AR')}</>}
+                                </p>
+                            </div>
+                            <button onClick={() => setDetailModal(null)} className="p-2 hover:bg-primary-100 rounded-lg text-primary-400 hover:text-primary-700 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            {/* Alertas de discrepancia */}
+                            {detailModal.register.openingDiscrepancyReason && (
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                    <p className="text-sm font-semibold text-amber-800 mb-1">⚠ Apertura con diferencia</p>
+                                    <p className="text-sm text-amber-700">{detailModal.register.openingDiscrepancyReason}</p>
+                                </div>
+                            )}
+                            {detailModal.register.discrepancyReason && (
+                                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                                    <p className="text-sm font-semibold text-red-800 mb-1">⚠ Cierre con diferencia</p>
+                                    <p className="text-sm text-red-700">{detailModal.register.discrepancyReason}</p>
+                                </div>
+                            )}
+
+                            {/* Resumen de saldos */}
+                            {detailModal.summary && (
+                                <div>
+                                    <h3 className="text-sm font-semibold text-primary-600 uppercase tracking-wider mb-3">Resumen</h3>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <div className="bg-primary-50 rounded-xl p-3 text-center">
+                                            <p className="text-xs text-primary-400 mb-1">Fondo Inicial</p>
+                                            <p className="font-bold text-espresso">{FMT(detailModal.register.openingAmount ?? 0)}</p>
+                                        </div>
+                                        <div className="bg-emerald-50 rounded-xl p-3 text-center">
+                                            <p className="text-xs text-emerald-600 mb-1">Ingresos</p>
+                                            <p className="font-bold text-emerald-700">{FMT(detailModal.summary.totalIncome ?? 0)}</p>
+                                        </div>
+                                        <div className="bg-red-50 rounded-xl p-3 text-center">
+                                            <p className="text-xs text-red-500 mb-1">Egresos</p>
+                                            <p className="font-bold text-red-600">{FMT(detailModal.summary.totalExpense ?? 0)}</p>
+                                        </div>
+                                        <div className="bg-caramel/10 rounded-xl p-3 text-center">
+                                            <p className="text-xs text-caramel mb-1">Saldo Esperado</p>
+                                            <p className="font-bold text-espresso">{FMT((detailModal.register.openingAmount ?? 0) + (detailModal.summary.totalIncome ?? 0) - (detailModal.summary.totalExpense ?? 0))}</p>
+                                        </div>
+                                    </div>
+                                    {detailModal.register.closingAmount != null && (
+                                        <div className={`mt-3 rounded-xl p-3 flex items-center justify-between ${Math.abs(detailModal.register.closingAmount - ((detailModal.register.openingAmount ?? 0) + (detailModal.summary.totalIncome ?? 0) - (detailModal.summary.totalExpense ?? 0))) < 0.01 ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
+                                            <span className="text-sm font-medium text-primary-700">Cierre declarado</span>
+                                            <span className="font-bold text-espresso">{FMT(detailModal.register.closingAmount)}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Movimientos */}
+                            <div>
+                                <h3 className="text-sm font-semibold text-primary-600 uppercase tracking-wider mb-3">Movimientos ({detailModal.movements.length})</h3>
+                                {detailModal.movements.length === 0 ? (
+                                    <p className="text-sm text-primary-400 text-center py-6">Sin movimientos registrados</p>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="admin-table w-full text-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Tipo</th>
+                                                    <th>Monto</th>
+                                                    <th>Descripción</th>
+                                                    <th>Usuario</th>
+                                                    <th>Hora</th>
+                                                    <th>Origen</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {detailModal.movements.map((m: CashMovement) => (
+                                                    <tr key={m.id}>
+                                                        <td>
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${m.movementType === 'INCOME' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
+                                                                {m.movementType === 'INCOME' ? '↑ Ingreso' : '↓ Egreso'}
+                                                            </span>
+                                                        </td>
+                                                        <td className={`font-semibold ${m.movementType === 'INCOME' ? 'text-emerald-700' : 'text-red-600'}`}>
+                                                            {m.movementType === 'INCOME' ? '+' : '-'}{FMT(m.amount)}
+                                                        </td>
+                                                        <td className="text-primary-600 max-w-[180px] truncate" title={m.description}>{m.description ?? '—'}</td>
+                                                        <td className="text-primary-500">{m.createdBy?.firstName ? `${m.createdBy.firstName} ${m.createdBy.lastName ?? ''}`.trim() : (m.createdBy?.username ?? '—')}</td>
+                                                        <td className="text-primary-400 whitespace-nowrap">{m.createdAt ? new Date(m.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                                                        <td>
+                                                            {m.isManual
+                                                                ? <span className="text-xs bg-primary-100 text-primary-600 rounded px-1.5 py-0.5">Manual</span>
+                                                                : <span className="text-xs bg-blue-100 text-blue-600 rounded px-1.5 py-0.5">Sistema</span>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="px-6 pb-6">
+                            <button onClick={() => setDetailModal(null)} className="btn-secondary w-full">Cerrar</button>
                         </div>
                     </div>
                 </div>

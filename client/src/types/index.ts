@@ -169,6 +169,7 @@ export interface CashMovement {
     description?: string
     createdAt: string
     isManual?: boolean
+    createdBy?: { id: number; username: string; firstName?: string; lastName?: string }
 }
 
 export interface Notification {

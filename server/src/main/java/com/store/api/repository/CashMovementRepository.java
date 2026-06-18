@@ -8,7 +8,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface CashMovementRepository extends JpaRepository<CashMovement, Long> {
-    List<CashMovement> findByRegisterId(Long registerId);
+    @Query("SELECT m FROM CashMovement m LEFT JOIN FETCH m.createdBy WHERE m.register.id = :registerId ORDER BY m.createdAt ASC")
+    List<CashMovement> findByRegisterId(@Param("registerId") Long registerId);
 
     List<CashMovement> findByRegisterIdIn(List<Long> registerIds);
 

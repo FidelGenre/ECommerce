@@ -27,7 +27,7 @@ public class DbAutoShrink implements CommandLineRunner {
             "ALTER TABLE audit_log ALTER COLUMN new_value TYPE VARCHAR(50)",
             "ALTER TABLE cash_movements ALTER COLUMN movement_type TYPE VARCHAR(20)",
             "ALTER TABLE cash_movements ALTER COLUMN description TYPE VARCHAR(100)",
-            "ALTER TABLE cash_registers ALTER COLUMN notes TYPE VARCHAR(40)",
+            "ALTER TABLE cash_registers ALTER COLUMN notes TYPE VARCHAR(255)",
             "ALTER TABLE categories ALTER COLUMN name TYPE VARCHAR(40)",
             "ALTER TABLE categories ALTER COLUMN description TYPE VARCHAR(100)",
             "ALTER TABLE categories ALTER COLUMN type TYPE VARCHAR(20)",

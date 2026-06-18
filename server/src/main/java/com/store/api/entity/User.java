@@ -25,6 +25,7 @@ public class User {
     private String documentNumber;
 
     @Column(name = "password_hash", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String passwordHash;
 
     @Column(nullable = false, length = 50)
