@@ -401,12 +401,11 @@ export default function CashPage() {
                                     <th className="cursor-pointer select-none" onClick={() => toggleHistorySort('openingAmount')}>Fondo Inicial ($) <HistorySortIcon field="openingAmount" /></th>
                                     <th className="cursor-pointer select-none" onClick={() => toggleHistorySort('closingAmount')}>Cierre Declarado ($) <HistorySortIcon field="closingAmount" /></th>
                                     <th>Medios de Pago</th>
-                                    <th>Notas / Discrepancias</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {history.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center text-primary-400 py-8">No hay registros en este rango</td></tr>
+                                    <tr><td colSpan={5} className="text-center text-primary-400 py-8">No hay registros en este rango</td></tr>
                                 ) : history.map(h => (
                                     <tr key={h.id} onClick={() => openDetail(h)} className={`cursor-pointer hover:bg-caramel/5 transition-colors ${h.closedAt ? '' : 'bg-primary-50'}`}>
                                         <td className="text-sm min-w-[140px]">
@@ -444,7 +443,6 @@ export default function CashPage() {
                                                 <span className="text-primary-300">Sin mov. integrados</span>
                                             )}
                                         </td>
-                                        <td className="text-primary-500 text-sm max-w-[200px] truncate" title={h.notes}>{h.notes ?? '—'}</td>
                                     </tr>
                                 ))}
                             </tbody>
