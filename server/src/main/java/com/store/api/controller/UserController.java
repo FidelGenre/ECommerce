@@ -99,25 +99,20 @@ public class UserController {
         user.setDocumentNumber(req.getDocumentNumber() != null ? req.getDocumentNumber() : req.getTaxId());
         final User savedUser = userRepo.save(user);
 
-        // Auto-create customer profile for all users
-        if (true) {
-            com.store.api.entity.Customer c = customerRepo.findByUserId(savedUser.getId())
-                    .orElseGet(() -> customerRepo.findByEmail(savedUser.getEmail())
-                            .orElse(new com.store.api.entity.Customer()));
-
-            c.setUser(savedUser);
-            c.setEmail(savedUser.getEmail());
-            c.setFirstName(req.getFirstName() != null && !req.getFirstName().isBlank() ? req.getFirstName()
-                    : savedUser.getUsername());
-            c.setLastName(req.getLastName());
-            c.setPhone(req.getPhone());
-            c.setAddress(req.getAddress());
-            c.setDocumentType(req.getDocumentType() != null ? req.getDocumentType() : "DNI");
-            c.setTaxId(req.getDocumentNumber() != null ? req.getDocumentNumber() : req.getTaxId());
-            if (req.getLoyaltyPoints() != null)
-                c.setLoyaltyPoints(req.getLoyaltyPoints());
-            customerRepo.save(c);
-        }
+        // Crear perfil de cliente vinculado al usuario
+        com.store.api.entity.Customer c = customerRepo.findByUserId(savedUser.getId())
+                .orElseGet(() -> customerRepo.findByEmail(savedUser.getEmail())
+                        .orElse(new com.store.api.entity.Customer()));
+        c.setUser(savedUser);
+        c.setEmail(savedUser.getEmail());
+        c.setFirstName(req.getFirstName() != null && !req.getFirstName().isBlank() ? req.getFirstName() : savedUser.getUsername());
+        c.setLastName(req.getLastName());
+        c.setPhone(req.getPhone());
+        c.setAddress(req.getAddress());
+        c.setDocumentType(req.getDocumentType() != null ? req.getDocumentType() : "DNI");
+        c.setTaxId(req.getDocumentNumber() != null ? req.getDocumentNumber() : req.getTaxId());
+        if (req.getLoyaltyPoints() != null) c.setLoyaltyPoints(req.getLoyaltyPoints());
+        customerRepo.save(c);
 
         return ResponseEntity.ok(savedUser);
     }
@@ -146,34 +141,21 @@ public class UserController {
 
             User savedUser = userRepo.save(u);
 
-            // Sync Customer profile for all roles
-            if (true) {
-                com.store.api.entity.Customer c = customerRepo.findByUserId(savedUser.getId())
-                        .orElseGet(() -> customerRepo.findByEmail(savedUser.getEmail())
-                                .orElse(new com.store.api.entity.Customer()));
-
-                if (c.getUser() == null) {
-                    c.setUser(savedUser);
-                }
-                c.setEmail(savedUser.getEmail());
-                if (req.getFirstName() != null)
-                    c.setFirstName(req.getFirstName());
-                if (req.getLastName() != null)
-                    c.setLastName(req.getLastName());
-                if (req.getPhone() != null)
-                    c.setPhone(req.getPhone());
-                if (req.getAddress() != null)
-                    c.setAddress(req.getAddress());
-                if (req.getDocumentType() != null)
-                    c.setDocumentType(req.getDocumentType());
-                if (req.getDocumentNumber() != null)
-                    c.setTaxId(req.getDocumentNumber());
-                else if (req.getTaxId() != null)
-                    c.setTaxId(req.getTaxId());
-                if (req.getLoyaltyPoints() != null)
-                    c.setLoyaltyPoints(req.getLoyaltyPoints());
-                customerRepo.saveAndFlush(c);
-            }
+            // Sincronizar perfil de cliente
+            com.store.api.entity.Customer c = customerRepo.findByUserId(savedUser.getId())
+                    .orElseGet(() -> customerRepo.findByEmail(savedUser.getEmail())
+                            .orElse(new com.store.api.entity.Customer()));
+            if (c.getUser() == null) c.setUser(savedUser);
+            c.setEmail(savedUser.getEmail());
+            if (req.getFirstName() != null) c.setFirstName(req.getFirstName());
+            if (req.getLastName() != null) c.setLastName(req.getLastName());
+            if (req.getPhone() != null) c.setPhone(req.getPhone());
+            if (req.getAddress() != null) c.setAddress(req.getAddress());
+            if (req.getDocumentType() != null) c.setDocumentType(req.getDocumentType());
+            if (req.getDocumentNumber() != null) c.setTaxId(req.getDocumentNumber());
+            else if (req.getTaxId() != null) c.setTaxId(req.getTaxId());
+            if (req.getLoyaltyPoints() != null) c.setLoyaltyPoints(req.getLoyaltyPoints());
+            customerRepo.saveAndFlush(c);
 
             return ResponseEntity.ok(savedUser);
         }).orElse(ResponseEntity.notFound().build());

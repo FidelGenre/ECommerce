@@ -4,6 +4,7 @@ import com.store.api.entity.CashMovement;
 import com.store.api.entity.CashRegister;
 import com.store.api.repository.CashMovementRepository;
 import com.store.api.repository.CashRegisterRepository;
+import com.store.api.repository.UserRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ public class CashController {
 
     private final CashRegisterRepository registerRepo;
     private final CashMovementRepository movementRepo;
+    private final UserRepository userRepo;
 
     @GetMapping("/current")
     public ResponseEntity<?> current() {
@@ -79,12 +81,8 @@ public class CashController {
     }
 
     @PostMapping("/open")
-    public ResponseEntity<?> open(@RequestBody OpenRequest req) {
-        // Check if last session has a different closing amount (opening discrepancy)
-        registerRepo.findFirstByClosedAtIsNotNullOrderByClosedAtDesc().ifPresent(last -> {
-            // validation is informational only — handled client-side
-        });
-
+    public ResponseEntity<?> open(@RequestBody OpenRequest req,
+            org.springframework.security.core.Authentication auth) {
         BigDecimal lastClosing = registerRepo.findFirstByClosedAtIsNotNullOrderByClosedAtDesc()
                 .map(CashRegister::getClosingAmount)
                 .orElse(null);
@@ -107,6 +105,10 @@ public class CashController {
         register.setNotes(req.getNotes());
         if (hasDiscrepancy) {
             register.setOpeningDiscrepancyReason(req.getOpeningDiscrepancyReason());
+        }
+        // Registrar quién abrió la caja
+        if (auth != null) {
+            userRepo.findByUsername(auth.getName()).ifPresent(register::setOpenedBy);
         }
         return ResponseEntity.ok(registerRepo.save(register));
     }
@@ -203,8 +205,8 @@ public class CashController {
         }
 
         return ResponseEntity.ok(Map.of(
-                "income", income,
-                "expense", expense,
+                "totalIncome", income,
+                "totalExpense", expense,
                 "net", income.subtract(expense),
                 "salesByPayment", salesByPayment,
                 "purchasesByPayment", purchasesByPayment));

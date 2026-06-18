@@ -41,6 +41,9 @@ public class PurchaseOrder {
     @Column(name = "cash_registered", columnDefinition = "boolean default false")
     private Boolean cashRegistered = false;
 
+    @Column(name = "stock_added", columnDefinition = "boolean default false")
+    private Boolean stockAdded = false;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by")
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "password" })

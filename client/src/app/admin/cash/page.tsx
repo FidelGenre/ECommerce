@@ -483,7 +483,7 @@ export default function CashPage() {
                                     <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-sm font-semibold text-amber-800">Discrepancia detectada</p>
-                                        <p className="text-xs text-amber-700 mt-1">El cierre anterior fue <strong>{FMT(openDiscrepancy.lastClosing)}</strong> y estás abriendo con <strong>{FMT(openDiscrepancy.provided)}</strong>. Diferencia: <strong>{FMT(openDiscrepancy.difference)}</strong>.</p>
+                                        <p className="text-xs text-amber-700 mt-1">El cierre anterior fue <strong>{FMT(openDiscrepancy.lastClosing)}</strong> y estás abriendo con <strong>{FMT(openDiscrepancy.provided)}</strong>. {openDiscrepancy.difference < 0 ? <>Falta <strong className="text-red-700">{FMT(Math.abs(openDiscrepancy.difference))}</strong></> : <>Sobran <strong className="text-emerald-700">{FMT(openDiscrepancy.difference)}</strong></>}.</p>
                                     </div>
                                 </div>
                                 <div>
@@ -523,7 +523,7 @@ export default function CashPage() {
                                     <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-sm font-semibold text-red-800">Discrepancia detectada</p>
-                                        <p className="text-xs text-red-700 mt-1">Balance esperado: <strong>{FMT(closeDiscrepancy.expected)}</strong>. Declarado: <strong>{FMT(closeDiscrepancy.provided)}</strong>. Diferencia: <strong>{FMT(closeDiscrepancy.difference)}</strong>.</p>
+                                        <p className="text-xs text-red-700 mt-1">Balance esperado: <strong>{FMT(closeDiscrepancy.expected)}</strong>. Declarado: <strong>{FMT(closeDiscrepancy.provided)}</strong>. {closeDiscrepancy.difference < 0 ? <>Falta <strong>{FMT(Math.abs(closeDiscrepancy.difference))}</strong> en caja</> : <>Sobran <strong>{FMT(closeDiscrepancy.difference)}</strong> en caja</>}.</p>
                                     </div>
                                 </div>
                                 <div>

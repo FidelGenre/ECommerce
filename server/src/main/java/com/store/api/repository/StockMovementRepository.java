@@ -9,4 +9,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface StockMovementRepository
                 extends JpaRepository<StockMovement, Long>, JpaSpecificationExecutor<StockMovement> {
         Page<StockMovement> findByItemId(Long itemId, Pageable pageable);
+        java.util.List<StockMovement> findByCreatedById(Long userId);
 }

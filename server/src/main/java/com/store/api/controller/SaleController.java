@@ -47,7 +47,6 @@ public class SaleController {
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "createdAt") String sort,
             @RequestParam(defaultValue = "DESC") String dir) {
-        System.err.println("SALES LIST REQUEST: buyer=" + buyer + ", q=" + q + ", seller=" + seller);
         Sort.Direction direction = dir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort));
         Specification<SaleOrder> spec = (root, query, cb) -> {
@@ -137,44 +136,30 @@ public class SaleController {
             }
         }
 
-        // Validate stock BEFORE saving or points deduction
+        // Validate stock BEFORE any side effects
         stockService.validateStockAvailability(order);
 
+        // Descontar puntos usados DESPUÉS de validar stock
         if (req.getPointsUsed() != null && req.getPointsUsed() >= 100 && order.getCustomer() != null) {
             Customer c = order.getCustomer();
-            int requestedPoints = req.getPointsUsed();
             int availablePoints = c.getLoyaltyPoints() != null ? c.getLoyaltyPoints() : 0;
-            int used = Math.min(requestedPoints, availablePoints);
-            int stars = used / 100;
-            if (stars > 5)
-                stars = 5;
+            int used = Math.min(req.getPointsUsed(), availablePoints);
+            int stars = Math.min(used / 100, 5);
             int actualPointsUsed = stars * 100;
-
             if (actualPointsUsed > 0) {
-                c.setLoyaltyPoints(c.getLoyaltyPoints() - actualPointsUsed);
-                order.setPointsUsed(actualPointsUsed);
-                java.math.BigDecimal discount = order.getTotal().multiply(java.math.BigDecimal.valueOf(stars))
-                        .divide(java.math.BigDecimal.valueOf(100));
-                order.setTotal(order.getTotal().subtract(discount));
-                if (order.getTotal().compareTo(java.math.BigDecimal.ZERO) < 0) {
-                    order.setTotal(java.math.BigDecimal.ZERO);
-                }
-            }
-        }
-
-        if (order.getCustomer() != null && order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0) {
-            Customer c = order.getCustomer();
-            int earned = order.getTotal().intValue() / 1000; // 1 punto por cada $1000
-            if (earned > 0) {
-                c.setLoyaltyPoints((c.getLoyaltyPoints() != null ? c.getLoyaltyPoints() : 0) + earned);
+                c.setLoyaltyPoints(availablePoints - actualPointsUsed);
                 customerRepo.save(c);
-                order.setPointsGranted(true);
+                order.setPointsUsed(actualPointsUsed);
+                java.math.BigDecimal discount = order.getTotal()
+                        .multiply(java.math.BigDecimal.valueOf(stars))
+                        .divide(java.math.BigDecimal.valueOf(100));
+                order.setTotal(order.getTotal().subtract(discount).max(java.math.BigDecimal.ZERO));
             }
         }
 
         SaleOrder saved = saleRepo.save(order);
 
-        // Deduct stock if status is completed or reserved
+        // Descontar stock según estado inicial
         if (saved.getStatus() != null) {
             String statusName = saved.getStatus().getName();
             if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)
@@ -185,12 +170,23 @@ public class SaleController {
             }
         }
 
+        // Registrar en caja y otorgar puntos solo si está Completado
         if (saved.getStatus() != null
-                && ("Completed".equals(saved.getStatus().getName()) || "Completado".equals(saved.getStatus().getName()))
-                && saved.getPaymentMethod() != null) {
-            String method = saved.getPaymentMethod().getName();
-            cashService.record("INCOME", saved.getTotal(), "[" + method + "] Venta #" + saved.getId());
-            saved.setCashRegistered(true);
+                && ("Completado".equalsIgnoreCase(saved.getStatus().getName()) || "Completed".equalsIgnoreCase(saved.getStatus().getName()))) {
+            if (saved.getPaymentMethod() != null && !Boolean.TRUE.equals(saved.getCashRegistered())) {
+                cashService.record("INCOME", saved.getTotal(), "[" + saved.getPaymentMethod().getName() + "] Venta #" + saved.getId());
+                saved.setCashRegistered(true);
+            }
+            if (!Boolean.TRUE.equals(saved.getPointsGranted()) && saved.getCustomer() != null
+                    && saved.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                Customer c = saved.getCustomer();
+                int earned = saved.getTotal().intValue() / 1000;
+                if (earned > 0) {
+                    c.setLoyaltyPoints((c.getLoyaltyPoints() != null ? c.getLoyaltyPoints() : 0) + earned);
+                    customerRepo.save(c);
+                    saved.setPointsGranted(true);
+                }
+            }
             saved = saleRepo.save(saved);
         }
         return ResponseEntity.ok(saved);
@@ -208,8 +204,14 @@ public class SaleController {
                 // Return stock if cancelled
                 if ("Cancelado".equalsIgnoreCase(statusName) || "Cancelled".equalsIgnoreCase(statusName)) {
                     stockService.returnStockForSale(order, "Cancelación de venta", updatedBy);
+                    // Revertir movimiento de caja si ya fue registrado
+                    if (Boolean.TRUE.equals(order.getCashRegistered()) && order.getPaymentMethod() != null) {
+                        cashService.record("EXPENSE", order.getTotal(),
+                                "[" + order.getPaymentMethod().getName() + "] Cancelación venta #" + order.getId());
+                        order.setCashRegistered(false);
+                    }
                 }
-                // Deduct stock if now completed or reserved or pending
+                // Descontar stock solo si aún no fue descontado y el estado lo requiere
                 else if ("Completado".equalsIgnoreCase(statusName) || "Completed".equalsIgnoreCase(statusName)
                         || "Reservado".equalsIgnoreCase(statusName) || "Pendiente".equalsIgnoreCase(statusName)
                         || "Pending".equalsIgnoreCase(statusName)) {
@@ -219,8 +221,9 @@ public class SaleController {
                         } catch (Exception e) {
                             throw new RuntimeException("No se puede actualizar el estado: " + e.getMessage());
                         }
+                        stockService.deductStockForSale(order, "Estado de venta actualizado a " + statusName, updatedBy);
                     }
-                    stockService.deductStockForSale(order, "Estado de venta actualizado a " + statusName, updatedBy);
+                    // Si ya estaba descontado, no hacer nada — el stock ya está correcto
                 }
 
                 if (("Completed".equals(statusName) || "Completado".equals(statusName))

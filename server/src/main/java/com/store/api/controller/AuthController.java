@@ -31,6 +31,7 @@ public class AuthController {
     private final CashMovementRepository cashRepo;
     private final PurchaseOrderRepository purchaseRepo;
     private final AccountMovementRepository accountMoveRepo;
+    private final com.store.api.repository.StockMovementRepository stockMovementRepo;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
@@ -58,10 +59,15 @@ public class AuthController {
         if (userRepository.existsByUsername(req.getUsername())) {
             return ResponseEntity.badRequest().body("El nombre de usuario ya está en uso");
         }
+        if (req.getEmail() == null || req.getEmail().isBlank()) {
+            return ResponseEntity.badRequest().body("El email es obligatorio para registrarse");
+        }
+        if (userRepository.existsByEmail(req.getEmail())) {
+            return ResponseEntity.badRequest().body("El email ya está registrado");
+        }
         User user = new User();
         user.setUsername(req.getUsername());
-        user.setEmail(req.getEmail() != null && !req.getEmail().isBlank() ? req.getEmail()
-                : req.getUsername() + "@placeholder.com");
+        user.setEmail(req.getEmail());
         user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         user.setRole("CLIENTE");
         user = userRepository.save(user);
@@ -218,6 +224,10 @@ public class AuthController {
         purchaseRepo.findByCreatedById(id).forEach(p -> {
             p.setCreatedBy(null);
             purchaseRepo.save(p);
+        });
+        stockMovementRepo.findByCreatedById(id).forEach(sm -> {
+            sm.setCreatedBy(null);
+            stockMovementRepo.save(sm);
         });
 
         if (user.getCustomer() != null) {

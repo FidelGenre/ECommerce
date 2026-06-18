@@ -84,6 +84,66 @@ public class PurchaseController {
         return purchaseRepo.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
+    private boolean isApprovedStatus(String name) {
+        if (name == null) return false;
+        String n = name.toLowerCase();
+        return n.equals("completado") || n.equals("completed") || n.equals("aprobado") || n.equals("approved");
+    }
+
+    private void addStockForPurchase(PurchaseOrder order, com.store.api.entity.User createdBy) {
+        if (Boolean.TRUE.equals(order.getStockAdded())) return;
+        for (PurchaseLine line : order.getLines()) {
+            Item item = line.getItem();
+            java.math.BigDecimal conversion = item.getPurchaseConversion() != null
+                    ? item.getPurchaseConversion() : java.math.BigDecimal.ONE;
+            java.math.BigDecimal addedStock = line.getQuantity().multiply(conversion);
+
+            item.setStock(item.getStock().add(addedStock));
+            itemRepo.save(item);
+
+            StockMovement movement = new StockMovement();
+            movement.setItem(item);
+            movement.setMovementType("IN");
+            movement.setQuantity(addedStock);
+            movement.setReason("Orden de compra #" + order.getId());
+            movement.setReferenceId(order.getId());
+            movement.setReferenceType("PURCHASE");
+            movement.setCreatedBy(createdBy);
+            stockMovementRepo.save(movement);
+
+            if (item.getStock().compareTo(item.getMinStock()) > 0) {
+                notificationRepo.findByIsReadFalseOrderByCreatedAtDesc().stream()
+                        .filter(n -> n.getMessage().contains(item.getName()))
+                        .forEach(n -> { n.setIsRead(true); notificationRepo.save(n); });
+            }
+        }
+        order.setStockAdded(true);
+    }
+
+    private void removeStockForPurchase(PurchaseOrder order, com.store.api.entity.User cancelledBy) {
+        if (!Boolean.TRUE.equals(order.getStockAdded())) return;
+        for (PurchaseLine line : order.getLines()) {
+            Item item = line.getItem();
+            java.math.BigDecimal conversion = item.getPurchaseConversion() != null
+                    ? item.getPurchaseConversion() : java.math.BigDecimal.ONE;
+            java.math.BigDecimal removedStock = line.getQuantity().multiply(conversion);
+
+            item.setStock(item.getStock().subtract(removedStock));
+            itemRepo.save(item);
+
+            StockMovement movement = new StockMovement();
+            movement.setItem(item);
+            movement.setMovementType("OUT");
+            movement.setQuantity(removedStock);
+            movement.setReason("Cancelación de compra #" + order.getId());
+            movement.setReferenceId(order.getId());
+            movement.setReferenceType("PURCHASE_CANCEL");
+            movement.setCreatedBy(cancelledBy);
+            stockMovementRepo.save(movement);
+        }
+        order.setStockAdded(false);
+    }
+
     @PostMapping
     public ResponseEntity<PurchaseOrder> create(@RequestBody OrderRequest req,
             org.springframework.security.core.Authentication auth) {
@@ -109,111 +169,80 @@ public class PurchaseController {
                 line.setQuantity(lineReq.getQuantity());
                 line.setUnitCost(lineReq.getUnitCost());
                 order.getLines().add(line);
-                order.setTotal(order.getTotal()
-                        .add(lineReq.getUnitCost().multiply(lineReq.getQuantity())));
-
-                // Auto-update stock
-                java.math.BigDecimal conversion = item.getPurchaseConversion() != null ? item.getPurchaseConversion()
-                        : java.math.BigDecimal.ONE;
-                java.math.BigDecimal addedStock = lineReq.getQuantity().multiply(conversion);
-
-                item.setStock(item.getStock().add(addedStock));
-                itemRepo.save(item);
-
-                // Record stock movement
-                StockMovement movement = new StockMovement();
-                movement.setItem(item);
-                movement.setMovementType("IN");
-                movement.setQuantity(addedStock);
-                movement.setReason("Orden de compra");
-                movement.setCreatedBy(createdBy);
-                stockMovementRepo.save(movement);
-
-                // Dismiss low-stock notifications for this item if stock now OK
-                if (item.getStock().compareTo(item.getMinStock()) > 0) {
-                    notificationRepo.findByIsReadFalseOrderByCreatedAtDesc().stream()
-                            .filter(n -> n.getMessage().contains(item.getName()))
-                            .forEach(n -> {
-                                n.setIsRead(true);
-                                notificationRepo.save(n);
-                            });
-                }
+                order.setTotal(order.getTotal().add(lineReq.getUnitCost().multiply(lineReq.getQuantity())));
             }
         }
 
         PurchaseOrder saved = purchaseRepo.save(order);
-        if (saved.getStatus() != null
-                && ("Completed".equals(saved.getStatus().getName()) || "Completado".equals(saved.getStatus().getName())
-                        || "Approved".equals(saved.getStatus().getName())
-                        || "Aprobado".equals(saved.getStatus().getName()))
-                &&
-                saved.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
-                saved.getPaymentMethod() != null) {
 
-            String method = saved.getPaymentMethod().getName();
-            cashService.record("EXPENSE", saved.getTotal(), "[" + method + "] Compra #" + saved.getId());
-            saved.setCashRegistered(true);
+        // Solo sumar stock si el estado inicial ya es aprobado/completado
+        if (saved.getStatus() != null && isApprovedStatus(saved.getStatus().getName())) {
+            addStockForPurchase(saved, createdBy);
+            if (saved.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 && saved.getPaymentMethod() != null) {
+                cashService.record("EXPENSE", saved.getTotal(), "[" + saved.getPaymentMethod().getName() + "] Compra #" + saved.getId());
+                saved.setCashRegistered(true);
+            }
             saved = purchaseRepo.save(saved);
         }
         return ResponseEntity.ok(saved);
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<PurchaseOrder> updateStatus(@PathVariable Long id, @RequestParam Long statusId) {
+    public ResponseEntity<PurchaseOrder> updateStatus(@PathVariable Long id, @RequestParam Long statusId,
+            org.springframework.security.core.Authentication auth) {
+        com.store.api.entity.User updatedBy = auth != null ? userRepo.findByUsername(auth.getName()).orElse(null) : null;
         return purchaseRepo.findById(id).map(order -> {
+            String prevStatus = order.getStatus() != null ? order.getStatus().getName() : "";
             statusRepo.findById(statusId).ifPresent(order::setStatus);
-            if (order.getStatus() != null
-                    && ("Completed".equals(order.getStatus().getName())
-                            || "Completado".equals(order.getStatus().getName())
-                            || "Approved".equals(order.getStatus().getName())
-                            || "Aprobado".equals(order.getStatus().getName()))
-                    &&
-                    !Boolean.TRUE.equals(order.getCashRegistered()) &&
-                    order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
-                    order.getPaymentMethod() != null) {
+            String newStatus = order.getStatus() != null ? order.getStatus().getName() : "";
 
-                String method = order.getPaymentMethod().getName();
-                cashService.record("EXPENSE", order.getTotal(), "[" + method + "] Compra #" + order.getId());
-                order.setCashRegistered(true);
+            boolean becomingApproved = isApprovedStatus(newStatus) && !isApprovedStatus(prevStatus);
+            boolean becomingCancelled = newStatus.toLowerCase().contains("cancel");
+
+            if (becomingApproved) {
+                addStockForPurchase(order, updatedBy);
+                if (!Boolean.TRUE.equals(order.getCashRegistered())
+                        && order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0
+                        && order.getPaymentMethod() != null) {
+                    cashService.record("EXPENSE", order.getTotal(), "[" + order.getPaymentMethod().getName() + "] Compra #" + order.getId());
+                    order.setCashRegistered(true);
+                }
+            } else if (becomingCancelled) {
+                removeStockForPurchase(order, updatedBy);
             }
+
             return ResponseEntity.ok(purchaseRepo.save(order));
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // Approval flow: Pending → Approved
     @PatchMapping("/{id}/approve")
-    public ResponseEntity<?> approve(@PathVariable Long id) {
+    public ResponseEntity<?> approve(@PathVariable Long id, org.springframework.security.core.Authentication auth) {
+        com.store.api.entity.User updatedBy = auth != null ? userRepo.findByUsername(auth.getName()).orElse(null) : null;
         return purchaseRepo.findById(id).map(order -> {
-            // Approved status for PURCHASE is id 54
             statusRepo.findAll().stream()
-                    .filter(s -> "Approved".equals(s.getName()) && "PURCHASE".equals(s.getType()))
+                    .filter(s -> "Aprobado".equals(s.getName()) && "PURCHASE".equals(s.getType()))
                     .findFirst()
                     .ifPresent(order::setStatus);
-            if (order.getStatus() != null
-                    && ("Approved".equals(order.getStatus().getName()) || "Aprobado".equals(order.getStatus().getName())
-                            || "Completed".equals(order.getStatus().getName())
-                            || "Completado".equals(order.getStatus().getName()))
-                    &&
-                    !Boolean.TRUE.equals(order.getCashRegistered()) &&
-                    order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0 &&
-                    order.getPaymentMethod() != null) {
-
-                String method = order.getPaymentMethod().getName();
-                cashService.record("EXPENSE", order.getTotal(), "[" + method + "] Compra #" + order.getId());
+            addStockForPurchase(order, updatedBy);
+            if (!Boolean.TRUE.equals(order.getCashRegistered())
+                    && order.getTotal().compareTo(java.math.BigDecimal.ZERO) > 0
+                    && order.getPaymentMethod() != null) {
+                cashService.record("EXPENSE", order.getTotal(), "[" + order.getPaymentMethod().getName() + "] Compra #" + order.getId());
                 order.setCashRegistered(true);
             }
             return ResponseEntity.ok(purchaseRepo.save(order));
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // Rejection flow: set to Cancelled
     @PatchMapping("/{id}/reject")
-    public ResponseEntity<?> reject(@PathVariable Long id) {
+    public ResponseEntity<?> reject(@PathVariable Long id, org.springframework.security.core.Authentication auth) {
+        com.store.api.entity.User updatedBy = auth != null ? userRepo.findByUsername(auth.getName()).orElse(null) : null;
         return purchaseRepo.findById(id).map(order -> {
             statusRepo.findAll().stream()
-                    .filter(s -> "Cancelled".equals(s.getName()) && "PURCHASE".equals(s.getType()))
+                    .filter(s -> "Cancelado".equals(s.getName()) && "PURCHASE".equals(s.getType()))
                     .findFirst()
                     .ifPresent(order::setStatus);
+            removeStockForPurchase(order, updatedBy);
             return ResponseEntity.ok(purchaseRepo.save(order));
         }).orElse(ResponseEntity.notFound().build());
     }

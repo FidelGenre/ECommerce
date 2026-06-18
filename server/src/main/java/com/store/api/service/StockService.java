@@ -105,29 +105,9 @@ public class StockService {
             }
         }
 
-        // Deduct 1 'Bolsa' per unit sold globally
-        try {
-            itemRepo.findFirstByNameContainingIgnoreCase("bolsa").ifPresent(bolsa -> {
-                java.math.BigDecimal totalUnits = order.getLines().stream()
-                        .map(SaleLine::getQuantity)
-                        .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-
-                bolsa.setStock(bolsa.getStock().subtract(totalUnits));
-                itemRepo.save(bolsa);
-
-                StockMovement bagMovement = new StockMovement();
-                bagMovement.setItem(bolsa);
-                bagMovement.setMovementType("OUT");
-                bagMovement.setQuantity(totalUnits);
-                bagMovement.setReason("Bolsa/empaque por Venta #" + order.getId());
-                bagMovement.setReferenceId(order.getId());
-                bagMovement.setReferenceType("SALE");
-                bagMovement.setCreatedBy(user);
-                stockMovementRepo.save(bagMovement);
-            });
-        } catch (Exception e) {
-            System.err.println("No se pudo descontar bolsa: " + e.getMessage());
-        }
+        // Los insumos/empaques se manejan a través de componentes de receta (ItemComponent),
+        // no por búsqueda global de nombre. El descuento de bolsa ya ocurre arriba si el
+        // producto tiene un componente de tipo bolsa configurado.
 
         order.setStockDeducted(true);
     }

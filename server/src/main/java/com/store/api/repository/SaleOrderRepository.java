@@ -25,4 +25,7 @@ public interface SaleOrderRepository extends JpaRepository<SaleOrder, Long>, Jpa
         java.util.Optional<SaleOrder> findByMpPreferenceId(String mpPreferenceId);
 
         List<SaleOrder> findByStatusId(Long statusId);
+
+        @Query("SELECT o FROM SaleOrder o WHERE o.reservedUntil IS NOT NULL AND o.reservedUntil < :now AND o.stockDeducted = true")
+        List<SaleOrder> findExpiredReservations(@Param("now") LocalDateTime now);
 }
