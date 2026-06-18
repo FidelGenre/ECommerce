@@ -36,6 +36,6 @@ public class CashMovement {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "is_manual", nullable = false)
+    @Column(name = "is_manual", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isManual = false;
 }
