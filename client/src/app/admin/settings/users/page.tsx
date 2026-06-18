@@ -326,7 +326,7 @@ export default function UsersSettingsPage() {
                                             )}
                                         </td>
                                         <td className="text-primary-600 text-sm font-medium">{u.email}</td>
-                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : u.role === 'NONE' ? 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500' : 'badge-brown'}>{roles.find(r => r.code === u.role)?.name ?? u.role}</span></td>
+                                        <td><span className={u.role === 'ADMIN' ? 'badge-blue' : u.role === 'NONE' ? 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500' : 'badge-brown'}>{roles.find(r => r.code === u.role)?.name ?? (u.role === 'NONE' ? 'Sin rol' : u.role)}</span></td>
                                         <td className="text-sm text-primary-500 font-medium">{formatDate(u.createdAt)}</td>
                                         <td className="text-right font-semibold text-espresso">{u.accountBalance !== undefined ? formatCurrency(u.accountBalance) : '—'}</td>
                                         <td className="text-right font-medium text-amber-600">{typeof u.loyaltyPoints === 'number' ? u.loyaltyPoints + ' pts' : <span className="text-primary-300 font-normal">Sin puntos</span>}</td>
