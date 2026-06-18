@@ -589,10 +589,8 @@ export default function SalesPage() {
                                     </div>
                                 </div>
 
-                                <div className="text-center pt-2 text-xs flex flex-col items-center gap-3">
-                                    <p className="font-semibold uppercase tracking-wide text-gray-600">
-                                        Estado: {ticketModal.status?.name ?? 'Pendiente'}
-                                    </p>
+                                <div className="text-center pt-2 text-xs">
+                                    <p className="text-gray-400">Coffee Beans — Detalle de orden #{ticketModal.id}</p>
                                 </div>
                             </div>
                         </div>
