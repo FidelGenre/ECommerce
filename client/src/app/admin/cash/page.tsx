@@ -22,9 +22,12 @@ export default function CashPage() {
     const [showClose, setShowClose] = useState(false)
     const [moveForm, setMoveForm] = useState({ id: 0, movementType: 'INCOME', amount: '', description: '' })
     const [saving, setSaving] = useState(false)
-    const [editingMove, setEditingMove] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
+    const [closeDiscrepancy, setCloseDiscrepancy] = useState<any>(null)
+    const [closeDiscrepancyReason, setCloseDiscrepancyReason] = useState('')
+    const [openDiscrepancy, setOpenDiscrepancy] = useState<any>(null)
+    const [openDiscrepancyReason, setOpenDiscrepancyReason] = useState('')
 
     // Movement filters
     const [movFilter, setMovFilter] = useState<'all' | 'INCOME' | 'EXPENSE'>('all')
@@ -95,21 +98,38 @@ export default function CashPage() {
         if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
         setSaving(true)
         try {
-            await api.post('/api/admin/cash/open', { amount: Number(openAmt) })
-            setShowOpen(false); load()
+            await api.post('/api/admin/cash/open', {
+                amount: Number(openAmt),
+                openingDiscrepancyReason: openDiscrepancyReason || undefined
+            })
+            setShowOpen(false); setOpenDiscrepancy(null); setOpenDiscrepancyReason(''); load()
             toast.success('Caja abierta')
-        } catch { toast.error('No se pudo abrir la caja') } finally { setSaving(false) }
+        } catch (err: any) {
+            const data = err.response?.data
+            if (data?.error === 'Discrepancia en apertura de caja') {
+                setOpenDiscrepancy(data)
+            } else {
+                toast.error(data?.message || 'No se pudo abrir la caja')
+            }
+        } finally { setSaving(false) }
     }
     const closeRegister = async () => {
         if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
         if (!register) return; setSaving(true)
         try {
-            await api.post(`/api/admin/cash/${register.id}/close`, { amount: Number(closeAmt) })
-            setShowClose(false); load()
+            await api.post(`/api/admin/cash/${register.id}/close`, {
+                amount: Number(closeAmt),
+                discrepancyReason: closeDiscrepancyReason || undefined
+            })
+            setShowClose(false); setCloseDiscrepancy(null); setCloseDiscrepancyReason(''); load()
             toast.success('Caja cerrada')
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || err.response?.data?.error || 'No se pudo cerrar la caja'
-            toast.error(errorMsg)
+            const data = err.response?.data
+            if (data?.error === 'Discrepancia en el cierre de caja') {
+                setCloseDiscrepancy(data)
+            } else {
+                toast.error(data?.message || 'No se pudo cerrar la caja')
+            }
         } finally { setSaving(false) }
     }
     const handleFormSubmit = (e: React.FormEvent) => {
@@ -123,25 +143,15 @@ export default function CashPage() {
         if (!register) return
         setSaving(true)
         try {
-            if (editingMove && moveForm.id) {
-                await api.put(`/api/admin/cash/movements/${moveForm.id}`, {
-                    movementType: moveForm.movementType,
-                    amount: Number(moveForm.amount),
-                    description: moveForm.description,
-                })
-                toast.success('Movimiento actualizado')
-            } else {
-                await api.post(`/api/admin/cash/${register.id}/movements`, {
-                    movementType: moveForm.movementType,
-                    amount: Number(moveForm.amount),
-                    description: moveForm.description,
-                })
-                toast.success('Movimiento agregado')
-            }
-            setShowMove(false); setEditingMove(false); setShowConfirmModal(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); load();
+            await api.post(`/api/admin/cash/${register.id}/movements`, {
+                movementType: moveForm.movementType,
+                amount: Number(moveForm.amount),
+                description: moveForm.description,
+            })
+            toast.success('Movimiento agregado')
+            setShowMove(false); setShowConfirmModal(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); load();
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || err.message || 'Error al procesar el movimiento'
-            toast.error(errorMsg)
+            toast.error(err.response?.data?.message || 'Error al procesar el movimiento')
         } finally {
             setSaving(false)
         }
@@ -153,12 +163,14 @@ export default function CashPage() {
         try {
             await api.delete(`/api/admin/cash/movements/${id}`)
             toast.success('Movimiento eliminado')
-        } catch { toast.error('No se pudo eliminar el movimiento') } finally {
+        } catch (err: any) {
+            toast.error(err.response?.data || 'No se pudo eliminar el movimiento')
+        } finally {
             setSaving(false); setDeleteConfirmId(null); load()
         }
     }
 
-    const openEditMove = (m: CashMovement) => {
+    const openEditMove = (m: any) => {
         if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
         setMoveForm({
             id: m.id,
@@ -166,7 +178,7 @@ export default function CashPage() {
             amount: String(m.amount),
             description: m.description || ''
         })
-        setEditingMove(true)
+        // editing removed — kept for TS compatibility
         setShowMove(true)
     }
 
@@ -205,7 +217,7 @@ export default function CashPage() {
                     : (
                         <div className="flex gap-3">
                             <button onClick={exportCash} className="btn-secondary flex items-center gap-2"><FileSpreadsheet className="w-4 h-4" />Exportar</button>
-                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditingMove(false); setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); setShowMove(true) }} className="btn-secondary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar movimiento</button>
+                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); setShowMove(true) }} className="btn-secondary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar movimiento</button>
                             <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setShowClose(true) }} className="btn-danger flex items-center gap-2"><Lock className="w-4 h-4" />Cerrar caja</button>
                         </div>
                     )
@@ -320,8 +332,12 @@ export default function CashPage() {
                                                 <td className="text-primary-400 text-xs">{new Date(m.createdAt).toLocaleTimeString()}</td>
                                                 <td className="text-right">
                                                     <div className="flex items-center justify-end gap-1">
-                                                        <button onClick={() => openEditMove(m)} className="btn-ghost p-1 hover:bg-primary-50 hover:text-primary-600 text-xs">Editar</button>
-                                                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setDeleteConfirmId(m.id) }} className="btn-ghost p-1 hover:bg-red-50 text-red-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                        {m.isManual && (
+                                                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setDeleteConfirmId(m.id) }} className="btn-ghost p-1 hover:bg-red-50 text-red-400 hover:text-red-600" title="Eliminar movimiento manual"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                        )}
+                                                        {!m.isManual && (
+                                                            <span className="text-xs text-primary-300 px-1">Sistema</span>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -366,18 +382,32 @@ export default function CashPage() {
                                     <th className="cursor-pointer select-none" onClick={() => toggleHistorySort('openingAmount')}>Fondo Inicial ($) <HistorySortIcon field="openingAmount" /></th>
                                     <th className="cursor-pointer select-none" onClick={() => toggleHistorySort('closingAmount')}>Cierre Declarado ($) <HistorySortIcon field="closingAmount" /></th>
                                     <th>Medios de Pago</th>
-                                    <th>Notas</th>
+                                    <th>Notas / Discrepancias</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {history.length === 0 ? (
-                                    <tr><td colSpan={5} className="text-center text-primary-400 py-8">No hay registros en este rango</td></tr>
+                                    <tr><td colSpan={6} className="text-center text-primary-400 py-8">No hay registros en este rango</td></tr>
                                 ) : history.map(h => (
                                     <tr key={h.id} className={h.closedAt ? '' : 'bg-primary-50'}>
-                                        <td className="text-sm min-w-[140px]">{new Date(h.openedAt).toLocaleString('es-AR')}</td>
+                                        <td className="text-sm min-w-[140px]">
+                                            {new Date(h.openedAt).toLocaleString('es-AR')}
+                                            {h.openingDiscrepancyReason && (
+                                                <div className="mt-1 text-xs text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 border border-amber-200">
+                                                    ⚠ Apertura con diferencia: {h.openingDiscrepancyReason}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="text-sm min-w-[140px]">{h.closedAt ? new Date(h.closedAt).toLocaleString('es-AR') : <span className="text-primary-500 font-semibold">Actual / Abierta</span>}</td>
                                         <td className="font-medium text-sm">{FMT(h.openingAmount ?? 0)}</td>
-                                        <td className="font-semibold text-sm">{h.closingAmount != null ? FMT(h.closingAmount) : '—'}</td>
+                                        <td className="font-semibold text-sm">
+                                            {h.closingAmount != null ? FMT(h.closingAmount) : '—'}
+                                            {h.discrepancyReason && (
+                                                <div className="mt-1 text-xs text-red-700 bg-red-50 rounded px-1.5 py-0.5 border border-red-200 font-normal">
+                                                    ⚠ Cierre con diferencia: {h.discrepancyReason}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="text-xs">
                                             {h.paymentTotals && Object.keys(h.paymentTotals).length > 0 ? (
                                                 <div className="flex flex-col gap-0.5">
@@ -423,11 +453,26 @@ export default function CashPage() {
                         <h2 className="text-lg font-bold text-espresso">Abrir Caja</h2>
                         <div>
                             <label className="block text-sm font-medium text-primary-700 mb-1">Monto de apertura</label>
-                            <input type="number" className="input" value={openAmt} onChange={e => setOpenAmt(e.target.value)} />
+                            <input type="number" className="input" value={openAmt} onChange={e => { setOpenAmt(e.target.value); setOpenDiscrepancy(null); setOpenDiscrepancyReason('') }} />
                         </div>
+                        {openDiscrepancy && (
+                            <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 space-y-3">
+                                <div className="flex items-start gap-2">
+                                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-amber-800">Discrepancia detectada</p>
+                                        <p className="text-xs text-amber-700 mt-1">El cierre anterior fue <strong>{FMT(openDiscrepancy.lastClosing)}</strong> y estás abriendo con <strong>{FMT(openDiscrepancy.provided)}</strong>. Diferencia: <strong>{FMT(openDiscrepancy.difference)}</strong>.</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-amber-800 mb-1">Motivo de la diferencia <span className="text-red-500">*</span></label>
+                                    <textarea className="input text-sm resize-none" rows={2} placeholder="Ej: Se retiró efectivo al cierre anterior..." value={openDiscrepancyReason} onChange={e => setOpenDiscrepancyReason(e.target.value)} />
+                                </div>
+                            </div>
+                        )}
                         <div className="flex gap-3">
-                            <button onClick={() => setShowOpen(false)} className="btn-secondary flex-1">Cancelar</button>
-                            <button onClick={openRegister} className="btn-primary flex-1" disabled={saving}>{saving ? 'Abriendo…' : 'Abrir'}</button>
+                            <button onClick={() => { setShowOpen(false); setOpenDiscrepancy(null); setOpenDiscrepancyReason('') }} className="btn-secondary flex-1">Cancelar</button>
+                            <button onClick={openRegister} className="btn-primary flex-1" disabled={saving || (!!openDiscrepancy && !openDiscrepancyReason.trim())}>{saving ? 'Abriendo…' : 'Abrir'}</button>
                         </div>
                     </div>
                 </div>
@@ -438,13 +483,36 @@ export default function CashPage() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
                         <h2 className="text-lg font-bold text-espresso">Cerrar Caja</h2>
+                        {summary && (
+                            <div className="bg-primary-50 rounded-xl p-3 text-xs space-y-1 text-primary-600">
+                                <div className="flex justify-between"><span>Apertura:</span><span className="font-medium">{FMT(register?.openingAmount ?? 0)}</span></div>
+                                <div className="flex justify-between text-emerald-700"><span>Ingresos:</span><span className="font-medium">+{FMT(summary.income)}</span></div>
+                                <div className="flex justify-between text-red-600"><span>Egresos:</span><span className="font-medium">-{FMT(summary.expense)}</span></div>
+                                <div className="flex justify-between font-bold text-espresso border-t border-primary-200 pt-1 mt-1"><span>Balance esperado:</span><span>{FMT((register?.openingAmount ?? 0) + summary.income - summary.expense)}</span></div>
+                            </div>
+                        )}
                         <div>
-                            <label className="block text-sm font-medium text-primary-700 mb-1">Monto de cierre (efectivo contado)</label>
-                            <input type="number" className="input" value={closeAmt} onChange={e => setCloseAmt(e.target.value)} />
+                            <label className="block text-sm font-medium text-primary-700 mb-1">Monto declarado (efectivo contado)</label>
+                            <input type="number" className="input" value={closeAmt} onChange={e => { setCloseAmt(e.target.value); setCloseDiscrepancy(null); setCloseDiscrepancyReason('') }} />
                         </div>
+                        {closeDiscrepancy && (
+                            <div className="bg-red-50 border border-red-300 rounded-xl p-4 space-y-3">
+                                <div className="flex items-start gap-2">
+                                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-red-800">Discrepancia detectada</p>
+                                        <p className="text-xs text-red-700 mt-1">Balance esperado: <strong>{FMT(closeDiscrepancy.expected)}</strong>. Declarado: <strong>{FMT(closeDiscrepancy.provided)}</strong>. Diferencia: <strong>{FMT(closeDiscrepancy.difference)}</strong>.</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-red-800 mb-1">Motivo de la diferencia <span className="text-red-500">*</span></label>
+                                    <textarea className="input text-sm resize-none border-red-300 focus:ring-red-400" rows={2} placeholder="Ej: Falta de cambio, error de cobro..." value={closeDiscrepancyReason} onChange={e => setCloseDiscrepancyReason(e.target.value)} />
+                                </div>
+                            </div>
+                        )}
                         <div className="flex gap-3">
-                            <button onClick={() => setShowClose(false)} className="btn-secondary flex-1">Cancelar</button>
-                            <button onClick={closeRegister} className="btn-danger flex-1" disabled={saving}>{saving ? 'Cerrando…' : 'Cerrar'}</button>
+                            <button onClick={() => { setShowClose(false); setCloseDiscrepancy(null); setCloseDiscrepancyReason('') }} className="btn-secondary flex-1">Cancelar</button>
+                            <button onClick={closeRegister} className="btn-danger flex-1" disabled={saving || (!!closeDiscrepancy && !closeDiscrepancyReason.trim())}>{saving ? 'Cerrando…' : 'Cerrar'}</button>
                         </div>
                     </div>
                 </div>
@@ -455,7 +523,7 @@ export default function CashPage() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
                         <div className="flex items-center justify-between p-6 border-b border-muted">
-                            <h2 className="text-lg font-bold text-espresso">{editingMove ? 'Editar Movimiento' : 'Agregar Movimiento'}</h2>
+                            <h2 className="text-lg font-bold text-espresso">Agregar Movimiento</h2>
                             <button onClick={() => setShowMove(false)} className="btn-ghost p-1.5"><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={handleFormSubmit} className="p-6 space-y-4">

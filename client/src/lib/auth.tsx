@@ -9,6 +9,8 @@ interface AuthUser {
     role: string
     token: string
     permissions?: string[]
+    firstName?: string
+    lastName?: string
 }
 
 interface AuthCtx {

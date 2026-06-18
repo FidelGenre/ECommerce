@@ -79,10 +79,12 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
             <div className="border-t border-primary-800 px-4 py-4">
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-8 h-8 bg-caramel rounded-full flex items-center justify-center text-espresso font-bold text-sm">
-                        {user?.username?.[0]?.toUpperCase() ?? 'A'}
+                        {(user?.firstName ?? user?.username)?.[0]?.toUpperCase() ?? 'A'}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate">{user?.username}</p>
+                        <p className="text-white text-sm font-medium truncate">
+                            {user?.firstName ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}` : user?.username}
+                        </p>
                         <p className="text-white/60 text-xs">{user?.role}</p>
                     </div>
                 </div>
@@ -188,10 +190,12 @@ export default function AdminSidebar() {
                     <div className="border-t border-primary-800 px-6 py-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-caramel rounded-full flex items-center justify-center text-espresso font-bold text-sm">
-                                {user?.username?.[0]?.toUpperCase() ?? 'A'}
+                                {(user?.firstName ?? user?.username)?.[0]?.toUpperCase() ?? 'A'}
                             </div>
                             <div>
-                                <p className="text-white text-sm font-medium">{user?.username}</p>
+                                <p className="text-white text-sm font-medium">
+                                    {user?.firstName ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}` : user?.username}
+                                </p>
                                 <p className="text-primary-400 text-xs">{user?.role}</p>
                             </div>
                         </div>

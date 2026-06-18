@@ -11,4 +11,6 @@ public class LoginResponse {
     private String role;
     private Long userId;
     private java.util.Set<String> permissions;
+    private String firstName;
+    private String lastName;
 }

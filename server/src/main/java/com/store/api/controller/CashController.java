@@ -79,32 +79,56 @@ public class CashController {
     }
 
     @PostMapping("/open")
-    public ResponseEntity<CashRegister> open(@RequestBody OpenRequest req) {
+    public ResponseEntity<?> open(@RequestBody OpenRequest req) {
+        // Check if last session has a different closing amount (opening discrepancy)
+        registerRepo.findFirstByClosedAtIsNotNullOrderByClosedAtDesc().ifPresent(last -> {
+            // validation is informational only — handled client-side
+        });
+
+        BigDecimal lastClosing = registerRepo.findFirstByClosedAtIsNotNullOrderByClosedAtDesc()
+                .map(CashRegister::getClosingAmount)
+                .orElse(null);
+
+        boolean hasDiscrepancy = lastClosing != null && req.getAmount() != null
+                && req.getAmount().compareTo(lastClosing) != 0;
+
+        if (hasDiscrepancy && (req.getOpeningDiscrepancyReason() == null || req.getOpeningDiscrepancyReason().isBlank())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Discrepancia en apertura de caja",
+                    "message", "El monto de apertura no coincide con el cierre anterior",
+                    "lastClosing", lastClosing,
+                    "provided", req.getAmount(),
+                    "difference", req.getAmount().subtract(lastClosing)
+            ));
+        }
+
         CashRegister register = new CashRegister();
         register.setOpeningAmount(req.getAmount());
         register.setNotes(req.getNotes());
+        if (hasDiscrepancy) {
+            register.setOpeningDiscrepancyReason(req.getOpeningDiscrepancyReason());
+        }
         return ResponseEntity.ok(registerRepo.save(register));
     }
 
     @PostMapping("/{id}/close")
     public ResponseEntity<?> close(@PathVariable Long id, @RequestBody OpenRequest req) {
         return registerRepo.findById(id).map(r -> {
-            // Calculate income and expense totals
             BigDecimal income = movementRepo.sumByRegisterAndType(id, "INCOME");
             BigDecimal expense = movementRepo.sumByRegisterAndType(id, "EXPENSE");
             if (income == null) income = BigDecimal.ZERO;
             if (expense == null) expense = BigDecimal.ZERO;
 
-            // Calculate expected balance: opening + income - expense
             BigDecimal expectedBalance = (r.getOpeningAmount() != null ? r.getOpeningAmount() : BigDecimal.ZERO)
                     .add(income)
                     .subtract(expense);
 
-            // Validate closing amount matches expected balance
-            if (req.getAmount().compareTo(expectedBalance) != 0) {
+            boolean hasDiscrepancy = req.getAmount().compareTo(expectedBalance) != 0;
+
+            if (hasDiscrepancy && (req.getDiscrepancyReason() == null || req.getDiscrepancyReason().isBlank())) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "error", "Discrepancia en el cierre de caja",
-                        "message", "El monto ingresado no coincide con el balance esperado",
+                        "message", "El monto declarado no coincide con el balance esperado. Ingresá un motivo para continuar.",
                         "expected", expectedBalance,
                         "provided", req.getAmount(),
                         "difference", req.getAmount().subtract(expectedBalance),
@@ -117,6 +141,9 @@ public class CashController {
             r.setClosingAmount(req.getAmount());
             r.setClosedAt(LocalDateTime.now());
             r.setNotes(req.getNotes());
+            if (hasDiscrepancy) {
+                r.setDiscrepancyReason(req.getDiscrepancyReason());
+            }
             return ResponseEntity.ok(registerRepo.save(r));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -130,25 +157,20 @@ public class CashController {
     public ResponseEntity<CashMovement> addMovement(@PathVariable Long id, @RequestBody CashMovement req) {
         return registerRepo.findById(id).map(register -> {
             req.setRegister(register);
+            req.setIsManual(true);
             return ResponseEntity.ok(movementRepo.save(req));
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/movements/{moveId}")
-    public ResponseEntity<CashMovement> updateMovement(@PathVariable Long moveId, @RequestBody CashMovement req) {
-        return movementRepo.findById(moveId).map(existing -> {
-            if (req.getAmount() != null) existing.setAmount(req.getAmount());
-            if (req.getDescription() != null) existing.setDescription(req.getDescription());
-            if (req.getMovementType() != null) existing.setMovementType(req.getMovementType());
-            return ResponseEntity.ok(movementRepo.save(existing));
-        }).orElse(ResponseEntity.notFound().build());
-    }
-
     @DeleteMapping("/movements/{moveId}")
-    public ResponseEntity<Void> deleteMovement(@PathVariable Long moveId) {
-        if (!movementRepo.existsById(moveId)) return ResponseEntity.notFound().build();
-        movementRepo.deleteById(moveId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteMovement(@PathVariable Long moveId) {
+        return movementRepo.findById(moveId).map(m -> {
+            if (!Boolean.TRUE.equals(m.getIsManual())) {
+                return ResponseEntity.badRequest().body("No se pueden eliminar movimientos generados por el sistema.");
+            }
+            movementRepo.deleteById(moveId);
+            return ResponseEntity.noContent().build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}/summary")
@@ -192,5 +214,7 @@ public class CashController {
     static class OpenRequest {
         private BigDecimal amount;
         private String notes;
+        private String discrepancyReason;
+        private String openingDiscrepancyReason;
     }
 }

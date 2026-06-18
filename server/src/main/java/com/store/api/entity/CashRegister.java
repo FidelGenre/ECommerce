@@ -29,8 +29,14 @@ public class CashRegister {
     @JoinColumn(name = "opened_by")
     private User openedBy;
 
-    @Column(length = 40)
+    @Column(length = 255)
     private String notes;
+
+    @Column(name = "discrepancy_reason", length = 500)
+    private String discrepancyReason;
+
+    @Column(name = "opening_discrepancy_reason", length = 500)
+    private String openingDiscrepancyReason;
 
     @Transient
     private java.util.Map<String, BigDecimal> paymentTotals;

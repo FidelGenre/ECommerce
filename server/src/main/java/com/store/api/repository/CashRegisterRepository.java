@@ -6,6 +6,7 @@ import java.util.Optional;
 
 public interface CashRegisterRepository extends JpaRepository<CashRegister, Long> {
     Optional<CashRegister> findFirstByClosedAtIsNullOrderByOpenedAtDesc();
+    Optional<CashRegister> findFirstByClosedAtIsNotNullOrderByClosedAtDesc();
 
     org.springframework.data.domain.Page<CashRegister> findByOpenedAtBetween(java.time.LocalDateTime from, java.time.LocalDateTime to, org.springframework.data.domain.Pageable pageable);
     

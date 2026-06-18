@@ -47,7 +47,10 @@ public class AuthController {
         java.util.Set<String> permissions = roleRepository.findById(user.getRole())
                 .map(com.store.api.entity.Role::getPermissions)
                 .orElse(java.util.Set.of());
-        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId(), permissions));
+        com.store.api.entity.Customer customer = customerRepo.findByEmail(user.getEmail()).orElse(null);
+        String firstName = customer != null ? customer.getFirstName() : user.getUsername();
+        String lastName = customer != null ? customer.getLastName() : "";
+        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId(), permissions, firstName, lastName));
     }
 
     @PostMapping("/register")
@@ -76,7 +79,10 @@ public class AuthController {
         java.util.Set<String> permissions = roleRepository.findById(user.getRole())
                 .map(com.store.api.entity.Role::getPermissions)
                 .orElse(java.util.Set.of());
-        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId(), permissions));
+        com.store.api.entity.Customer regCustomer = customerRepo.findByEmail(user.getEmail()).orElse(null);
+        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId(), permissions,
+                regCustomer != null ? regCustomer.getFirstName() : user.getUsername(),
+                regCustomer != null ? regCustomer.getLastName() : ""));
     }
 
     @GetMapping("/refresh")
@@ -90,7 +96,10 @@ public class AuthController {
         java.util.Set<String> permissions = roleRepository.findById(user.getRole())
                 .map(com.store.api.entity.Role::getPermissions)
                 .orElse(java.util.Set.of());
-        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId(), permissions));
+        com.store.api.entity.Customer refreshCustomer = customerRepo.findByEmail(user.getEmail()).orElse(null);
+        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRole(), user.getId(), permissions,
+                refreshCustomer != null ? refreshCustomer.getFirstName() : user.getUsername(),
+                refreshCustomer != null ? refreshCustomer.getLastName() : ""));
     }
 
     @PatchMapping("/profile")

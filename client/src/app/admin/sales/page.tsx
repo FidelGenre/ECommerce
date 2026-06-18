@@ -590,8 +590,11 @@ export default function SalesPage() {
                                 </div>
 
                                 <div className="text-center pt-2 text-xs flex flex-col items-center gap-3">
-                                    <p>¡Gracias por su compra!</p>
-
+                                    <p className="font-semibold uppercase tracking-wide text-gray-600">
+                                        {ticketModal.status?.name === 'Completado'
+                                            ? '¡Gracias por su compra!'
+                                            : `Estado: ${ticketModal.status?.name ?? 'Pendiente'}`}
+                                    </p>
                                 </div>
                             </div>
                         </div>

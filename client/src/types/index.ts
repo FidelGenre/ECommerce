@@ -158,6 +158,8 @@ export interface CashRegister {
     closedAt?: string
     notes?: string
     paymentTotals?: Record<string, number>
+    discrepancyReason?: string
+    openingDiscrepancyReason?: string
 }
 
 export interface CashMovement {
@@ -166,6 +168,7 @@ export interface CashMovement {
     amount: number
     description?: string
     createdAt: string
+    isManual?: boolean
 }
 
 export interface Notification {
