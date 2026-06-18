@@ -212,8 +212,8 @@ export default function CashPage() {
                 Hora: new Date(m.createdAt).toLocaleTimeString(),
             })),
             { Concepto: '', Monto: '', Hora: '' },
-            { Concepto: 'Total Ingresos', Monto: summary.income },
-            { Concepto: 'Total Egresos', Monto: summary.expense },
+            { Concepto: 'Total Ingresos', Monto: summary.totalIncome },
+            { Concepto: 'Total Egresos', Monto: summary.totalExpense },
             { Concepto: 'Neto', Monto: summary.net },
             ...(register.closingAmount != null ? [{ Concepto: 'Cierre declarado', Monto: register.closingAmount },
             { Concepto: 'Diferencia', Monto: register.closingAmount - (register.openingAmount + summary.net) }] : []),
@@ -255,7 +255,7 @@ export default function CashPage() {
                             </div>
                             <div className="card text-center bg-emerald-50">
                                 <p className="text-xs text-emerald-600 uppercase font-semibold mb-1">Ingresos</p>
-                                <p className="text-2xl font-bold text-emerald-700">{FMT(summary.income)}</p>
+                                <p className="text-2xl font-bold text-emerald-700">{FMT(summary.totalIncome)}</p>
                                 {summary.salesByPayment && Object.keys(summary.salesByPayment).length > 0 && (
                                     <div className="mt-2 pt-2 border-t border-emerald-200/50 text-xs text-emerald-700/80 text-left space-y-0.5 max-h-24 overflow-y-auto">
                                         {Object.entries(summary.salesByPayment).map(([method, amount]: any) => (
@@ -269,7 +269,7 @@ export default function CashPage() {
                             </div>
                             <div className="card text-center bg-red-50">
                                 <p className="text-xs text-red-600 uppercase font-semibold mb-1">Egresos</p>
-                                <p className="text-2xl font-bold text-red-700">{FMT(summary.expense)}</p>
+                                <p className="text-2xl font-bold text-red-700">{FMT(summary.totalExpense)}</p>
                                 {summary.purchasesByPayment && Object.keys(summary.purchasesByPayment).length > 0 && (
                                     <div className="mt-2 pt-2 border-t border-red-200/50 text-xs text-red-700/80 text-left space-y-0.5 max-h-24 overflow-y-auto">
                                         {Object.entries(summary.purchasesByPayment).map(([method, amount]: any) => (
@@ -283,7 +283,7 @@ export default function CashPage() {
                             </div>
                             <div className="card text-center bg-blue-50">
                                 <p className="text-xs text-blue-600 uppercase font-semibold mb-1">Total</p>
-                                <p className="text-2xl font-bold text-blue-700">{FMT(register.openingAmount + summary.income - summary.expense)}</p>
+                                <p className="text-2xl font-bold text-blue-700">{FMT(register.openingAmount + summary.totalIncome - summary.totalExpense)}</p>
                             </div>
                         </div>
                     )}
@@ -508,9 +508,9 @@ export default function CashPage() {
                         {summary && (
                             <div className="bg-primary-50 rounded-xl p-3 text-xs space-y-1 text-primary-600">
                                 <div className="flex justify-between"><span>Apertura:</span><span className="font-medium">{FMT(register?.openingAmount ?? 0)}</span></div>
-                                <div className="flex justify-between text-emerald-700"><span>Ingresos:</span><span className="font-medium">+{FMT(summary.income)}</span></div>
-                                <div className="flex justify-between text-red-600"><span>Egresos:</span><span className="font-medium">-{FMT(summary.expense)}</span></div>
-                                <div className="flex justify-between font-bold text-espresso border-t border-primary-200 pt-1 mt-1"><span>Balance esperado:</span><span>{FMT((register?.openingAmount ?? 0) + summary.income - summary.expense)}</span></div>
+                                <div className="flex justify-between text-emerald-700"><span>Ingresos:</span><span className="font-medium">+{FMT(summary.totalIncome)}</span></div>
+                                <div className="flex justify-between text-red-600"><span>Egresos:</span><span className="font-medium">-{FMT(summary.totalExpense)}</span></div>
+                                <div className="flex justify-between font-bold text-espresso border-t border-primary-200 pt-1 mt-1"><span>Balance esperado:</span><span>{FMT((register?.openingAmount ?? 0) + summary.totalIncome - summary.totalExpense)}</span></div>
                             </div>
                         )}
                         <div>
