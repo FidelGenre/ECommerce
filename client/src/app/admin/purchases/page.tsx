@@ -490,15 +490,10 @@ export default function PurchasesPage() {
                                             <span>Pago:</span>
                                             <span>{ticketModal.paymentMethod?.name ?? '—'}</span>
                                         </div>
-                                        <div className="flex justify-between text-xs">
-                                            <span>Estado:</span>
-                                            <span>{(ticketModal.status?.name && STATUS_LABELS[ticketModal.status.name]) || ticketModal.status?.name || '—'}</span>
-                                        </div>
                                     </div>
 
-                                    <div className="text-center pt-2 text-xs flex flex-col items-center gap-3">
-                                        <p>Registro de Entrada de Mercadería</p>
-
+                                    <div className="text-center pt-2 text-xs">
+                                        <p className="text-gray-400">Coffee Beans — Detalle de compra #{ticketModal.id}</p>
                                     </div>
                                 </div>
                             </div>
