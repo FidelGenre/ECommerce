@@ -473,7 +473,7 @@ export default function CashPage() {
                         <h2 className="text-lg font-bold text-espresso">Abrir Caja</h2>
                         <div>
                             <label className="block text-sm font-medium text-primary-700 mb-1">Monto de apertura</label>
-                            <input type="number" className="input" value={openAmt} onChange={e => { setOpenAmt(e.target.value); setOpenDiscrepancy(null); setOpenDiscrepancyReason('') }} />
+                            <input type="number" min="0" step="0.01" className="input" value={openAmt} onChange={e => { setOpenAmt(e.target.value); setOpenDiscrepancy(null); setOpenDiscrepancyReason('') }} />
                         </div>
                         {openDiscrepancy && (
                             <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 space-y-3">
@@ -513,7 +513,7 @@ export default function CashPage() {
                         )}
                         <div>
                             <label className="block text-sm font-medium text-primary-700 mb-1">Monto declarado (efectivo contado)</label>
-                            <input type="number" className="input" value={closeAmt} onChange={e => { setCloseAmt(e.target.value); setCloseDiscrepancy(null); setCloseDiscrepancyReason('') }} />
+                            <input type="number" min="0" step="0.01" className="input" value={closeAmt} onChange={e => { setCloseAmt(e.target.value); setCloseDiscrepancy(null); setCloseDiscrepancyReason('') }} />
                         </div>
                         {closeDiscrepancy && (
                             <div className="bg-red-50 border border-red-300 rounded-xl p-4 space-y-3">
@@ -556,7 +556,7 @@ export default function CashPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Monto</label>
-                                <input type="number" className="input" value={moveForm.amount} onChange={e => setMoveForm({ ...moveForm, amount: e.target.value })} required />
+                                <input type="number" min="0.01" step="0.01" className="input" value={moveForm.amount} onChange={e => setMoveForm({ ...moveForm, amount: e.target.value })} required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-primary-700 mb-1">Descripción</label>

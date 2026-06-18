@@ -83,6 +83,9 @@ public class CashController {
     @PostMapping("/open")
     public ResponseEntity<?> open(@RequestBody OpenRequest req,
             org.springframework.security.core.Authentication auth) {
+        if (req.getAmount() == null || req.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Monto inválido", "message", "El monto de apertura no puede ser negativo."));
+        }
         if (registerRepo.findFirstByClosedAtIsNullOrderByOpenedAtDesc().isPresent()) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Caja ya abierta",
@@ -122,6 +125,9 @@ public class CashController {
 
     @PostMapping("/{id}/close")
     public ResponseEntity<?> close(@PathVariable Long id, @RequestBody OpenRequest req, org.springframework.security.core.Authentication auth) {
+        if (req.getAmount() == null || req.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Monto inválido", "message", "El monto de cierre no puede ser negativo."));
+        }
         return registerRepo.findById(id).map(r -> {
             BigDecimal income = movementRepo.sumByRegisterAndType(id, "INCOME");
             BigDecimal expense = movementRepo.sumByRegisterAndType(id, "EXPENSE");
@@ -166,10 +172,16 @@ public class CashController {
     }
 
     @PostMapping("/{id}/movements")
-    public ResponseEntity<CashMovement> addMovement(@PathVariable Long id, @RequestBody CashMovement req) {
+    public ResponseEntity<?> addMovement(@PathVariable Long id, @RequestBody CashMovement req, org.springframework.security.core.Authentication auth) {
+        if (req.getAmount() == null || req.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            return ResponseEntity.badRequest().body("El monto debe ser mayor a 0.");
+        }
         return registerRepo.findById(id).map(register -> {
             req.setRegister(register);
             req.setIsManual(true);
+            if (auth != null) {
+                userRepo.findByUsername(auth.getName()).ifPresent(req::setCreatedBy);
+            }
             return ResponseEntity.ok(movementRepo.save(req));
         }).orElse(ResponseEntity.notFound().build());
     }
