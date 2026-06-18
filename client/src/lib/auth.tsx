@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false)
     }, [])
 
-    // Poll /api/auth/refresh every 30s to keep role/token in sync
+    // Poll /api/auth/refresh every 30s and on tab focus to keep role/token in sync
     useEffect(() => {
         if (!user) return
         const refresh = async () => {
@@ -49,7 +49,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         }
         intervalRef.current = setInterval(refresh, 30_000)
-        return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+        const onFocus = () => refresh()
+        window.addEventListener('focus', onFocus)
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current)
+            window.removeEventListener('focus', onFocus)
+        }
     }, [user?.userId])
 
     const login = async (username: string, password: string) => {
