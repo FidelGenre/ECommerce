@@ -121,7 +121,7 @@ public class CashController {
     }
 
     @PostMapping("/{id}/close")
-    public ResponseEntity<?> close(@PathVariable Long id, @RequestBody OpenRequest req) {
+    public ResponseEntity<?> close(@PathVariable Long id, @RequestBody OpenRequest req, org.springframework.security.core.Authentication auth) {
         return registerRepo.findById(id).map(r -> {
             BigDecimal income = movementRepo.sumByRegisterAndType(id, "INCOME");
             BigDecimal expense = movementRepo.sumByRegisterAndType(id, "EXPENSE");
@@ -152,6 +152,9 @@ public class CashController {
             r.setNotes(req.getNotes());
             if (hasDiscrepancy) {
                 r.setDiscrepancyReason(req.getDiscrepancyReason());
+            }
+            if (auth != null) {
+                userRepo.findByUsername(auth.getName()).ifPresent(r::setClosedBy);
             }
             return ResponseEntity.ok(registerRepo.save(r));
         }).orElse(ResponseEntity.notFound().build());

@@ -611,9 +611,9 @@ export default function CashPage() {
                         <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100">
                             <div>
                                 <h2 className="text-lg font-bold text-espresso">Detalle de Sesión de Caja</h2>
-                                <p className="text-xs text-primary-400 mt-0.5">
-                                    Apertura: {new Date(detailModal.register.openedAt).toLocaleString('es-AR')}
-                                    {detailModal.register.closedAt && <> · Cierre: {new Date(detailModal.register.closedAt).toLocaleString('es-AR')}</>}
+                                <p className="text-xs text-primary-400 mt-0.5 flex flex-wrap gap-x-4 gap-y-1">
+                                    <span>Apertura: {new Date(detailModal.register.openedAt).toLocaleString('es-AR')} {detailModal.register.openedBy && <span className="font-semibold text-primary-500">por {detailModal.register.openedBy.firstName ? `${detailModal.register.openedBy.firstName} ${detailModal.register.openedBy.lastName ?? ''}`.trim() : detailModal.register.openedBy.username}</span>}</span>
+                                    {detailModal.register.closedAt && <span>Cierre: {new Date(detailModal.register.closedAt).toLocaleString('es-AR')} {detailModal.register.closedBy && <span className="font-semibold text-primary-500">por {detailModal.register.closedBy.firstName ? `${detailModal.register.closedBy.firstName} ${detailModal.register.closedBy.lastName ?? ''}`.trim() : detailModal.register.closedBy.username}</span>}</span>}
                                 </p>
                             </div>
                             <button onClick={() => setDetailModal(null)} className="p-2 hover:bg-primary-100 rounded-lg text-primary-400 hover:text-primary-700 transition-colors">

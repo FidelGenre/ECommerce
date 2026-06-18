@@ -30,6 +30,11 @@ public class CashRegister {
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "passwordHash", "email", "documentType", "documentNumber", "active", "createdAt", "customer" })
     private User openedBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "closed_by")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "passwordHash", "email", "documentType", "documentNumber", "active", "createdAt", "customer" })
+    private User closedBy;
+
     @Column(length = 255)
     private String notes;
 

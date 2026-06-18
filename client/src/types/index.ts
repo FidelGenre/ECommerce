@@ -160,6 +160,8 @@ export interface CashRegister {
     paymentTotals?: Record<string, number>
     discrepancyReason?: string
     openingDiscrepancyReason?: string
+    openedBy?: { id: number; username: string; firstName?: string; lastName?: string }
+    closedBy?: { id: number; username: string; firstName?: string; lastName?: string }
 }
 
 export interface CashMovement {
