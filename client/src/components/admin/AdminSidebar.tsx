@@ -111,6 +111,17 @@ export default function AdminSidebar() {
     const [mobileOpen, setMobileOpen] = useState(false)
     const pathname = usePathname()
     const { user, logout } = useAuth()
+    const [profile, setProfile] = useState<{ firstName?: string; lastName?: string } | null>(null)
+
+    useEffect(() => {
+        if (!user) return
+        api.get('/api/auth/me').then(r => setProfile(r.data)).catch(() => {})
+    }, [user?.userId])
+
+    const displayName = profile?.firstName
+        ? `${profile.firstName}${profile.lastName ? ' ' + profile.lastName : ''}`
+        : (user?.firstName ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}` : user?.username)
+    const displayInitial = (profile?.firstName ?? user?.firstName ?? user?.username)?.[0]?.toUpperCase() ?? 'A'
 
     // Lock body scroll when mobile menu is open
     useEffect(() => {
