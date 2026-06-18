@@ -39,7 +39,7 @@ public class RoleController {
     @DeleteMapping("/{code}")
     public ResponseEntity<?> deleteRole(@PathVariable String code) {
         if ("ADMIN".equals(code) || "CLIENTE".equals(code)) {
-            return ResponseEntity.status(403).body("Cannot delete system roles");
+            return ResponseEntity.status(403).body("No se pueden eliminar roles del sistema");
         }
         return roleRepo.findById(code).map(role -> {
             roleRepo.delete(role);

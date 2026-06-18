@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import {
     LayoutDashboard, ShoppingCart, Package2, Users, Truck,
     BarChart3, Boxes, Banknote, Bell, ClipboardList,
@@ -34,6 +35,17 @@ const NAV = [
 function SidebarInner({ onNav }: { onNav?: () => void }) {
     const pathname = usePathname()
     const { user, logout } = useAuth()
+    const [profile, setProfile] = useState<{ firstName?: string; lastName?: string } | null>(null)
+
+    useEffect(() => {
+        if (!user) return
+        api.get('/api/auth/me').then(r => setProfile(r.data)).catch(() => {})
+    }, [user?.userId])
+
+    const displayName = profile?.firstName
+        ? `${profile.firstName}${profile.lastName ? ' ' + profile.lastName : ''}`
+        : (user?.firstName ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}` : user?.username)
+    const displayInitial = (profile?.firstName ?? user?.firstName ?? user?.username)?.[0]?.toUpperCase() ?? 'A'
 
     return (
         <>
@@ -79,12 +91,10 @@ function SidebarInner({ onNav }: { onNav?: () => void }) {
             <div className="border-t border-primary-800 px-4 py-4">
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-8 h-8 bg-caramel rounded-full flex items-center justify-center text-espresso font-bold text-sm">
-                        {(user?.firstName ?? user?.username)?.[0]?.toUpperCase() ?? 'A'}
+                        {displayInitial}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate">
-                            {user?.firstName ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}` : user?.username}
-                        </p>
+                        <p className="text-white text-sm font-medium truncate">{displayName}</p>
                         <p className="text-white/60 text-xs">{user?.role}</p>
                     </div>
                 </div>
@@ -190,12 +200,10 @@ export default function AdminSidebar() {
                     <div className="border-t border-primary-800 px-6 py-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-caramel rounded-full flex items-center justify-center text-espresso font-bold text-sm">
-                                {(user?.firstName ?? user?.username)?.[0]?.toUpperCase() ?? 'A'}
+                                {displayInitial}
                             </div>
                             <div>
-                                <p className="text-white text-sm font-medium">
-                                    {user?.firstName ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}` : user?.username}
-                                </p>
+                                <p className="text-white text-sm font-medium">{displayName}</p>
                                 <p className="text-primary-400 text-xs">{user?.role}</p>
                             </div>
                         </div>

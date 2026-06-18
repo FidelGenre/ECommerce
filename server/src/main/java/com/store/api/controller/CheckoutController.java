@@ -104,7 +104,7 @@ public class CheckoutController {
 
             for (OrderRequest.OrderLineRequest line : req.getLines()) {
                 Item item = itemRepo.findById(line.getItemId())
-                        .orElseThrow(() -> new RuntimeException("Item not found: " + line.getItemId()));
+                        .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + line.getItemId()));
                 resolvedItems.add(item);
 
                 PreferenceItemRequest mpItem = PreferenceItemRequest.builder()
