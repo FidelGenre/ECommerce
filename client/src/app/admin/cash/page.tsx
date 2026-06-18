@@ -18,13 +18,11 @@ export default function CashPage() {
     const [showOpen, setShowOpen] = useState(false)
     const [showMove, setShowMove] = useState(false)
     const [openAmt, setOpenAmt] = useState('0')
-    const [closeAmt, setCloseAmt] = useState('')
     const [showClose, setShowClose] = useState(false)
     const [moveForm, setMoveForm] = useState({ id: 0, movementType: 'INCOME', amount: '', description: '' })
     const [saving, setSaving] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
-    const [closeDiscrepancy, setCloseDiscrepancy] = useState<any>(null)
     const [openDiscrepancy, setOpenDiscrepancy] = useState<any>(null)
     const [openDiscrepancyReason, setOpenDiscrepancyReason] = useState('')
     const [detailModal, setDetailModal] = useState<{ register: CashRegister; movements: CashMovement[]; summary: any } | null>(null)
@@ -116,20 +114,18 @@ export default function CashPage() {
     }
     const closeRegister = async () => {
         if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
-        if (!register) return; setSaving(true)
+        if (!register || !summary) return; setSaving(true)
         try {
+            const expectedBalance = (register.openingAmount ?? 0) + summary.totalIncome - summary.totalExpense;
             await api.post(`/api/admin/cash/${register.id}/close`, {
-                amount: Number(closeAmt)
+                amount: expectedBalance
             })
-            setShowClose(false); setCloseDiscrepancy(null); load()
+            setShowClose(false); load()
             toast.success('Caja cerrada')
         } catch (err: any) {
             const data = err.response?.data
-            if (data?.error === 'Discrepancia en el cierre de caja') {
-                setCloseDiscrepancy(data)
-            } else {
-                toast.error(data?.message || 'No se pudo cerrar la caja')
-            }
+            const msg = data?.message || (typeof data === 'string' ? data : 'No se pudo cerrar la caja')
+            toast.error(msg)
         } finally { setSaving(false) }
     }
     const handleFormSubmit = (e: React.FormEvent) => {
@@ -505,32 +501,17 @@ export default function CashPage() {
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
                         <h2 className="text-lg font-bold text-espresso">Cerrar Caja</h2>
                         {summary && (
-                            <div className="bg-primary-50 rounded-xl p-3 text-xs space-y-1 text-primary-600">
+                            <div className="bg-primary-50 rounded-xl p-3 text-xs space-y-1 text-primary-600 mb-4">
                                 <div className="flex justify-between"><span>Apertura:</span><span className="font-medium">{FMT(register?.openingAmount ?? 0)}</span></div>
                                 <div className="flex justify-between text-emerald-700"><span>Ingresos:</span><span className="font-medium">+{FMT(summary.totalIncome)}</span></div>
                                 <div className="flex justify-between text-red-600"><span>Egresos:</span><span className="font-medium">-{FMT(summary.totalExpense)}</span></div>
                                 <div className="flex justify-between font-bold text-espresso border-t border-primary-200 pt-1 mt-1"><span>Balance esperado:</span><span>{FMT((register?.openingAmount ?? 0) + summary.totalIncome - summary.totalExpense)}</span></div>
                             </div>
                         )}
-                        <div>
-                            <label className="block text-sm font-medium text-primary-700 mb-1">Monto declarado (efectivo contado)</label>
-                            <input type="number" min="0" step="0.01" className="input" value={closeAmt} onChange={e => { setCloseAmt(e.target.value); setCloseDiscrepancy(null); }} />
-                        </div>
-                        {closeDiscrepancy && (
-                            <div className="bg-red-50 border border-red-300 rounded-xl p-4 space-y-3">
-                                <div className="flex items-start gap-2">
-                                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="text-sm font-semibold text-red-800">Cierre bloqueado</p>
-                                        <p className="text-xs text-red-700 mt-1">Balance esperado: <strong>{FMT(closeDiscrepancy.expected)}</strong>. Declarado: <strong>{FMT(closeDiscrepancy.provided)}</strong>. {closeDiscrepancy.difference < 0 ? <>Falta <strong>{FMT(Math.abs(closeDiscrepancy.difference))}</strong> en caja</> : <>Sobran <strong>{FMT(closeDiscrepancy.difference)}</strong> en caja</>}.</p>
-                                        <p className="text-xs text-red-700 mt-2 font-medium">Cancelá y registrá los movimientos de ingreso o egreso correspondientes para cuadrar la caja.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        <p className="text-sm text-primary-600 mb-6">Si el efectivo físico no coincide con este balance esperado, debes cancelar y registrar un nuevo movimiento de caja que justifique el sobrante o faltante.</p>
                         <div className="flex gap-3">
-                            <button onClick={() => { setShowClose(false); setCloseDiscrepancy(null); }} className="btn-secondary flex-1">Cancelar</button>
-                            <button onClick={closeRegister} className="btn-danger flex-1" disabled={saving || !!closeDiscrepancy}>{saving ? 'Cerrando…' : 'Cerrar'}</button>
+                            <button onClick={() => setShowClose(false)} className="btn-secondary flex-1">Cancelar</button>
+                            <button onClick={closeRegister} className="btn-danger flex-1" disabled={saving}>{saving ? 'Cerrando…' : 'Cerrar caja (' + FMT((register?.openingAmount ?? 0) + (summary?.totalIncome ?? 0) - (summary?.totalExpense ?? 0)) + ')'}</button>
                         </div>
                     </div>
                 </div>
