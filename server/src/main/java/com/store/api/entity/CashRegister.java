@@ -27,6 +27,7 @@ public class CashRegister {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "opened_by")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "passwordHash", "email", "documentType", "documentNumber", "active", "createdAt", "customer" })
     private User openedBy;
 
     @Column(length = 255)
