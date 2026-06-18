@@ -17,14 +17,11 @@ export default function CashPage() {
     const [loading, setLoading] = useState(true)
     const [showOpen, setShowOpen] = useState(false)
     const [showMove, setShowMove] = useState(false)
-    const [openAmt, setOpenAmt] = useState('0')
     const [showClose, setShowClose] = useState(false)
     const [moveForm, setMoveForm] = useState({ id: 0, movementType: 'INCOME', amount: '', description: '' })
     const [saving, setSaving] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
-    const [openDiscrepancy, setOpenDiscrepancy] = useState<any>(null)
-    const [openDiscrepancyReason, setOpenDiscrepancyReason] = useState('')
     const [detailModal, setDetailModal] = useState<{ register: CashRegister; movements: CashMovement[]; summary: any } | null>(null)
     const [loadingDetail, setLoadingDetail] = useState(false)
 
@@ -97,19 +94,12 @@ export default function CashPage() {
         if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
         setSaving(true)
         try {
-            await api.post('/api/admin/cash/open', {
-                amount: Number(openAmt),
-                openingDiscrepancyReason: openDiscrepancyReason || undefined
-            })
-            setShowOpen(false); setOpenDiscrepancy(null); setOpenDiscrepancyReason(''); load()
+            await api.post('/api/admin/cash/open', {})
+            setShowOpen(false); load()
             toast.success('Caja abierta')
         } catch (err: any) {
             const data = err.response?.data
-            if (data?.error === 'Discrepancia en apertura de caja') {
-                setOpenDiscrepancy(data)
-            } else {
-                toast.error(data?.message || 'No se pudo abrir la caja')
-            }
+            toast.error(data?.message || 'No se pudo abrir la caja')
         } finally { setSaving(false) }
     }
     const closeRegister = async () => {
@@ -468,28 +458,10 @@ export default function CashPage() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
                         <h2 className="text-lg font-bold text-espresso">Abrir Caja</h2>
-                        <div>
-                            <label className="block text-sm font-medium text-primary-700 mb-1">Monto de apertura</label>
-                            <input type="number" min="0" step="0.01" className="input" value={openAmt} onChange={e => { setOpenAmt(e.target.value); setOpenDiscrepancy(null); setOpenDiscrepancyReason('') }} />
-                        </div>
-                        {openDiscrepancy && (
-                            <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 space-y-3">
-                                <div className="flex items-start gap-2">
-                                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="text-sm font-semibold text-amber-800">Discrepancia detectada</p>
-                                        <p className="text-xs text-amber-700 mt-1">El cierre anterior fue <strong>{FMT(openDiscrepancy.lastClosing)}</strong> y estás abriendo con <strong>{FMT(openDiscrepancy.provided)}</strong>. {openDiscrepancy.difference < 0 ? <>Falta <strong className="text-red-700">{FMT(Math.abs(openDiscrepancy.difference))}</strong></> : <>Sobran <strong className="text-emerald-700">{FMT(openDiscrepancy.difference)}</strong></>}.</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-amber-800 mb-1">Motivo de la diferencia <span className="text-red-500">*</span></label>
-                                    <textarea className="input text-sm resize-none" rows={2} placeholder="Ej: Se retiró efectivo al cierre anterior..." value={openDiscrepancyReason} onChange={e => setOpenDiscrepancyReason(e.target.value)} />
-                                </div>
-                            </div>
-                        )}
+                        <p className="text-sm text-primary-600 mb-6">La caja se abrirá automáticamente con el saldo exacto del último cierre.</p>
                         <div className="flex gap-3">
-                            <button onClick={() => { setShowOpen(false); setOpenDiscrepancy(null); setOpenDiscrepancyReason('') }} className="btn-secondary flex-1">Cancelar</button>
-                            <button onClick={openRegister} className="btn-primary flex-1" disabled={saving || (!!openDiscrepancy && !openDiscrepancyReason.trim())}>{saving ? 'Abriendo…' : 'Abrir'}</button>
+                            <button onClick={() => setShowOpen(false)} className="btn-secondary flex-1">Cancelar</button>
+                            <button onClick={openRegister} className="btn-primary flex-1" disabled={saving}>{saving ? 'Abriendo…' : 'Abrir caja'}</button>
                         </div>
                     </div>
                 </div>

@@ -83,9 +83,6 @@ public class CashController {
     @PostMapping("/open")
     public ResponseEntity<?> open(@RequestBody OpenRequest req,
             org.springframework.security.core.Authentication auth) {
-        if (req.getAmount() == null || req.getAmount().compareTo(BigDecimal.ZERO) < 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Monto inválido", "message", "El monto de apertura no puede ser negativo."));
-        }
         if (registerRepo.findFirstByClosedAtIsNullOrderByOpenedAtDesc().isPresent()) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Caja ya abierta",
@@ -95,27 +92,12 @@ public class CashController {
 
         BigDecimal lastClosing = registerRepo.findFirstByClosedAtIsNotNullOrderByClosedAtDesc()
                 .map(CashRegister::getClosingAmount)
-                .orElse(null);
-
-        boolean hasDiscrepancy = lastClosing != null && req.getAmount() != null
-                && req.getAmount().compareTo(lastClosing) != 0;
-
-        if (hasDiscrepancy && (req.getOpeningDiscrepancyReason() == null || req.getOpeningDiscrepancyReason().isBlank())) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Discrepancia en apertura de caja",
-                    "message", "El monto de apertura no coincide con el cierre anterior",
-                    "lastClosing", lastClosing,
-                    "provided", req.getAmount(),
-                    "difference", req.getAmount().subtract(lastClosing)
-            ));
-        }
+                .orElse(BigDecimal.ZERO);
 
         CashRegister register = new CashRegister();
-        register.setOpeningAmount(req.getAmount());
+        register.setOpeningAmount(lastClosing);
         register.setNotes(req.getNotes());
-        if (hasDiscrepancy) {
-            register.setOpeningDiscrepancyReason(req.getOpeningDiscrepancyReason());
-        }
+        
         // Registrar quién abrió la caja
         if (auth != null) {
             userRepo.findByUsername(auth.getName()).ifPresent(register::setOpenedBy);
