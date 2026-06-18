@@ -28,20 +28,16 @@ public class CashService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void record(String movementType, BigDecimal amount, String description) {
         try {
-            CashRegister register = registerRepo.findFirstByClosedAtIsNullOrderByOpenedAtDesc()
-                    .orElseThrow(() -> new IllegalStateException(
-                            "No hay una caja abierta. Abrí la caja antes de registrar operaciones."));
-
-            CashMovement movement = new CashMovement();
-            movement.setRegister(register);
-            movement.setMovementType(movementType);
-            movement.setAmount(amount.abs());
-            movement.setDescription(description);
-            movement.setIsManual(false); // generado por el sistema
-            movementRepo.save(movement);
-        } catch (IllegalStateException e) {
-            // Propagar para que el controller pueda informar al usuario
-            throw e;
+            // Si no hay caja abierta, el movimiento se omite pero la operación (venta/compra) no falla
+            registerRepo.findFirstByClosedAtIsNullOrderByOpenedAtDesc().ifPresentOrElse(register -> {
+                CashMovement movement = new CashMovement();
+                movement.setRegister(register);
+                movement.setMovementType(movementType);
+                movement.setAmount(amount.abs());
+                movement.setDescription(description);
+                movement.setIsManual(false);
+                movementRepo.save(movement);
+            }, () -> System.err.println("CashService: no hay caja abierta, movimiento omitido: " + description));
         } catch (Exception e) {
             System.err.println("CashService: no se pudo registrar el movimiento - " + e.getMessage());
         }

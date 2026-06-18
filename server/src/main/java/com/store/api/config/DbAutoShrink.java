@@ -86,7 +86,16 @@ public class DbAutoShrink implements CommandLineRunner {
                 log.warn("Failed to execute (might be normal if table is different): {} - {}", q, e.getMessage());
             }
         }
-        
+
+        // Migración: compras existentes ya tenían el stock sumado al crearlas (comportamiento anterior).
+        // Marcamos stock_added = true para evitar que se re-sumen al cambiar estado.
+        try {
+            jdbc.execute("UPDATE purchase_orders SET stock_added = TRUE WHERE stock_added IS NULL");
+            log.info("Migrated existing purchase_orders: stock_added set to TRUE");
+        } catch (Exception e) {
+            log.warn("Could not migrate stock_added on purchase_orders: {}", e.getMessage());
+        }
+
         log.info("Database shrink completed.");
     }
 }
