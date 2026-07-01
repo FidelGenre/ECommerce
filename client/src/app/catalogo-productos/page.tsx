@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
@@ -7,7 +7,7 @@ import { useCart } from '@/lib/cart'
 import { CartDrawer } from '@/components/CartDrawer'
 import { ScrollToTop } from '@/components/ScrollToTop'
 import { Item } from '@/types'
-import { Coffee, Search, X, ChevronLeft, ShoppingCart, User } from 'lucide-react'
+import { Coffee, Search, X, ChevronLeft, ChevronRight, ShoppingCart, User } from 'lucide-react'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
@@ -20,6 +20,11 @@ export default function CatalogoProductosPage() {
     const [selectedCategory, setSelectedCategory] = useState<string>('')
     const [showCart, setShowCart] = useState(false)
 
+    // Category filters row: horizontal scroll with arrows that appear only when the
+    // chips overflow (many categories). Otherwise it just centers them.
+    const catRowRef = useRef<HTMLDivElement>(null)
+    const [catOverflow, setCatOverflow] = useState(false)
+
     useEffect(() => {
         api.get('/api/public/items?size=100')
             .then(r => setItems(r.data.content ?? []))
@@ -31,6 +36,24 @@ export default function CatalogoProductosPage() {
         () => Array.from(new Set(items.map((it: any) => it.category?.name).filter(Boolean))).sort() as string[],
         [items]
     )
+
+    // Detect whether the category row overflows (to show the arrows), on mount,
+    // when categories change, and on resize.
+    useEffect(() => {
+        const check = () => {
+            const el = catRowRef.current
+            if (el) setCatOverflow(el.scrollWidth > el.clientWidth + 4)
+        }
+        check()
+        window.addEventListener('resize', check)
+        return () => window.removeEventListener('resize', check)
+    }, [categories])
+
+    const scrollCategories = (dir: 'left' | 'right') => {
+        const el = catRowRef.current
+        if (!el) return
+        el.scrollBy({ left: dir === 'left' ? -240 : 240, behavior: 'smooth' })
+    }
 
     const filteredItems = useMemo(() => {
         const q = search.trim().toLowerCase()
@@ -108,24 +131,48 @@ export default function CatalogoProductosPage() {
                     </div>
                 </div>
 
-                {/* Filtros por categoría */}
+                {/* Filtros por categoría (una fila; con flechas si hay muchas) */}
                 {categories.length > 0 && (
-                    <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
-                        <button
-                            onClick={() => setSelectedCategory('')}
-                            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${selectedCategory === '' ? 'bg-[#4A2D19] text-white shadow-md' : 'bg-[#FFFDF8] text-[#8B6A4B] hover:bg-[#D4A97A] hover:text-[#4A2D19]'}`}
-                        >
-                            Todos
-                        </button>
-                        {categories.map((cat, idx) => (
+                    <div className="relative mb-10">
+                        {/* Flecha izquierda */}
+                        {catOverflow && (
                             <button
-                                key={idx}
-                                onClick={() => setSelectedCategory(cat)}
-                                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${selectedCategory === cat ? 'bg-[#4A2D19] text-white shadow-md' : 'bg-[#FFFDF8] text-[#8B6A4B] hover:bg-[#D4A97A] hover:text-[#4A2D19]'}`}
-                            >
-                                {cat}
+                                onClick={() => scrollCategories('left')}
+                                aria-label="Categorías anteriores"
+                                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-[#4A2D19] text-white shadow-md hover:bg-[#3a2313] transition-colors">
+                                <ChevronLeft className="w-4 h-4" />
                             </button>
-                        ))}
+                        )}
+
+                        <div
+                            ref={catRowRef}
+                            className={`flex items-center gap-2 overflow-x-auto no-scrollbar ${catOverflow ? 'justify-start px-11' : 'flex-wrap justify-center'}`}>
+                            <button
+                                onClick={() => setSelectedCategory('')}
+                                className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all ${selectedCategory === '' ? 'bg-[#4A2D19] text-white shadow-md' : 'bg-[#FFFDF8] text-[#8B6A4B] hover:bg-[#D4A97A] hover:text-[#4A2D19]'}`}
+                            >
+                                Todos
+                            </button>
+                            {categories.map((cat, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all ${selectedCategory === cat ? 'bg-[#4A2D19] text-white shadow-md' : 'bg-[#FFFDF8] text-[#8B6A4B] hover:bg-[#D4A97A] hover:text-[#4A2D19]'}`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Flecha derecha */}
+                        {catOverflow && (
+                            <button
+                                onClick={() => scrollCategories('right')}
+                                aria-label="Más categorías"
+                                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-[#4A2D19] text-white shadow-md hover:bg-[#3a2313] transition-colors">
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                 )}
 
