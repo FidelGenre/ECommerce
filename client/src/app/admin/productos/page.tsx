@@ -581,10 +581,15 @@ export default function ProductosAdminPage() {
                                     </div>
                                 )}
 
-                                {/* Stock */}
+                                {/* Stock (read-only: managed via Inventario → Ajustar stock) */}
                                 <div>
                                     <label className="block text-sm font-medium text-primary-700 mb-1">Stock actual</label>
-                                    <input type="number" step="any" min="0" className="input" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} />
+                                    <input type="number" className="input bg-gray-100 text-primary-400 cursor-not-allowed" value={editing ? form.stock : '0'} disabled readOnly />
+                                    <p className="text-xs text-primary-400 mt-1">
+                                        {editing
+                                            ? 'Se gestiona desde Inventario → Ajustar stock (para dejar registro del movimiento).'
+                                            : 'El producto se crea con stock 0. Cargalo desde Inventario → Ajustar stock.'}
+                                    </p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-primary-700 mb-1">Stock mínimo</label>

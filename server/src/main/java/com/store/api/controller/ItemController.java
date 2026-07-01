@@ -182,8 +182,10 @@ public class ItemController {
         item.setPrice(req.getPrice());
         item.setCost(req.getCost());
         item.setImageUrl(req.getImageUrl());
-        if (req.getStock() != null)
-            item.setStock(req.getStock());
+        // Stock is intentionally NOT set here. Physical stock is only ever changed through
+        // traceable movements (Inventario → Ajustar stock, purchases, sales), never by
+        // overwriting it from the product form. New items default to 0; edits preserve the
+        // existing value. minStock is config, so it stays editable.
         if (req.getMinStock() != null)
             item.setMinStock(req.getMinStock());
         if (req.getVisible() != null)
