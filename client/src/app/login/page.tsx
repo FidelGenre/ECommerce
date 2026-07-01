@@ -20,7 +20,7 @@ export default function LoginPage() {
             const errorMsg = e.message || 'Usuario o contraseña incorrectos.'
             setError(errorMsg)
             setLoading(false)
-            setTimeout(() => setError(''), 3000)
+            setTimeout(() => setError(''), 6000)
         }
     }
 
