@@ -76,8 +76,8 @@ export default function CustomersPage() {
         </span>
     )
 
-    const openNew = () => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditing(null); setForm({ firstName: '', lastName: '', email: '', phone: '', address: '', taxId: '', notes: '' }); setShowModal(true) }
-    const openEdit = (c: Customer) => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditing(c); setForm({ firstName: c.firstName, lastName: c.lastName ?? '', email: c.email ?? '', phone: c.phone ?? '', address: c.address ?? '', taxId: c.taxId ?? '', notes: c.notes ?? '' }); setShowModal(true) }
+    const openNew = () => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setEditing(null); setForm({ firstName: '', lastName: '', email: '', phone: '', address: '', taxId: '', notes: '' }); setShowModal(true) }
+    const openEdit = (c: Customer) => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setEditing(c); setForm({ firstName: c.firstName, lastName: c.lastName ?? '', email: c.email ?? '', phone: c.phone ?? '', address: c.address ?? '', taxId: c.taxId ?? '', notes: c.notes ?? '' }); setShowModal(true) }
 
     const openAccount = async (c: Customer) => {
         setAccountModal(c)
@@ -122,7 +122,7 @@ export default function CustomersPage() {
 
     const handleAddMovement = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         if (!accountModal || !accForm.amount) return
         setSaving(true)
         try {
@@ -141,7 +141,7 @@ export default function CustomersPage() {
 
     const handleAdjustPoints = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         if (!pointsModal || !pointsAdj) return
         setSaving(true)
         try {
@@ -159,7 +159,7 @@ export default function CustomersPage() {
                 <div><h1 className="text-2xl font-bold text-espresso">Clientes</h1><p className="text-primary-500 text-sm">{total} clientes</p></div>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
-                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDelete([...selected]) }} disabled={deleting}
+                        <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setPendingDelete([...selected]) }} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -202,11 +202,11 @@ export default function CustomersPage() {
                                             <button onClick={() => openAccount(c)} className="btn-ghost py-1 px-2 text-xs flex items-center gap-1" title="Cuenta Corriente">
                                                 <History className="w-3.5 h-3.5" /> Cuenta
                                             </button>
-                                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPointsModal(c); setPointsAdj('') }} className="btn-ghost py-1 px-2 text-xs flex items-center gap-1 text-amber-600 hover:text-amber-800" title="Ajustar Puntos">
+                                            <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setPointsModal(c); setPointsAdj('') }} className="btn-ghost py-1 px-2 text-xs flex items-center gap-1 text-amber-600 hover:text-amber-800" title="Ajustar Puntos">
                                                 <Star className="w-3.5 h-3.5" /> Puntos
                                             </button>
                                             <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">Editar</button>
-                                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDelete([c.id]) }} className="text-red-500 hover:text-red-700 text-xs px-2 py-1">Eliminar</button>
+                                            <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setPendingDelete([c.id]) }} className="text-red-500 hover:text-red-700 text-xs px-2 py-1">Eliminar</button>
                                         </td>
                                     </tr>
                                 ))}

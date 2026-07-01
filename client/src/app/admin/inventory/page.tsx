@@ -143,7 +143,7 @@ export default function InventoryPage() {
 
     const handleAdjust = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         setSaving(true)
         try {
             const reason = adjReasonDetail ? `${adjReasonType}: ${adjReasonDetail}` : adjReasonType
@@ -254,7 +254,7 @@ export default function InventoryPage() {
                                             <td className="text-primary-400">{item.supplier?.name ?? '—'}</td>
                                             <td><span className={st.cls}>{st.label}</span></td>
                                             <td className="space-x-1">
-                                                <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setModal(item) }} className="btn-ghost py-1 px-2 text-xs">
+                                                <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return } setModal(item) }} className="btn-ghost py-1 px-2 text-xs">
                                                     <Plus className="w-3.5 h-3.5 inline mr-1" />Ajustar
                                                 </button>
                                                 <button onClick={() => setLabelModal(item)} className="btn-ghost py-1 px-2 text-xs" title="Imprimir Etiqueta">

@@ -108,8 +108,8 @@ export default function SuppliersPage() {
         </span>
     )
 
-    const openNew = () => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditing(null); setForm(blankForm); setNewCategoryName(''); setShowModal(true) }
-    const openEdit = (s: Supplier) => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditing(s); setForm({ name: s.name, legalName: s.legalName ?? '', taxId: s.taxId ?? '', documentType: s.documentType ?? 'DNI', alias: s.alias ?? '', phone: s.phone ?? '', email: s.email ?? '', address: s.address ?? '', categoryId: s.category?.id ? String(s.category.id) : '' }); setNewCategoryName(''); setShowModal(true) }
+    const openNew = () => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setEditing(null); setForm(blankForm); setNewCategoryName(''); setShowModal(true) }
+    const openEdit = (s: Supplier) => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setEditing(s); setForm({ name: s.name, legalName: s.legalName ?? '', taxId: s.taxId ?? '', documentType: s.documentType ?? 'DNI', alias: s.alias ?? '', phone: s.phone ?? '', email: s.email ?? '', address: s.address ?? '', categoryId: s.category?.id ? String(s.category.id) : '' }); setNewCategoryName(''); setShowModal(true) }
 
     const openAccount = async (s: Supplier) => {
         setAccountModal(s)
@@ -141,7 +141,7 @@ export default function SuppliersPage() {
 
     const handleAddMovement = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         if (!accountModal || !accForm.amount) return
         setSaving(true)
         try {
@@ -164,7 +164,7 @@ export default function SuppliersPage() {
                 <div><h1 className="text-2xl font-bold text-espresso">Proveedores</h1><p className="text-primary-500 text-sm">{total} proveedores</p></div>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
-                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDelete([...selected]) }} disabled={deleting}
+                        <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setPendingDelete([...selected]) }} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -217,7 +217,7 @@ export default function SuppliersPage() {
                                                 <History className="w-3.5 h-3.5" /> Cuenta
                                             </button>
                                             <button onClick={() => openEdit(s)} className="btn-ghost py-1 px-2 text-xs">Editar</button>
-                                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDelete([s.id]) }} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700" title="Eliminar">
+                                            <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setPendingDelete([s.id]) }} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700" title="Eliminar">
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </td>

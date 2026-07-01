@@ -31,16 +31,16 @@ export default function PaymentsSettingsPage() {
     useEffect(() => { load() }, [])
 
     const openNew = () => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         setEditing(null); setForm({ name: '', description: '' }); setShowModal(true)
     }
     const openEdit = (p: PaymentMethod) => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         setEditing(p); setForm({ name: p.name, description: p.description ?? '' }); setShowModal(true)
     }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         setSaving(true)
         try {
             if (editing) { await api.put(`/api/admin/settings/payment-methods/${editing.id}`, form); toast.success('Forma de pago actualizada') }
@@ -50,7 +50,7 @@ export default function PaymentsSettingsPage() {
     }
 
     const executeDelete = async () => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         if (!pendingDelete) return
         setDeleting(true)
         const errors: string[] = []
@@ -75,7 +75,7 @@ export default function PaymentsSettingsPage() {
                 <h1 className="text-2xl font-bold text-espresso">Formas de Pago</h1>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
-                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete([...selected]) }} disabled={deleting}
+                        <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return } setPendingDelete([...selected]) }} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -91,7 +91,7 @@ export default function PaymentsSettingsPage() {
                                 <td className="pl-4"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="w-4 h-4 rounded accent-primary-700" /></td>
                                 <td className="font-medium">{p.name}</td><td className="text-primary-500">{p.description ?? '—'}</td>
                                 <td>{p.createdBy ? <span className="text-primary-600 font-medium">{p.createdBy.username ?? p.createdBy.email}</span> : <span className="text-primary-300">Sistema</span>}</td>
-                                <td className="space-x-1"><><button onClick={() => openEdit(p)} className="btn-ghost p-1.5"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete([p.id]) }} className="text-red-500 hover:text-red-700 p-1.5"><Trash2 className="w-3.5 h-3.5" /></button></></td></tr>
+                                <td className="space-x-1"><><button onClick={() => openEdit(p)} className="btn-ghost p-1.5"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return } setPendingDelete([p.id]) }} className="text-red-500 hover:text-red-700 p-1.5"><Trash2 className="w-3.5 h-3.5" /></button></></td></tr>
                         ))}</tbody></table>
                 )}
             </div>

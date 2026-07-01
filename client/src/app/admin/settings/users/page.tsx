@@ -24,6 +24,10 @@ const ALL_PERMISSIONS = [
     { id: 'MANAGE_SETTINGS', label: 'Configuración y Roles' }
 ];
 
+// Access-level permission (not a section): controls whether the role can modify
+// data at all. Without it, the role is read-only across every section it can see.
+const WRITE_PERMISSION = { id: 'MANAGE_WRITE', label: 'Puede editar y modificar datos' };
+
 interface UserRow {
     id: number;
     username: string;
@@ -155,11 +159,11 @@ export default function UsersSettingsPage() {
         return `${raw.slice(0, 2)}-${raw.slice(2, 10)}-${raw.slice(10)}`
     }
 
-    const openNew = () => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE', firstName: '', lastName: '', phone: '', address: '', taxId: '', documentType: 'DNI', loyaltyPoints: 0 }); setShowModal(true) }
-    const openEdit = (u: UserRow) => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role, firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', address: u.address || '', taxId: u.taxId || '', documentType: u.documentType || 'DNI', loyaltyPoints: u.loyaltyPoints || 0 }); setShowModal(true) }
+    const openNew = () => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setEditing(null); setForm({ username: '', email: '', password: '', role: 'CLIENTE', firstName: '', lastName: '', phone: '', address: '', taxId: '', documentType: 'DNI', loyaltyPoints: 0 }); setShowModal(true) }
+    const openEdit = (u: UserRow) => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setEditing(u); setForm({ username: u.username, email: u.email, password: '', role: u.role, firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', address: u.address || '', taxId: u.taxId || '', documentType: u.documentType || 'DNI', loyaltyPoints: u.loyaltyPoints || 0 }); setShowModal(true) }
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         setSaving(true)
         try {
             if (editing) await api.put(`/api/admin/users/${editing.id}`, form)
@@ -169,14 +173,14 @@ export default function UsersSettingsPage() {
         } finally { setSaving(false) }
     }
 
-    const openNewRole = () => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditingRole(null); setRoleForm({ code: '', name: '', permissions: [] }); setShowRoleModal(true) }
-    const openEditRole = (r: Role) => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setEditingRole(r); setRoleForm({ ...r }); setShowRoleModal(true) }
+    const openNewRole = () => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setEditingRole(null); setRoleForm({ code: '', name: '', permissions: [] }); setShowRoleModal(true) }
+    const openEditRole = (r: Role) => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setEditingRole(r); setRoleForm({ ...r }); setShowRoleModal(true) }
     const [pendingDeleteRole, setPendingDeleteRole] = useState<string | null>(null)
     const [pendingDeleteIds, setPendingDeleteIds] = useState<number[] | null>(null)
 
     const handleSaveRole = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         setSaving(true)
         try {
             if (editingRole) { await api.put(`/api/admin/roles/${editingRole.code}`, roleForm); toast.success('Rol actualizado') }
@@ -200,7 +204,7 @@ export default function UsersSettingsPage() {
         }
     }
 
-    const toggle = async (id: number) => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } await api.patch(`/api/admin/users/${id}/toggle`); load() }
+    const toggle = async (id: number) => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } await api.patch(`/api/admin/users/${id}/toggle`); load() }
 
     const executeDeleteUsers = async () => {
         if (!pendingDeleteIds) return
@@ -240,7 +244,7 @@ export default function UsersSettingsPage() {
                 <h1 className="text-2xl font-bold text-espresso">Usuarios y Permisos</h1>
                 <div className="flex items-center gap-2">
                     {activeTab === 'USERS' && selected.size > 0 && (
-                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDeleteIds([...selected]) }} disabled={deleting !== ""}
+                        <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setPendingDeleteIds([...selected]) }} disabled={deleting !== ""}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -341,7 +345,7 @@ export default function UsersSettingsPage() {
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 {u.username !== 'admin' && (
-                                                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDeleteIds([u.id]) }} title="Eliminar definitivamente" disabled={deleting !== ""} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
+                                                    <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setPendingDeleteIds([u.id]) }} title="Eliminar definitivamente" disabled={deleting !== ""} className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
@@ -377,6 +381,11 @@ export default function UsersSettingsPage() {
                                             <div className="flex flex-wrap gap-1">
                                                 {r.permissions.length === 0 && <span className="text-xs text-primary-300">Ninguno</span>}
                                                 {r.permissions.map(p => {
+                                                    if (p === WRITE_PERMISSION.id) return (
+                                                        <span key={p} className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-md text-[10px] uppercase font-bold tracking-wider">
+                                                            {WRITE_PERMISSION.label}
+                                                        </span>
+                                                    );
                                                     const permInfo = ALL_PERMISSIONS.find(ap => ap.id === p);
                                                     return (
                                                     <span key={p} className="inline-flex items-center gap-1 px-2 py-1 bg-primary-50 border border-primary-100 text-primary-700 rounded-md text-[10px] uppercase font-bold tracking-wider">
@@ -391,7 +400,7 @@ export default function UsersSettingsPage() {
                                                     <Edit className="w-3.5 h-3.5" /> Editar
                                                 </button>
                                                 {r.code !== 'ADMIN' && r.code !== 'CLIENTE' && (
-                                                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setPendingDeleteRole(r.code) }} title="Eliminar rol" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
+                                                    <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setPendingDeleteRole(r.code) }} title="Eliminar rol" className="btn-ghost p-1.5 hover:bg-red-50 hover:text-red-600 text-primary-400">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 )}
@@ -541,7 +550,35 @@ export default function UsersSettingsPage() {
                             </div>
 
                             <hr className="border-t border-muted my-4" />
-                            <h3 className="text-sm font-bold text-espresso mb-2">Permisos del Sistema</h3>
+                            <h3 className="text-sm font-bold text-espresso mb-2">Nivel de Acceso</h3>
+                            {(() => {
+                                const isAdmin = roleForm.code === 'ADMIN';
+                                const isChecked = roleForm.permissions.includes(WRITE_PERMISSION.id);
+                                return (
+                                    <label className={`flex items-start gap-2 p-3 rounded-lg border select-none transition-colors mb-4 ${isAdmin ? 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed' : (isChecked ? 'bg-emerald-50 border-emerald-200 text-emerald-800 cursor-pointer' : 'bg-white border-muted text-primary-600 hover:bg-gray-50 cursor-pointer')}`}>
+                                        <div className="mt-0.5">
+                                            {isChecked ? <CheckSquare className={`w-4 h-4 ${isAdmin ? 'text-gray-400' : 'text-emerald-600'}`} /> : <Square className="w-4 h-4 text-primary-300" />}
+                                        </div>
+                                        <div>
+                                            <span className="text-sm font-semibold leading-tight block">{WRITE_PERMISSION.label}</span>
+                                            <span className="text-xs text-primary-400 leading-tight">Sin esto, el rol solo puede ver información (modo consulta).</span>
+                                        </div>
+                                        <input type="checkbox" className="sr-only"
+                                            disabled={isAdmin}
+                                            checked={isChecked}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setRoleForm(prev => ({
+                                                    ...prev,
+                                                    permissions: checked ? [...prev.permissions, WRITE_PERMISSION.id] : prev.permissions.filter(x => x !== WRITE_PERMISSION.id)
+                                                }))
+                                            }}
+                                        />
+                                    </label>
+                                );
+                            })()}
+
+                            <h3 className="text-sm font-bold text-espresso mb-2">Permisos del Sistema (secciones visibles)</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pl-1 pb-1 pr-3 custom-scrollbar">
                                 {ALL_PERMISSIONS.map(p => {
                                     const isAdmin = roleForm.code === 'ADMIN';

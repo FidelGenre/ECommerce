@@ -170,11 +170,11 @@ export default function ProductosAdminPage() {
     const [newCategoryName, setNewCategoryName] = useState('')
 
     const openNew = () => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         setEditing(null); setForm({ ...blank, visible: true, components: [] }); setNewCategoryName(''); setShowModal(true)
     }
     const openEdit = (item: Item) => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         setEditing(item)
         setForm({
             name: item.name,
@@ -200,7 +200,7 @@ export default function ProductosAdminPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         setSaving(true)
         try {
             let categoryId = form.categoryId ? Number(form.categoryId) : null
@@ -234,7 +234,7 @@ export default function ProductosAdminPage() {
     const [pendingDelete, setPendingDelete] = useState<number[] | null>(null)
 
     const executeDelete = async () => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         if (!pendingDelete) return
         const ids = pendingDelete
         setDeleting(true)
@@ -255,12 +255,12 @@ export default function ProductosAdminPage() {
     }
 
     const toggleVisibility = async (item: Item) => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         await api.patch(`/api/admin/items/${item.id}/visibility`); load()
     }
 
     const handleBatchVisibility = async (ids: number[], makeVisible: boolean) => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         setSaving(true)
         const errors: string[] = []
         for (const id of ids) {
@@ -462,7 +462,7 @@ export default function ProductosAdminPage() {
                                                 <button onClick={() => toggleVisibility(item)} className="btn-ghost p-1.5" title={item.visible ? 'Ocultar' : 'Mostrar'}>
                                                     {item.visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                                 </button>
-                                                <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete([item.id]) }} className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50 transition-colors" title="Eliminar">
+                                                <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return } setPendingDelete([item.id]) }} className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50 transition-colors" title="Eliminar">
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
@@ -480,14 +480,14 @@ export default function ProductosAdminPage() {
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white shadow-xl border border-primary-100 rounded-full px-4 md:px-6 py-3 flex items-center gap-3 md:gap-4 z-40 animate-in slide-in-from-bottom-5 max-w-[95%] overflow-x-auto flex-nowrap whitespace-nowrap hide-scrollbar">
                     <span className="font-bold text-espresso text-sm bg-primary-50 px-3 py-1 rounded-full">{selectedIds.size} seleccionados</span>
                     <div className="w-px h-6 bg-muted"></div>
-                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } handleBatchVisibility(Array.from(selectedIds), true) }} className="btn-ghost text-sm flex items-center gap-2">
+                    <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return } handleBatchVisibility(Array.from(selectedIds), true) }} className="btn-ghost text-sm flex items-center gap-2">
                         <Eye className="w-4 h-4" /> Mostrar
                     </button>
-                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } handleBatchVisibility(Array.from(selectedIds), false) }} className="btn-ghost text-sm flex items-center gap-2">
+                    <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return } handleBatchVisibility(Array.from(selectedIds), false) }} className="btn-ghost text-sm flex items-center gap-2">
                         <EyeOff className="w-4 h-4" /> Ocultar
                     </button>
                     <div className="w-px h-6 bg-muted"></div>
-                    <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete(Array.from(selectedIds)) }} className="text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
+                    <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return } setPendingDelete(Array.from(selectedIds)) }} className="text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
                         <Trash2 className="w-4 h-4" /> Eliminar
                     </button>
                     <button onClick={() => setSelectedIds(new Set())} className="ml-2 btn-ghost p-1.5 rounded-full" title="Cancelar selección">

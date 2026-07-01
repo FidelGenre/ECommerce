@@ -91,7 +91,7 @@ export default function CashPage() {
     )
 
     const openRegister = async () => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         setSaving(true)
         try {
             await api.post('/api/admin/cash/open', {})
@@ -103,7 +103,7 @@ export default function CashPage() {
         } finally { setSaving(false) }
     }
     const closeRegister = async () => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         if (!register || !summary) return; setSaving(true)
         try {
             const expectedBalance = (register.openingAmount ?? 0) + summary.totalIncome - summary.totalExpense;
@@ -125,7 +125,7 @@ export default function CashPage() {
     }
 
     const processMovement = async () => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         if (!register) return
         setSaving(true)
         try {
@@ -147,7 +147,7 @@ export default function CashPage() {
     }
 
     const deleteMovement = async (id: number) => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         setSaving(true)
         try {
             await api.delete(`/api/admin/cash/movements/${id}`)
@@ -160,7 +160,7 @@ export default function CashPage() {
     }
 
     const openEditMove = (m: any) => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         setMoveForm({
             id: m.id,
             movementType: m.movementType,
@@ -219,12 +219,12 @@ export default function CashPage() {
                     <p className="text-primary-500 text-sm">{register ? 'Sesión abierta' : 'Sin sesión activa'}</p>
                 </div>
                 {!register
-                    ? (<button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setShowOpen(true) }} className="btn-primary flex items-center gap-2"><Unlock className="w-4 h-4" />Abrir caja</button>)
+                    ? (<button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setShowOpen(true) }} className="btn-primary flex items-center gap-2"><Unlock className="w-4 h-4" />Abrir caja</button>)
                     : (
                         <div className="flex gap-3">
                             <button onClick={exportCash} className="btn-secondary flex items-center gap-2"><FileSpreadsheet className="w-4 h-4" />Exportar</button>
-                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); setShowMove(true) }} className="btn-secondary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar movimiento</button>
-                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setShowClose(true) }} className="btn-danger flex items-center gap-2"><Lock className="w-4 h-4" />Cerrar caja</button>
+                            <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setMoveForm({ id: 0, movementType: 'INCOME', amount: '', description: '' }); setShowMove(true) }} className="btn-secondary flex items-center gap-2"><Plus className="w-4 h-4" />Agregar movimiento</button>
+                            <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setShowClose(true) }} className="btn-danger flex items-center gap-2"><Lock className="w-4 h-4" />Cerrar caja</button>
                         </div>
                     )
                 }
@@ -339,7 +339,7 @@ export default function CashPage() {
                                                 <td className="text-right">
                                                     <div className="flex items-center justify-end gap-1">
                                                         {m.isManual && (
-                                                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setDeleteConfirmId(m.id) }} className="btn-ghost p-1 hover:bg-red-50 text-red-400 hover:text-red-600" title="Eliminar movimiento manual"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setDeleteConfirmId(m.id) }} className="btn-ghost p-1 hover:bg-red-50 text-red-400 hover:text-red-600" title="Eliminar movimiento manual"><Trash2 className="w-3.5 h-3.5" /></button>
                                                         )}
                                                         {!m.isManual && (
                                                             <span className="text-xs text-primary-300 px-1">Sistema</span>

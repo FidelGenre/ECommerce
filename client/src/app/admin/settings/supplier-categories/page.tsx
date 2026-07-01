@@ -38,18 +38,18 @@ export default function SupplierCategoriesPage() {
     useEffect(() => { load() }, [])
 
     const openNew = () => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         setForm({ type: 'SUPPLIER', name: '', description: '' }); setEditing(null); setOpen(true); setMsg(null)
     }
     const openEdit = (c: SupplierCategory) => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         setForm({ ...c }); setEditing(c.id); setOpen(true); setMsg(null)
     }
     const close = () => { setOpen(false); setMsg(null) }
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         if (!form.name?.trim()) { setMsg('El nombre es requerido'); return }
         setSaving(true)
         try {
@@ -60,7 +60,7 @@ export default function SupplierCategoriesPage() {
     }
 
     const executeDelete = async () => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return }
         if (!pendingDelete) return
         setDeleting(true)
         const errors: string[] = []
@@ -90,7 +90,7 @@ export default function SupplierCategoriesPage() {
                 <h1 className="text-2xl font-bold text-espresso">Categorías de Proveedores</h1>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
-                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete([...selected]) }} disabled={deleting}
+                        <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return } setPendingDelete([...selected]) }} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -142,7 +142,7 @@ export default function SupplierCategoriesPage() {
                                             <button onClick={() => openEdit(c)} className="w-8 h-8 rounded-lg bg-primary-100 hover:bg-primary-200 flex items-center justify-center text-primary-700 transition-colors">
                                                 <Edit2 className="w-3.5 h-3.5" />
                                             </button>
-                                            <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return } setPendingDelete([c.id]) }} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors">
+                                            <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return } setPendingDelete([c.id]) }} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors">
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </div>

@@ -48,14 +48,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             username, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(auth);
 
-                    // Block writing for CONSULTA role
+                    // Block writing for any role that lacks the MANAGE_WRITE permission
                     if (request.getRequestURI().startsWith("/api/admin/") &&
                         ("POST".equalsIgnoreCase(request.getMethod()) || "PUT".equalsIgnoreCase(request.getMethod()) ||
                          "PATCH".equalsIgnoreCase(request.getMethod()) || "DELETE".equalsIgnoreCase(request.getMethod()))) {
-                        if (role.equals("CONSULTA")) {
+                        boolean canWrite = authorities.stream()
+                                .anyMatch(a -> a.getAuthority().equals("MANAGE_WRITE"));
+                        if (!canWrite) {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json");
-                            response.getWriter().write("{\"error\": \"Forbidden\", \"message\": \"El rol CONSULTA no tiene permisos para modificar datos.\"}");
+                            response.getWriter().write("{\"error\": \"Forbidden\", \"message\": \"Este rol no tiene permisos para modificar datos (solo lectura).\"}");
                             return;
                         }
                     }

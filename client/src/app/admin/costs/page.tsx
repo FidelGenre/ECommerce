@@ -88,13 +88,13 @@ export default function CostsPage() {
     const [lines, setLines] = useState([{ ...emptyForm }])
 
     const openCreate = () => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         setEditItem(null)
         setLines([{ ...emptyForm }])
         setShowModal(true)
     }
     const openEdit = (item: InternalCost) => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         setEditItem(item)
         setForm({ description: item.description, amount: String(item.amount), category: item.category ?? '', costDate: item.costDate, status: item.status ?? 'PENDING' })
         setShowModal(true)
@@ -106,7 +106,7 @@ export default function CostsPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         setSaving(true)
         try {
             if (editItem) {
@@ -140,7 +140,7 @@ export default function CostsPage() {
     }
 
     const togglePaid = async (c: InternalCost) => {
-        if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; }
+        if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         await api.patch(`/api/admin/costs/${c.id}/mark-paid`, { paid: !c.paid })
         load()
     }
@@ -175,7 +175,7 @@ export default function CostsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     {selected.size > 0 && (
-                        <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setDeleteId([...selected]) }} disabled={deleting}
+                        <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setDeleteId([...selected]) }} disabled={deleting}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />{deleting ? 'Eliminando…' : `Eliminar ${selected.size} seleccionados`}
                         </button>
@@ -252,7 +252,7 @@ export default function CostsPage() {
                                         <td>
                                             <div className="flex gap-1 items-center">
                                                 <button
-                                                    onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } togglePaid(c) }}
+                                                    onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } togglePaid(c) }}
                                                     className={`py-1 px-2 rounded text-xs font-medium transition-colors ${getStatus(c) !== 'PENDING' ? 'bg-primary-100 text-primary-600 hover:bg-primary-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
                                                     title={getStatus(c) !== 'PENDING' ? 'Marcar como pendiente' : 'Marcar como pagado'}
                                                 >
@@ -261,7 +261,7 @@ export default function CostsPage() {
                                                 <button onClick={() => openEdit(c)} className="btn-ghost py-1 px-2 text-xs">
                                                     <Pencil className="w-3.5 h-3.5" />
                                                 </button>
-                                                <button onClick={() => { if (!canWrite) { toast.error('No puedes hacer esto en rol Consulta'); return; } setDeleteId([c.id]) }} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700">
+                                                <button onClick={() => { if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; } setDeleteId([c.id]) }} className="btn-ghost py-1 px-2 text-xs text-red-500 hover:text-red-700">
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>

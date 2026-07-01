@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/login')
     }
 
-    const canWrite = user?.role !== 'CONSULTA'
+    const canWrite = !!user?.permissions?.includes('MANAGE_WRITE')
 
     return <Context.Provider value={{ user, login, logout, loading, canWrite }}>{children}</Context.Provider>
 }
