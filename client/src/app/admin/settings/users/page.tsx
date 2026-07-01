@@ -192,9 +192,14 @@ export default function UsersSettingsPage() {
         e.preventDefault()
         if (!canWrite) { toast.error('Tu rol es de solo lectura, no podés modificar datos'); return; }
         setSaving(true)
+        // MANAGE_WRITE (edit-everything wildcard) is reserved for ADMIN. Strip any stale
+        // copy from other roles on save so per-section permissions fully govern them.
+        const payload = roleForm.code === 'ADMIN'
+            ? roleForm
+            : { ...roleForm, permissions: roleForm.permissions.filter(p => p !== 'MANAGE_WRITE') }
         try {
-            if (editingRole) { await api.put(`/api/admin/roles/${editingRole.code}`, roleForm); toast.success('Rol actualizado') }
-            else { await api.post('/api/admin/roles', roleForm); toast.success('Rol creado') }
+            if (editingRole) { await api.put(`/api/admin/roles/${editingRole.code}`, payload); toast.success('Rol actualizado') }
+            else { await api.post('/api/admin/roles', payload); toast.success('Rol creado') }
             setShowRoleModal(false); load()
         } catch (e: any) {
             toast.error(e.response?.data?.message || e.response?.data || 'Error al guardar el rol. Verificá que el código no exista ya.')

@@ -72,5 +72,18 @@ public class RoleSeeder implements CommandLineRunner {
                 logger.info("Granted MANAGE_WRITE to existing ADMIN role (migration).");
             }
         });
+
+        // Migration: MANAGE_WRITE is a global "edit everything" wildcard reserved for ADMIN.
+        // Older roles may still carry it from when write access was a single global toggle;
+        // strip it from every non-ADMIN role so per-section WRITE_<AREA> permissions govern them.
+        roleRepository.findAll().forEach(role -> {
+            if (!"ADMIN".equals(role.getCode()) && role.getPermissions().contains("MANAGE_WRITE")) {
+                Set<String> perms = new java.util.HashSet<>(role.getPermissions());
+                perms.remove("MANAGE_WRITE");
+                role.setPermissions(perms);
+                roleRepository.save(role);
+                logger.info("Removed stale MANAGE_WRITE from role {} (migration).", role.getCode());
+            }
+        });
     }
 }
