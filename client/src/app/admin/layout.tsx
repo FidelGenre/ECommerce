@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
-import { requiredViewPermission } from '@/lib/adminPermissions'
+import { requiredViewPermission, firstAccessibleAdminRoute } from '@/lib/adminPermissions'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import { ForbiddenToast } from '@/components/ForbiddenToast'
 import { Toast } from '@/components/Toast'
@@ -14,11 +14,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter()
     const pathname = usePathname()
 
+    // Block direct-URL access to sections the role can't view. ADMIN passes through;
+    // any role holding the section's permission passes; unmapped routes pass.
+    const requiredPerm = requiredViewPermission(pathname)
+    const isAdmin = user?.role === 'ADMIN'
+    const hasSectionAccess = isAdmin
+        || !requiredPerm
+        || (user?.permissions?.includes(requiredPerm) ?? false)
+    // Where to send the user if they can't see the current section.
+    const fallbackRoute = isAdmin ? '/admin' : firstAccessibleAdminRoute(user?.permissions)
+
     useEffect(() => {
-        if (!loading && (!user || user.role === 'NONE' || (user.role === 'CLIENTE' && (!user.permissions || user.permissions.length === 0)))) {
+        if (loading) return
+        if (!user || user.role === 'NONE' || (user.role === 'CLIENTE' && (!user.permissions || user.permissions.length === 0))) {
             router.replace('/login')
+            return
         }
-    }, [user, loading, router])
+        // If the current section isn't accessible but another one is, redirect there
+        // (e.g. landing on /admin/Dashboard without VIEW_DASHBOARD).
+        if (!hasSectionAccess && fallbackRoute && fallbackRoute !== pathname) {
+            router.replace(fallbackRoute)
+        }
+    }, [user, loading, router, hasSectionAccess, fallbackRoute, pathname])
 
     if (loading || !user) {
         return (
@@ -27,13 +44,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
         )
     }
-
-    // Block direct-URL access to sections the role can't view. ADMIN (MANAGE_WRITE
-    // wildcard aside) and any role holding the section's permission pass through.
-    const requiredPerm = requiredViewPermission(pathname)
-    const hasSectionAccess = user.role === 'ADMIN'
-        || !requiredPerm
-        || (user.permissions?.includes(requiredPerm) ?? false)
 
     const isReadOnly = !canWrite
 
@@ -48,7 +58,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </div>
                         <h2 className="text-xl font-bold text-espresso mb-2">Sin acceso a esta sección</h2>
                         <p className="text-primary-500 text-sm mb-6">Tu rol no tiene permiso para ver esta parte del panel.</p>
-                        <Link href="/admin" className="btn-primary inline-flex">Volver al inicio del panel</Link>
+                        {fallbackRoute && fallbackRoute !== pathname ? (
+                            <Link href={fallbackRoute} className="btn-primary inline-flex">Ir a mi panel</Link>
+                        ) : (
+                            <Link href="/" className="btn-primary inline-flex">Volver a la tienda</Link>
+                        )}
                     </div>
                     <ForbiddenToast />
                     <Toast />
