@@ -9,7 +9,8 @@ import { ConfirmModal } from '@/components/ConfirmModal'
 import { useAuth } from '@/lib/auth'
 
 export default function StatusesSettingsPage() {
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('SETTINGS')
     const [data, setData] = useState<OperationStatus[]>([])
     const [loading, setLoading] = useState(true)
 

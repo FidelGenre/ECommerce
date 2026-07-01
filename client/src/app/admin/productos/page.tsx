@@ -30,7 +30,8 @@ function ProductCard({ item, onEdit, onToggle, onDelete, selected, onSelect }: {
     selected: boolean
     onSelect: () => void
 }) {
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('INVENTORY')
     const stockBad = item.stock <= item.minStock
     return (
         <div className={`card p-0 overflow-hidden flex flex-col transition-shadow hover:shadow-lg ${!item.visible ? 'opacity-60' : ''}`}>
@@ -134,7 +135,8 @@ export default function ProductosAdminPage() {
     const [showLabels, setShowLabels] = useState(false)
 
     // Selection
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('INVENTORY')
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
     const toggleSelect = (id: number) => setSelectedIds(prev => {

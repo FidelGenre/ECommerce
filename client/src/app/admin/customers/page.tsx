@@ -31,7 +31,8 @@ export default function CustomersPage() {
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
     // Edit Modal
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('CUSTOMERS')
     const [showModal, setShowModal] = useState(false)
     const [editing, setEditing] = useState<Customer | null>(null)
     const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', address: '', taxId: '', notes: '' })

@@ -8,7 +8,8 @@ import { ConfirmModal } from '@/components/ConfirmModal'
 import { useAuth } from '@/lib/auth'
 
 export default function PaymentsSettingsPage() {
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('SETTINGS')
     const [data, setData] = useState<PaymentMethod[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)

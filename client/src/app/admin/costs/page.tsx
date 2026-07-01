@@ -19,7 +19,8 @@ const CATEGORIES = ['Servicios', 'Gastos imprevistos', 'Mantenimiento', 'Utiliti
 const emptyForm = { description: '', amount: '', category: '', costDate: new Date().toISOString().slice(0, 10), status: 'PENDING' }
 
 export default function CostsPage() {
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('SETTINGS')
     const [data, setData] = useState<InternalCost[]>([])
     const [total, setTotal] = useState(0)
     const [page, setPage] = useState(0)

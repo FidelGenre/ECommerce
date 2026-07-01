@@ -10,7 +10,8 @@ import { useAuth } from '@/lib/auth'
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
 export default function CashPage() {
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('CASH')
     const [register, setRegister] = useState<CashRegister | null>(null)
     const [movements, setMovements] = useState<CashMovement[]>([])
     const [summary, setSummary] = useState<any>(null)

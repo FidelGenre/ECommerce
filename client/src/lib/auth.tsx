@@ -13,12 +13,18 @@ interface AuthUser {
     lastName?: string
 }
 
+// Sections that support editing, each gated by its own WRITE_<AREA> permission.
+export type WriteArea = 'SALES' | 'PURCHASES' | 'INVENTORY' | 'CASH' | 'CUSTOMERS' | 'SUPPLIERS' | 'SETTINGS'
+
 interface AuthCtx {
     user: AuthUser | null
     login: (username: string, password: string) => Promise<void>
     logout: () => void
     loading: boolean
+    /** True if the role can write to at least one area (used for the read-only banner). */
     canWrite: boolean
+    /** True if the role can modify the given area (holds WRITE_<area> or the global MANAGE_WRITE). */
+    canWriteArea: (area: WriteArea) => boolean
 }
 
 const Context = createContext<AuthCtx>({} as AuthCtx)
@@ -79,9 +85,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/login')
     }
 
-    const canWrite = !!user?.permissions?.includes('MANAGE_WRITE')
+    const perms = user?.permissions ?? []
+    const hasGlobalWrite = perms.includes('MANAGE_WRITE')
+    const canWriteArea = (area: WriteArea) => hasGlobalWrite || perms.includes(`WRITE_${area}`)
+    // Read-only banner: true only if the role can't write to anything at all.
+    const canWrite = hasGlobalWrite || perms.some(p => p.startsWith('WRITE_'))
 
-    return <Context.Provider value={{ user, login, logout, loading, canWrite }}>{children}</Context.Provider>
+    return <Context.Provider value={{ user, login, logout, loading, canWrite, canWriteArea }}>{children}</Context.Provider>
 }
 
 export const useAuth = () => useContext(Context)

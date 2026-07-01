@@ -9,7 +9,8 @@ import { useAuth } from '@/lib/auth'
 type SupplierCategory = { id: number; name: string; description?: string; type: string }
 
 export default function SupplierCategoriesPage() {
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('SUPPLIERS')
     const [cats, setCats] = useState<SupplierCategory[]>([])
     const [form, setForm] = useState<Partial<SupplierCategory>>({ type: 'SUPPLIER' })
     const [editing, setEditing] = useState<number | null>(null)

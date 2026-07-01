@@ -67,7 +67,8 @@ export default function ClientesPage() {
     const [loadingDetail, setLoadingDetail] = useState(false)
 
     // Form
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('CUSTOMERS')
 
     const blank = { firstName: '', lastName: '', email: '', phone: '', address: '', taxId: '', documentType: 'DNI', notes: '' }
     const [form, setForm] = useState(blank)

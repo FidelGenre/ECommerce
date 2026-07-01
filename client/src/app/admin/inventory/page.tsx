@@ -13,7 +13,8 @@ type SortField = 'name' | 'stock' | 'category' | 'id' | 'minStock' | 'supplier' 
 type SortDir = 'asc' | 'desc'
 
 export default function InventoryPage() {
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('INVENTORY')
     const [items, setItems] = useState<Item[]>([])
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState<string | null>(null)

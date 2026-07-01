@@ -35,7 +35,8 @@ export default function SuppliersPage() {
     const [showModal, setShowModal] = useState(false)
     const [editing, setEditing] = useState<Supplier | null>(null)
     const [categories, setCategories] = useState<Category[]>([])
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('SUPPLIERS')
     const blankForm = { name: '', legalName: '', taxId: '', documentType: 'DNI', alias: '', phone: '', email: '', address: '', categoryId: '' }
 
     const formatDoc = (val: string, type: string) => {

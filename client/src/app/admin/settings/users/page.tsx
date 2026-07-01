@@ -24,9 +24,18 @@ const ALL_PERMISSIONS = [
     { id: 'MANAGE_SETTINGS', label: 'Configuración y Roles' }
 ];
 
-// Access-level permission (not a section): controls whether the role can modify
-// data at all. Without it, the role is read-only across every section it can see.
-const WRITE_PERMISSION = { id: 'MANAGE_WRITE', label: 'Puede editar y modificar datos' };
+// Per-section write permission: which sections can be edited (not just viewed).
+// A section maps its view permission -> its WRITE_<AREA> permission. Sections without
+// an entry (Dashboard, Reportes) are view-only and never editable.
+const WRITE_PERMISSION_BY_VIEW: Record<string, string> = {
+    MANAGE_SALES: 'WRITE_SALES',
+    MANAGE_PURCHASES: 'WRITE_PURCHASES',
+    MANAGE_INVENTORY: 'WRITE_INVENTORY',
+    MANAGE_CASH: 'WRITE_CASH',
+    MANAGE_CUSTOMERS: 'WRITE_CUSTOMERS',
+    MANAGE_SUPPLIERS: 'WRITE_SUPPLIERS',
+    MANAGE_SETTINGS: 'WRITE_SETTINGS',
+};
 
 interface UserRow {
     id: number;
@@ -46,7 +55,8 @@ interface UserRow {
 }
 
 export default function UsersSettingsPage() {
-    const { user: authUser, logout, canWrite } = useAuth()
+    const { user: authUser, logout, canWriteArea } = useAuth()
+    const canWrite = canWriteArea('SETTINGS')
     const [activeTab, setActiveTab] = useState<'USERS' | 'ROLES'>('USERS')
     const [data, setData] = useState<UserRow[]>([])
     const [roles, setRoles] = useState<Role[]>([])
@@ -381,11 +391,19 @@ export default function UsersSettingsPage() {
                                             <div className="flex flex-wrap gap-1">
                                                 {r.permissions.length === 0 && <span className="text-xs text-primary-300">Ninguno</span>}
                                                 {r.permissions.map(p => {
-                                                    if (p === WRITE_PERMISSION.id) return (
-                                                        <span key={p} className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-md text-[10px] uppercase font-bold tracking-wider">
-                                                            {WRITE_PERMISSION.label}
+                                                    if (p === 'MANAGE_WRITE') return (
+                                                        <span key={p} className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-md text-[10px] uppercase font-bold tracking-wider">
+                                                            Editar todo
                                                         </span>
                                                     );
+                                                    if (p.startsWith('WRITE_')) {
+                                                        const viewId = Object.keys(WRITE_PERMISSION_BY_VIEW).find(k => WRITE_PERMISSION_BY_VIEW[k] === p);
+                                                        const label = ALL_PERMISSIONS.find(ap => ap.id === viewId)?.label ?? p.replace('WRITE_', '');
+                                                        return (
+                                                        <span key={p} className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-md text-[10px] uppercase font-bold tracking-wider">
+                                                            Editar: {label}
+                                                        </span>
+                                                    )}
                                                     const permInfo = ALL_PERMISSIONS.find(ap => ap.id === p);
                                                     return (
                                                     <span key={p} className="inline-flex items-center gap-1 px-2 py-1 bg-primary-50 border border-primary-100 text-primary-700 rounded-md text-[10px] uppercase font-bold tracking-wider">
@@ -550,58 +568,54 @@ export default function UsersSettingsPage() {
                             </div>
 
                             <hr className="border-t border-muted my-4" />
-                            <h3 className="text-sm font-bold text-espresso mb-2">Nivel de Acceso</h3>
-                            {(() => {
-                                const isAdmin = roleForm.code === 'ADMIN';
-                                const isChecked = roleForm.permissions.includes(WRITE_PERMISSION.id);
-                                return (
-                                    <label className={`flex items-start gap-2 p-3 rounded-lg border select-none transition-colors mb-4 ${isAdmin ? 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed' : (isChecked ? 'bg-emerald-50 border-emerald-200 text-emerald-800 cursor-pointer' : 'bg-white border-muted text-primary-600 hover:bg-gray-50 cursor-pointer')}`}>
-                                        <div className="mt-0.5">
-                                            {isChecked ? <CheckSquare className={`w-4 h-4 ${isAdmin ? 'text-gray-400' : 'text-emerald-600'}`} /> : <Square className="w-4 h-4 text-primary-300" />}
-                                        </div>
-                                        <div>
-                                            <span className="text-sm font-semibold leading-tight block">{WRITE_PERMISSION.label}</span>
-                                            <span className="text-xs text-primary-400 leading-tight">Sin esto, el rol solo puede ver información (modo consulta).</span>
-                                        </div>
-                                        <input type="checkbox" className="sr-only"
-                                            disabled={isAdmin}
-                                            checked={isChecked}
-                                            onChange={(e) => {
-                                                const checked = e.target.checked;
-                                                setRoleForm(prev => ({
-                                                    ...prev,
-                                                    permissions: checked ? [...prev.permissions, WRITE_PERMISSION.id] : prev.permissions.filter(x => x !== WRITE_PERMISSION.id)
-                                                }))
-                                            }}
-                                        />
-                                    </label>
-                                );
-                            })()}
-
-                            <h3 className="text-sm font-bold text-espresso mb-2">Permisos del Sistema (secciones visibles)</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pl-1 pb-1 pr-3 custom-scrollbar">
+                            <h3 className="text-sm font-bold text-espresso mb-1">Permisos por Sección</h3>
+                            <p className="text-xs text-primary-400 mb-3">Marcá <strong>Ver</strong> para dar acceso a la sección y <strong>Editar</strong> para permitir modificar. Sin "Editar", el rol solo consulta.</p>
+                            <div className="space-y-2 max-h-72 overflow-y-auto pl-1 pb-1 pr-3 custom-scrollbar">
                                 {ALL_PERMISSIONS.map(p => {
                                     const isAdmin = roleForm.code === 'ADMIN';
-                                    const isChecked = roleForm.permissions.includes(p.id);
+                                    const canView = roleForm.permissions.includes(p.id);
+                                    const writePerm = WRITE_PERMISSION_BY_VIEW[p.id];
+                                    const canEdit = !!writePerm && roleForm.permissions.includes(writePerm);
+                                    const toggle = (id: string, on: boolean) => setRoleForm(prev => ({
+                                        ...prev,
+                                        permissions: on ? [...prev.permissions, id] : prev.permissions.filter(x => x !== id)
+                                    }));
                                     return (
-                                    <label key={p.id} className={`flex items-start gap-2 p-2 rounded-lg border select-none transition-colors ${isAdmin ? (isChecked ? 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed') : (isChecked ? 'bg-primary-50 border-primary-200 text-primary-800 cursor-pointer' : 'bg-white border-muted text-primary-600 hover:bg-gray-50 cursor-pointer')}`}>
-                                        <div className="mt-0.5">
-                                            {isChecked ? <CheckSquare className={`w-4 h-4 ${isAdmin ? 'text-gray-400' : 'text-emerald-600'}`} /> : <Square className="w-4 h-4 text-primary-300" />}
-                                        </div>
-                                        <span className="text-sm font-medium leading-tight">{p.label}</span>
-                                        {/* Hidden checkbox for a11y */}
-                                        <input type="checkbox" className="sr-only" 
-                                            disabled={isAdmin}
-                                            checked={isChecked}
-                                            onChange={(e) => {
-                                                const checked = e.target.checked;
-                                                setRoleForm(prev => ({
-                                                    ...prev,
-                                                    permissions: checked ? [...prev.permissions, p.id] : prev.permissions.filter(x => x !== p.id)
-                                                }))
-                                            }}
-                                        />
-                                    </label>
+                                    <div key={p.id} className={`flex items-center justify-between gap-3 p-2.5 rounded-lg border transition-colors ${isAdmin ? 'bg-gray-50 border-gray-200' : canView ? 'bg-primary-50/60 border-primary-200' : 'bg-white border-muted'}`}>
+                                        {/* Ver */}
+                                        <label className={`flex items-center gap-2 select-none ${isAdmin ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                            {canView ? <CheckSquare className={`w-4 h-4 ${isAdmin ? 'text-gray-400' : 'text-emerald-600'}`} /> : <Square className="w-4 h-4 text-primary-300" />}
+                                            <span className={`text-sm font-medium leading-tight ${isAdmin ? 'text-gray-500' : canView ? 'text-primary-800' : 'text-primary-600'}`}>{p.label}</span>
+                                            <input type="checkbox" className="sr-only"
+                                                disabled={isAdmin}
+                                                checked={canView}
+                                                onChange={(e) => {
+                                                    const on = e.target.checked;
+                                                    setRoleForm(prev => ({
+                                                        ...prev,
+                                                        // Unchecking "Ver" also drops "Editar" for that section.
+                                                        permissions: on
+                                                            ? [...prev.permissions, p.id]
+                                                            : prev.permissions.filter(x => x !== p.id && x !== writePerm)
+                                                    }))
+                                                }}
+                                            />
+                                        </label>
+                                        {/* Editar (only for sections that support it) */}
+                                        {writePerm ? (
+                                            <label className={`flex items-center gap-1.5 select-none shrink-0 ${isAdmin || !canView ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`} title={!canView ? 'Requiere "Ver" activado' : ''}>
+                                                {canEdit ? <CheckSquare className={`w-4 h-4 ${isAdmin ? 'text-gray-400' : 'text-amber-600'}`} /> : <Square className="w-4 h-4 text-primary-300" />}
+                                                <span className={`text-xs font-semibold uppercase tracking-wide ${canEdit ? 'text-amber-700' : 'text-primary-400'}`}>Editar</span>
+                                                <input type="checkbox" className="sr-only"
+                                                    disabled={isAdmin || !canView}
+                                                    checked={canEdit}
+                                                    onChange={(e) => toggle(writePerm, e.target.checked)}
+                                                />
+                                            </label>
+                                        ) : (
+                                            <span className="text-[10px] text-primary-300 uppercase tracking-wide shrink-0 pr-1">Solo lectura</span>
+                                        )}
+                                    </div>
                                 )})}
                             </div>
 

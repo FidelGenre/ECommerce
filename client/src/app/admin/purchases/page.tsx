@@ -15,7 +15,8 @@ type SortField = 'id' | 'total' | 'createdAt' | 'supplier' | 'createdBy' | 'stat
 type SortDir = 'asc' | 'desc'
 
 export default function PurchasesPage() {
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('PURCHASES')
     const [data, setData] = useState<PurchaseOrder[]>([])
     const [total, setTotal] = useState(0)
     const [page, setPage] = useState(0)

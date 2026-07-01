@@ -8,7 +8,8 @@ import { ConfirmModal } from '@/components/ConfirmModal'
 import { useAuth } from '@/lib/auth'
 
 export default function CategoriesPage() {
-    const { canWrite } = useAuth()
+    const { canWriteArea } = useAuth()
+    const canWrite = canWriteArea('INVENTORY')
     const [data, setData] = useState<Category[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
