@@ -1,30 +1,64 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
+import { useCart } from '@/lib/cart'
+import { ScrollToTop } from '@/components/ScrollToTop'
 import { Item } from '@/types'
 import {
   ShoppingCart, User, Coffee, Mail, Phone,
   MapPin, Flame, Leaf, Award, Heart, X, Plus, Minus,
-  Menu, ChevronRight, Star
+  Menu, ChevronRight, ChevronLeft, Star
 } from 'lucide-react'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
 export default function StorefrontPage() {
   const { user } = useAuth()
+  const {
+    cart, addToCart, removeFromCart, updateQty, setQtyExact,
+    getAvailableStock, cartTotal, cartCount,
+  } = useCart()
   const [items, setItems] = useState<Item[]>([])
-  const [categories, setCategories] = useState<any[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [loading, setLoading] = useState(true)
-  const [cart, setCart] = useState<{ item: Item; qty: number }[]>([])
   const [showCart, setShowCart] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' })
   const [contactSent, setContactSent] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+
+  // Products carousel: auto-scrolls on its own, pauses on hover, and can be
+  // nudged with the arrow buttons. Loops back to the start when it reaches the end.
+  const carouselRef = useRef<HTMLDivElement>(null)
+  const carouselPaused = useRef(false)
+
+  useEffect(() => {
+    const el = carouselRef.current
+    if (!el) return
+    let raf: number
+    const step = () => {
+      if (!carouselPaused.current && el.scrollWidth > el.clientWidth) {
+        // The track renders the products twice; once we've scrolled past the first
+        // copy, jump back by that width for a seamless infinite loop (no visible jump).
+        const half = el.scrollWidth / 2
+        if (el.scrollLeft >= half) {
+          el.scrollLeft -= half
+        }
+        el.scrollLeft += 0.7
+      }
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [items])
+
+  const scrollCarousel = (dir: 'left' | 'right') => {
+    const el = carouselRef.current
+    if (!el) return
+    el.scrollBy({ left: dir === 'left' ? -320 : 320, behavior: 'smooth' })
+  }
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -41,8 +75,6 @@ export default function StorefrontPage() {
       .then(r => {
         const fetchedItems = r.data.content ?? [];
         setItems(fetchedItems);
-        const uniqueCategories = Array.from(new Set(fetchedItems.map((it: any) => it.category?.name).filter(Boolean))).sort();
-        setCategories(uniqueCategories);
       })
       .catch(() => setItems([]))
       .finally(() => setLoading(false))
@@ -61,54 +93,6 @@ export default function StorefrontPage() {
     sessionStorage.removeItem('pending_checkout_order')
     return () => window.removeEventListener('pageshow', handlePageShow)
   }, [])
-
-  const filteredItems = selectedCategory ? items.filter((it: any) => it.category?.name === selectedCategory) : items;
-
-  const removeFromCart = (id: number) => setCart(prev => prev.filter(c => c.item.id !== id))
-
-  const updateQty = (id: number, delta: number) => {
-    setCart(prev => prev.map(c => {
-      if (c.item.id === id) {
-        const stock = Number(c.item.stock)
-        const newQty = Math.min(stock, Math.max(0, Math.floor(c.qty + delta)))
-        return { ...c, qty: newQty }
-      }
-      return c
-    }))
-  }
-
-  const setQtyExact = (id: number, val: number) => {
-    setCart(prev => prev.map(c => {
-      if (c.item.id === id) {
-        const stock = Number(c.item.stock)
-        const newQty = Math.min(stock, Math.max(0, Math.floor(val)))
-        return { ...c, qty: newQty }
-      }
-      return c
-    }))
-  }
-
-  const addToCart = (item: Item) => {
-    const stock = Number(item.stock);
-    setCart(prev => {
-      const existing = prev.find(c => c.item.id === item.id)
-      if (existing) {
-        if (existing.qty >= stock) return prev;
-        return prev.map(c => c.item.id === item.id ? { ...c, qty: c.qty + 1 } : c)
-      } else {
-        if (stock <= 0) return prev;
-        return [...prev, { item, qty: 1 }]
-      }
-    })
-  }
-
-  const getAvailableStock = (itemId: number, totalStock: number) => {
-    const inCart = cart.find(c => c.item.id === itemId)
-    return totalStock - (inCart ? inCart.qty : 0)
-  }
-
-  const cartTotal = cart.reduce((s: number, c) => s + (c.item.price * c.qty), 0)
-  const cartCount = cart.reduce((s: number, c) => s + c.qty, 0)
 
   const handleCheckout = async () => {
     if (cart.length === 0) return
@@ -167,7 +151,7 @@ export default function StorefrontPage() {
       <div className="min-h-screen bg-surface">
 
         {/* ═══════════════════ NAVBAR ═══════════════════ */}
-        <nav className="bg-primary-600 sticky top-0 z-50 shadow-lg">
+        <nav className="bg-primary-600 relative z-50 shadow-lg">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <span className="text-white font-bold text-xl tracking-wide">Coffee Beans</span>
 
@@ -228,6 +212,8 @@ export default function StorefrontPage() {
             </span>
           )}
         </button>
+
+        <ScrollToTop bottomClass="bottom-24" />
 
         {/* Cart popup */}
         {showCart && (
@@ -294,35 +280,35 @@ export default function StorefrontPage() {
           </div>
         )}
 
-        {/* ═══════════════════ HERO ═══════════════════ */}
-        <section id="inicio" className="bg-surface">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-24 flex flex-col md:flex-row items-center gap-12">
-            <div className="flex-1 space-y-6 text-center md:text-left">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-espresso leading-tight">
+        {/* ═══════════════════ HERO (banner con imagen de fondo) ═══════════════════ */}
+        <section
+          id="inicio"
+          className="relative bg-espresso bg-cover bg-center"
+          style={{ backgroundImage: "url('/images/hero-banner.jpg')" }}
+        >
+          {/* Overlay para legibilidad del texto sobre la imagen */}
+          <div className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-espresso/40 to-transparent" />
+
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-24 md:py-36 lg:py-44">
+            <div className="max-w-xl space-y-6 text-center md:text-left">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight drop-shadow-sm">
                 Viví la Esencia<br />del Café
               </h1>
-              <p className="text-primary-500 text-lg leading-relaxed max-w-lg mx-auto md:mx-0">
+              <p className="text-cream/90 text-lg leading-relaxed max-w-lg mx-auto md:mx-0">
                 Descubrí nuestra selección artesanal de granos de café premium, tostados a la
                 perfección para resaltar los mejores aromas y sabores en cada taza.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                 <a href="#productos"
-                  className="inline-flex items-center justify-center gap-2 bg-espresso hover:bg-primary-800 text-white font-semibold px-7 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95">
+                  className="inline-flex items-center justify-center gap-2 bg-caramel hover:bg-amber-500 text-espresso font-semibold px-7 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95">
                   Explorar Nuestras Mezclas
                   <ChevronRight className="w-4 h-4" />
                 </a>
                 <a href="#nosotros"
-                  className="inline-flex items-center justify-center gap-2 border border-primary-300 hover:border-espresso text-espresso font-semibold px-7 py-3.5 rounded-xl transition-all">
+                  className="inline-flex items-center justify-center gap-2 border border-cream/60 hover:border-white text-white hover:bg-white/10 font-semibold px-7 py-3.5 rounded-xl transition-all">
                   Nuestra Historia
                 </a>
               </div>
-            </div>
-            <div className="flex-1 w-full max-w-md md:max-w-none mx-auto">
-              <img
-                src="/images/coffee-hero.png"
-                alt="Granos de café premium"
-                className="w-full rounded-2xl shadow-xl object-cover aspect-[4/3]"
-              />
             </div>
           </div>
         </section>
@@ -417,75 +403,82 @@ export default function StorefrontPage() {
               </div>
             ) : (
               <>
-                {categories.length > 0 && (
-                  <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
-                    <button
-                      onClick={() => setSelectedCategory('')}
-                      className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${selectedCategory === '' ? 'bg-[#4A2D19] text-white shadow-md' : 'bg-[#FFFDF8] text-[#8B6A4B] hover:bg-[#D4A97A] hover:text-[#4A2D19]'}`}
-                    >
-                      Todos
-                    </button>
-                    {categories.map((cat, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedCategory(cat as string)}
-                        className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${selectedCategory === cat ? 'bg-[#4A2D19] text-white shadow-md' : 'bg-[#FFFDF8] text-[#8B6A4B] hover:bg-[#D4A97A] hover:text-[#4A2D19]'}`}
-                      >
-                        {cat as string}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className="relative"
+                  onMouseEnter={() => { carouselPaused.current = true }}
+                  onMouseLeave={() => { carouselPaused.current = false }}>
 
-                {filteredItems.length === 0 && selectedCategory && (
-                  <div className="text-center py-10 w-full col-span-full">
-                    <p className="text-[#4A2D19] font-medium">No hay productos en esta categoría.</p>
-                  </div>
-                )}
+                  {/* Flecha izquierda */}
+                  <button
+                    onClick={() => scrollCarousel('left')}
+                    aria-label="Anterior"
+                    className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 w-11 h-11 items-center justify-center rounded-full bg-[#FFFDF8] text-[#4A2D19] shadow-lg hover:bg-[#4A2D19] hover:text-white transition-colors">
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredItems.map(item => {
-                    const available = getAvailableStock(item.id, Number(item.stock))
-                    const soldOut = available <= 0
-                    return (
-                    <div key={item.id}
-                      className="bg-[#FFFDF8] rounded-lg overflow-hidden flex flex-col transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1">
+                  {/* Pista deslizable */}
+                  <div
+                    ref={carouselRef}
+                    className="flex gap-8 overflow-x-auto pb-4 no-scrollbar px-1">
+                    {[...items, ...items].map((item, idx) => {
+                      const available = getAvailableStock(item.id, Number(item.stock))
+                      const soldOut = available <= 0
+                      return (
+                      <div key={`${item.id}-${idx}`}
+                        className="shrink-0 w-80 bg-[#FFFDF8] rounded-xl overflow-hidden flex flex-col transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1">
 
-                      {/* Image full width */}
-                      <div className="h-56 bg-[#D4A97A] overflow-hidden relative">
-                        {item.imageUrl
-                          ? <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                          : <div className="w-full h-full flex items-center justify-center"><Coffee className="w-16 h-16 text-[#8B6A4B]" /></div>
-                        }
-                      </div>
+                        {/* Image full width */}
+                        <div className="h-64 bg-[#D4A97A] overflow-hidden relative">
+                          {item.imageUrl
+                            ? <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex items-center justify-center"><Coffee className="w-16 h-16 text-[#8B6A4B]" /></div>
+                          }
+                        </div>
 
-                      {/* Card Content centered */}
-                      <div className="p-5 flex flex-col text-center flex-1">
-                        <h3 className="font-extrabold text-[#4A2D19] text-lg mb-2">{item.name.toLowerCase()}</h3>
+                        {/* Card Content centered */}
+                        <div className="p-5 flex flex-col text-center flex-1">
+                          <h3 className="font-extrabold text-[#4A2D19] text-lg mb-2">{item.name.toLowerCase()}</h3>
 
-                        <p className={`text-xs font-semibold mb-6 ${soldOut ? 'text-red-500' : 'text-[#8B6A4B]'}`}>
-                          {soldOut ? 'Sin stock disponible' : `Stock: ${available} disponibles`}
-                        </p>
+                          <p className={`text-xs font-semibold mb-6 ${soldOut ? 'text-red-500' : 'text-[#8B6A4B]'}`}>
+                            {soldOut ? 'Sin stock disponible' : `Stock: ${available} disponibles`}
+                          </p>
 
-                        <div className="flex items-center justify-between mt-auto">
-                          <span className="text-lg font-bold text-[#6B4B31]">
-                            {FMT(item.price)}
-                            <span className="text-sm font-normal ml-1">/ 100 gramos cada unidad</span>
-                          </span>
-                          <button
-                            onClick={() => addToCart(item)}
-                            disabled={soldOut}
-                            className={`text-sm font-semibold px-5 py-2 rounded-md transition-colors shadow-sm ${soldOut
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              : 'bg-[#5C3A21] hover:bg-[#4A2D19] text-white'
-                              }`}>
-                            {soldOut ? 'Sin stock' : 'Añadir'}
-                          </button>
+                          <div className="flex items-center justify-between mt-auto">
+                            <span className="text-lg font-bold text-[#6B4B31]">
+                              {FMT(item.price)}
+                              <span className="text-sm font-normal ml-1">/ 100 gramos cada unidad</span>
+                            </span>
+                            <button
+                              onClick={() => addToCart(item)}
+                              disabled={soldOut}
+                              className={`text-sm font-semibold px-5 py-2 rounded-md transition-colors shadow-sm ${soldOut
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-[#5C3A21] hover:bg-[#4A2D19] text-white'
+                                }`}>
+                              {soldOut ? 'Sin stock' : 'Añadir'}
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
+
+                  {/* Flecha derecha */}
+                  <button
+                    onClick={() => scrollCarousel('right')}
+                    aria-label="Siguiente"
+                    className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 w-11 h-11 items-center justify-center rounded-full bg-[#FFFDF8] text-[#4A2D19] shadow-lg hover:bg-[#4A2D19] hover:text-white transition-colors">
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Ver todos → página de tienda con filtros y buscador */}
+                <div className="text-center mt-12">
+                  <Link href="/catalogo-productos"
+                    className="inline-flex items-center justify-center gap-2 bg-[#4A2D19] hover:bg-[#3a2313] text-white font-semibold px-8 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95">
+                    Ver todos los productos
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
                 </div>
               </>
             )}
