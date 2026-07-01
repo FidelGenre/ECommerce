@@ -1,16 +1,16 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { useCart } from '@/lib/cart'
 import { ScrollToTop } from '@/components/ScrollToTop'
+import { PublicNav } from '@/components/PublicNav'
 import { Item } from '@/types'
 import {
-  ShoppingCart, User, Coffee, Mail, Phone,
+  ShoppingCart, Coffee, Mail, Phone,
   MapPin, Flame, Leaf, Award, Heart, X, Plus, Minus,
-  Menu, ChevronRight, ChevronLeft, Star
+  ChevronRight, ChevronLeft
 } from 'lucide-react'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
@@ -24,7 +24,6 @@ export default function StorefrontPage() {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [showCart, setShowCart] = useState(false)
-  const [mobileMenu, setMobileMenu] = useState(false)
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' })
   const [contactSent, setContactSent] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
@@ -60,15 +59,6 @@ export default function StorefrontPage() {
     el.scrollBy({ left: dir === 'left' ? -320 : 320, behavior: 'smooth' })
   }
 
-  // Lock body scroll when mobile menu is open
-  useEffect(() => {
-    if (mobileMenu) {
-      document.body.classList.add('menu-open')
-    } else {
-      document.body.classList.remove('menu-open')
-    }
-    return () => document.body.classList.remove('menu-open')
-  }, [mobileMenu])
 
   const fetchItems = () => {
     api.get('/api/public/items?size=100')
@@ -139,67 +129,12 @@ export default function StorefrontPage() {
     setContactForm({ name: '', email: '', message: '' })
   }
 
-  const NAV_LINKS = [
-    { href: '#inicio', label: 'Inicio' },
-    { href: '#nosotros', label: 'Nosotros' },
-    { href: '#productos', label: 'Productos' },
-    { href: '#contacto', label: 'Contacto' },
-  ]
-
   return (
     <>
       <div className="min-h-screen bg-surface">
 
         {/* ═══════════════════ NAVBAR ═══════════════════ */}
-        <nav className="bg-primary-600 relative z-50 shadow-lg">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-            <span className="text-white font-bold text-xl tracking-wide">Coffee Beans</span>
-
-            {/* Desktop nav */}
-            <div className="hidden md:flex items-center gap-8">
-              {NAV_LINKS.map(l => (
-                <a key={l.href} href={l.href} className="text-primary-300 hover:text-white text-sm font-medium transition-colors">
-                  {l.label}
-                </a>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* Desktop-only user icons */}
-              {user ? (
-                <>
-                  <Link href="/account" className="hidden md:flex w-9 h-9 bg-primary-700/60 hover:bg-primary-800 rounded-lg items-center justify-center text-white transition-colors">
-                    <User className="w-4 h-4" />
-                  </Link>
-                  {((user.permissions && user.permissions.length > 0) || user.role === 'ADMIN') && (
-                    <Link href="/admin" className="hidden md:flex px-3 h-9 bg-primary-700/60 hover:bg-primary-800 rounded-lg items-center justify-center text-caramel font-semibold text-xs transition-colors">
-                      Panel
-                    </Link>
-                  )}
-                </>
-              ) : (
-                <Link href="/login" className="hidden md:flex w-9 h-9 bg-caramel hover:bg-amber-500 rounded-lg items-center justify-center text-white transition-colors">
-                  <User className="w-4 h-4" />
-                </Link>
-              )}
-
-              <button onClick={() => setShowCart(!showCart)}
-                className="relative w-9 h-9 bg-primary-600 hover:bg-primary-500 rounded-lg flex items-center justify-center text-white transition-colors">
-                <ShoppingCart className="w-4 h-4" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-
-              <button onClick={() => setMobileMenu(!mobileMenu)}
-                className="md:hidden w-9 h-9 bg-primary-700/60 rounded-lg flex items-center justify-center text-white">
-                {mobileMenu ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-        </nav>
+        <PublicNav onCartClick={() => setShowCart(true)} />
 
         {/* ═══════════════════ CART PANEL ═══════════════════ */}
         {/* Floating cart button */}
@@ -605,74 +540,6 @@ export default function StorefrontPage() {
         </footer>
       </div>
 
-      {/* Mobile menu — fullscreen overlay via portal */}
-      {mobileMenu && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[9999] bg-primary-800/95 backdrop-blur-sm flex flex-col overlay-animate"
-          style={{ overscrollBehavior: 'contain' }}>
-          {/* Top bar with logo and close */}
-          <div className="flex items-center justify-between px-4 py-4">
-            <span className="text-white font-bold text-xl tracking-wide">Coffee Beans</span>
-            <div className="flex items-center gap-2">
-              <button onClick={() => { setShowCart(!showCart); setMobileMenu(false) }}
-                className="relative w-9 h-9 bg-primary-700/60 rounded-lg flex items-center justify-center text-white active:scale-90 transition-transform">
-                <ShoppingCart className="w-4 h-4" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-              <button onClick={() => setMobileMenu(false)}
-                className="w-9 h-9 flex items-center justify-center text-white hover:text-primary-300 active:scale-90 transition-all">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-
-          {/* Centered navigation links */}
-          <div className="flex-1 flex flex-col items-center justify-center gap-2 -mt-16 overlay-items-animate">
-            {NAV_LINKS.map(l => (
-              <a key={l.href} href={l.href}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setMobileMenu(false)
-                  setTimeout(() => {
-                    const el = document.querySelector(l.href)
-                    if (el) el.scrollIntoView({ behavior: 'smooth' })
-                  }, 50)
-                }}
-                className="text-white text-2xl font-bold hover:text-caramel active:scale-95 transition-all py-3">
-                {l.label}
-              </a>
-            ))}
-
-            {/* Separator */}
-            <div className="w-16 h-px bg-primary-500/40 my-3" />
-
-            {/* User links */}
-            {user ? (
-              <>
-                <Link href="/account" onClick={() => setMobileMenu(false)}
-                  className="flex items-center gap-2 text-primary-300 hover:text-white text-lg font-medium py-2 active:scale-95 transition-all">
-                  <User className="w-5 h-5" /> Mi Cuenta
-                </Link>
-                {((user.permissions && user.permissions.length > 0) || user.role === 'ADMIN') && (
-                  <Link href="/admin" onClick={() => setMobileMenu(false)}
-                    className="flex items-center gap-2 text-caramel hover:text-amber-300 text-lg font-medium py-2 active:scale-95 transition-all">
-                    <Star className="w-5 h-5" /> Panel de Admin
-                  </Link>
-                )}
-              </>
-            ) : (
-              <Link href="/login" onClick={() => setMobileMenu(false)}
-                className="flex items-center gap-2 text-caramel hover:text-amber-300 text-lg font-medium py-2 active:scale-95 transition-all">
-                <User className="w-5 h-5" /> Iniciar sesión
-              </Link>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
     </>
   )
 }

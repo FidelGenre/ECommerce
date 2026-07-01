@@ -1,19 +1,17 @@
 'use client'
 import { useEffect, useState, useMemo, useRef } from 'react'
-import Link from 'next/link'
 import api from '@/lib/api'
-import { useAuth } from '@/lib/auth'
 import { useCart } from '@/lib/cart'
 import { CartDrawer } from '@/components/CartDrawer'
 import { ScrollToTop } from '@/components/ScrollToTop'
+import { PublicNav } from '@/components/PublicNav'
 import { Item } from '@/types'
-import { Coffee, Search, X, ChevronLeft, ChevronRight, ShoppingCart, User } from 'lucide-react'
+import { Coffee, Search, X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const FMT = (n: number) => `$${Number(n ?? 0).toLocaleString('es-AR')}`
 
 export default function CatalogoProductosPage() {
-    const { user } = useAuth()
-    const { addToCart, getAvailableStock, cartCount } = useCart()
+    const { addToCart, getAvailableStock } = useCart()
     const [items, setItems] = useState<Item[]>([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
@@ -66,43 +64,7 @@ export default function CatalogoProductosPage() {
 
     return (
         <div className="min-h-screen bg-[#CDB38B]">
-            {/* Navbar — mismo estilo que el home */}
-            <nav className="bg-primary-600 relative z-50 shadow-lg">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 text-white font-bold text-xl tracking-wide hover:text-caramel transition-colors">
-                        <ChevronLeft className="w-5 h-5" /> Coffee Beans
-                    </Link>
-
-                    <div className="flex items-center gap-2">
-                        {user ? (
-                            <>
-                                <Link href="/account" className="hidden md:flex w-9 h-9 bg-primary-700/60 hover:bg-primary-800 rounded-lg items-center justify-center text-white transition-colors">
-                                    <User className="w-4 h-4" />
-                                </Link>
-                                {((user.permissions && user.permissions.length > 0) || user.role === 'ADMIN') && (
-                                    <Link href="/admin" className="hidden md:flex px-3 h-9 bg-primary-700/60 hover:bg-primary-800 rounded-lg items-center justify-center text-caramel font-semibold text-xs transition-colors">
-                                        Panel
-                                    </Link>
-                                )}
-                            </>
-                        ) : (
-                            <Link href="/login" className="hidden md:flex w-9 h-9 bg-caramel hover:bg-amber-500 rounded-lg items-center justify-center text-white transition-colors">
-                                <User className="w-4 h-4" />
-                            </Link>
-                        )}
-
-                        <button onClick={() => setShowCart(!showCart)}
-                            className="relative w-9 h-9 bg-primary-600 hover:bg-primary-500 rounded-lg flex items-center justify-center text-white transition-colors">
-                            <ShoppingCart className="w-4 h-4" />
-                            {cartCount > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                                    {cartCount}
-                                </span>
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </nav>
+            <PublicNav onCartClick={() => setShowCart(true)} />
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
                 <div className="text-center mb-8">
