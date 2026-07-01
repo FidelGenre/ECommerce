@@ -319,7 +319,7 @@ export default function StorefrontPage() {
 
         {/* ═══════════════════ PRODUCTOS ═══════════════════ */}
         <section id="productos" className="bg-[#CDB38B] py-16 lg:py-24">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-extrabold text-[#4A2D19] mb-2">Nuestra selección de café</h2>
               <p className="text-[#6B4B31] max-w-xl mx-auto font-medium">
